@@ -255,7 +255,7 @@ firewall-cmd --list-ports
 
 ### 1、简单动态字符串（SDS）
 
- ![Redis_数据结构_SDS](Images\Redis_数据结构_SDS.png) 
+ ![Redis_数据结构_SDS](Images/Redis_数据结构_SDS.png) 
 
 ```c
 /* sds.h */
@@ -337,7 +337,7 @@ typedef struct list {
 
 > 数据结构
 
-![Redis_数据结构_LinkedList](Images\Redis_数据结构_LinkedList.png) 
+![Redis_数据结构_LinkedList](Images/Redis_数据结构_LinkedList.png) 
 
 
 
@@ -425,7 +425,7 @@ typedef struct dict {
 
 > 数据结构
 
-![Redis_数据结构_Dict](Images\Redis_数据结构_Dict.png)
+![Redis_数据结构_Dict](Images/Redis_数据结构_Dict.png)
 
 
 
@@ -508,11 +508,11 @@ typedef struct zskiplist {
 
 > 数据结构
 
-![Redis_数据结构_SkipList1](Images\Redis_数据结构_SkipList1.png) 
+![Redis_数据结构_SkipList1](Images/Redis_数据结构_SkipList1.png) 
 
 
 
-![Redis_数据结构_SkipList2](Images\Redis_数据结构_SkipList2.png)
+![Redis_数据结构_SkipList2](Images/Redis_数据结构_SkipList2.png)
 
 
 
@@ -538,13 +538,13 @@ typedef struct intset {
 } intset;
 ```
 
- ![Redis_数据结构_IntSet](Images\Redis_数据结构_IntSet.png) 
+ ![Redis_数据结构_IntSet](Images/Redis_数据结构_IntSet.png) 
 
 
 
 ### 6、压缩列表（ZipList）
 
-![Redis_数据结构_ZipList](Images\Redis_数据结构_ZipList.png)
+![Redis_数据结构_ZipList](Images/Redis_数据结构_ZipList.png)
 
 | 属性      | 类型       | 长度     | 用途                                                         |
 | :-------: | :--------: | :------: | :----------------------------------------------------------- |
@@ -587,7 +587,7 @@ typedef struct redisObject {
 
 > RedisObject 数据结构
 
-![Redis_数据结构_RedisObject](Images\Redis_数据结构_RedisObject.png)
+![Redis_数据结构_RedisObject](Images/Redis_数据结构_RedisObject.png)
 
 > 类型（type）
 
@@ -645,7 +645,7 @@ typedef struct redisObject {
 
 int 编码能存储的整数值范围：[ -2^63 , 2^63 - 1]
 
-![Redis_编码结构_int](Images\Redis_编码结构_int.png)
+![Redis_编码结构_int](Images/Redis_编码结构_int.png)
 
 - embstr 编码
 
@@ -657,13 +657,13 @@ int 编码能存储的整数值范围：[ -2^63 , 2^63 - 1]
 
 能够更好的利用缓存带来的优势（缓存行：64 字节）。
 
-![Redis_编码结构_embstr](Images\Redis_编码结构_embstr.png)
+![Redis_编码结构_embstr](Images/Redis_编码结构_embstr.png)
 
 - raw 编码
 
 如果字符串的长度大于 44 字节，那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串值。
 
- ![Redis_编码结构_raw](Images\Redis_编码结构_raw.png) 
+ ![Redis_编码结构_raw](Images/Redis_编码结构_raw.png) 
 
 - embstr 与 raw 的区别
   - embstr 编码则通过调用一次内存分配函数来分配一块连续的空间， 空间中依次包含 redisObject 和 sdshdr 两个结构。
@@ -681,11 +681,11 @@ int 编码能存储的整数值范围：[ -2^63 , 2^63 - 1]
 
 - ziplist 编码
 
- ![Redis_编码结构_list-ziplist](Images\Redis_编码结构_list-ziplist.png) 
+ ![Redis_编码结构_list-ziplist](Images/Redis_编码结构_list-ziplist.png) 
 
 - linkedlist 编码
 
-![Redis_编码结构_list-linkedlist](Images\Redis_编码结构_list-linkedlist.png) 
+![Redis_编码结构_list-linkedlist](Images/Redis_编码结构_list-linkedlist.png) 
 
 - 编码转换
 
@@ -711,11 +711,11 @@ list-max-ziplist-value 64
 
 - ziplist 编码
 
-![Redis_编码结构_hash-ziplist](Images\Redis_编码结构_hash-ziplist.png)
+![Redis_编码结构_hash-ziplist](Images/Redis_编码结构_hash-ziplist.png)
 
 - hashtable 编码
 
- ![Redis_编码结构_hash-hashtable](Images\Redis_编码结构_hash-hashtable.png) 
+ ![Redis_编码结构_hash-hashtable](Images/Redis_编码结构_hash-hashtable.png) 
 
 - 编码转换
 
@@ -741,11 +741,11 @@ hash-max-ziplist-value 64
 
 - intset 编码
 
- ![Redis_编码结构_set-intset](Images\Redis_编码结构_set-intset.png) 
+ ![Redis_编码结构_set-intset](Images/Redis_编码结构_set-intset.png) 
 
 - hashtable 编码
 
- ![Redis_编码结构_set-hashtable](Images\Redis_编码结构_set-hashtable.png) 
+ ![Redis_编码结构_set-hashtable](Images/Redis_编码结构_set-hashtable.png) 
 
 - 编码转换
 
@@ -769,7 +769,7 @@ set-max-intset-entries 512
 
 - ziplist 编码
 
-![Redis_编码结构_zset-ziplist](Images\Redis_编码结构_zset-ziplist.png)
+![Redis_编码结构_zset-ziplist](Images/Redis_编码结构_zset-ziplist.png)
 
 - skiplist 编码
 
@@ -788,7 +788,7 @@ typedef struct zset {
 } zset;
 ```
 
- ![Redis_编码结构_zset-skiplist](Images\Redis_编码结构_zset-skiplist.png) 
+ ![Redis_编码结构_zset-skiplist](Images/Redis_编码结构_zset-skiplist.png) 
 
 - 编码转换
 

@@ -65,16 +65,16 @@
 package main
 
 import (
-	"fmt"
-	"unsafe"
+    "fmt"
+    "unsafe"
 )
 
 func main() {
-	fmt.Println(unsafe.Sizeof(int8(127)))                  // 1 Byte
-	fmt.Println(unsafe.Sizeof(int16(32767)))               // 2 Byte
-	fmt.Println(unsafe.Sizeof(int32(2147483647)))          // 4 Byte
-	fmt.Println(unsafe.Sizeof(int64(9223372036854775807))) // 8 Byte
-	fmt.Println(unsafe.Sizeof(int(9223372036854775807)))   // 8 Byte
+    fmt.Println(unsafe.Sizeof(int8(127)))                  // 1 Byte
+    fmt.Println(unsafe.Sizeof(int16(32767)))               // 2 Byte
+    fmt.Println(unsafe.Sizeof(int32(2147483647)))          // 4 Byte
+    fmt.Println(unsafe.Sizeof(int64(9223372036854775807))) // 8 Byte
+    fmt.Println(unsafe.Sizeof(int(9223372036854775807)))   // 8 Byte
 } 
 ```
 
@@ -101,32 +101,32 @@ fmt.Println(unsafe.Sizeof(string("abc")))   // 16 Byte
 package main
 
 import (
-	"fmt"
-	"unsafe"
+    "fmt"
+    "unsafe"
 )
 
 func main() {
-	aa := struct {
-		a int8 // 1 Byte
-		b int8 // 1 Byte
-	}{
-		a: 1, // 0xc00000a088
-		b: 2, // 0xc00000a089
-	}
+    aa := struct {
+        a int8 // 1 Byte
+        b int8 // 1 Byte
+    }{
+        a: 1, // 0xc00000a088
+        b: 2, // 0xc00000a089
+    }
 
-	// AA	 size(aa)=2	 &aa=0xc00000a088	 &aa.a=0xc00000a088	 &aa.b=0xc00000a089
-	fmt.Printf("AA\t size(aa)=%d\t &aa=%p\t &aa.a=%p\t &aa.b=%p\n", unsafe.Sizeof(aa), &aa, &aa.a, &aa.b)
+    // AA     size(aa)=2     &aa=0xc00000a088     &aa.a=0xc00000a088     &aa.b=0xc00000a089
+    fmt.Printf("AA\t size(aa)=%d\t &aa=%p\t &aa.a=%p\t &aa.b=%p\n", unsafe.Sizeof(aa), &aa, &aa.a, &aa.b)
 
-	ab := struct {
-		a int    // 8 Byte
-		b string // 16 Byte
-	}{
-		a: 1,   // 0xc000004078
-		b: "b", // 0xc000004080 = 0xc000004078 + 8Byte
-	}
+    ab := struct {
+        a int    // 8 Byte
+        b string // 16 Byte
+    }{
+        a: 1,   // 0xc000004078
+        b: "b", // 0xc000004080 = 0xc000004078 + 8Byte
+    }
 
-	// AB	 size(ab)=24  &ab=0xc000004078	 &ab.a=0xc000004078	 &ab.b=0xc000004080
-	fmt.Printf("AB\t size(ab)=%d\t &ab=%p\t &ab.a=%p\t &ab.b=%p\n", unsafe.Sizeof(ab), &ab, &ab.a, &ab.b)
+    // AB     size(ab)=24  &ab=0xc000004078     &ab.a=0xc000004078     &ab.b=0xc000004080
+    fmt.Printf("AB\t size(ab)=%d\t &ab=%p\t &ab.a=%p\t &ab.b=%p\n", unsafe.Sizeof(ab), &ab, &ab.a, &ab.b)
 }
 
 /**
@@ -150,9 +150,9 @@ func main() {
 /* src/runtime/slice.go */
 
 type slice struct {
-	array unsafe.Pointer	// 8 Byte
-	len   int				// 8 Byte
-	cap   int				// 8 Byte
+    array unsafe.Pointer    // 8 Byte
+    len   int                // 8 Byte
+    cap   int                // 8 Byte
 }
 ```
 
@@ -167,26 +167,26 @@ type slice struct {
 func growslice(et *_type, old slice, cap int) slice {
     // ...
     
-	newcap := old.cap
-	doublecap := newcap + newcap
-	if cap > doublecap {
-		newcap = cap
-	} else {
-		if old.cap < 1024 {
-			newcap = doublecap
-		} else {
-			// Check 0 < newcap to detect overflow
-			// and prevent an infinite loop.
-			for 0 < newcap && newcap < cap {
-				newcap += newcap / 4
-			}
-			// Set newcap to the requested cap when
-			// the newcap calculation overflowed.
-			if newcap <= 0 {
-				newcap = cap
-			}
-		}
-	}
+    newcap := old.cap
+    doublecap := newcap + newcap
+    if cap > doublecap {
+        newcap = cap
+    } else {
+        if old.cap < 1024 {
+            newcap = doublecap
+        } else {
+            // Check 0 < newcap to detect overflow
+            // and prevent an infinite loop.
+            for 0 < newcap && newcap < cap {
+                newcap += newcap / 4
+            }
+            // Set newcap to the requested cap when
+            // the newcap calculation overflowed.
+            if newcap <= 0 {
+                newcap = cap
+            }
+        }
+    }
     
     // ...
 }
@@ -283,19 +283,19 @@ const (
 // A header for a Go map.
 type hmap struct {
     count     int // Map 的元素个数，必须是第一个（内置 len() 使用该值）
-	flags     uint8
-	B         uint8  // 桶容量的幂（最多可放 loadFactor * 2^B 个元素，再多就要 hashGrow 了）
-	noverflow uint16 // overflow 的 bucket 的近似数
-	hash0     uint32 // hash seed
+    flags     uint8
+    B         uint8  // 桶容量的幂（最多可放 loadFactor * 2^B 个元素，再多就要 hashGrow 了）
+    noverflow uint16 // overflow 的 bucket 的近似数
+    hash0     uint32 // hash seed
 
-	buckets    unsafe.Pointer // 2^B 大小的数组，如果 count == 0，可能是 nil
-	// 等量扩容时，bucket 与 oldbucket 长度相等
+    buckets    unsafe.Pointer // 2^B 大小的数组，如果 count == 0，可能是 nil
+    // 等量扩容时，bucket 与 oldbucket 长度相等
     // 双倍扩容时，bucket 长度是 oldbucket 的两倍，bucket 的前一半是 oldbucket
     // 只有在 growing 时是非 nil
     oldbuckets unsafe.Pointer 
-	nevacuate  uintptr        // 转移进度计数器（小于此值的桶已转移）
+    nevacuate  uintptr        // 转移进度计数器（小于此值的桶已转移）
 
-	extra *mapextra // 当 key 和 value 都可以 inline 的时候，就会用这个字段
+    extra *mapextra // 当 key 和 value 都可以 inline 的时候，就会用这个字段
 }
 
 // map 的额外信息
@@ -306,22 +306,23 @@ type mapextra struct {
     // 都放在 hmap.extra.overflow 和 hmap.extra.oldoverflow 中了
     // overflow 包含的是 hmap.buckets 的 overflow 的 bucket
     // oldoverflow 包含扩容时的 hmap.oldbuckets 的 overflow 的 bucket
-	overflow    *[]*bmap // hmap.buckets 的溢出桶
-	oldoverflow *[]*bmap // hmap.oldbuckets 的溢出桶
+    overflow    *[]*bmap // hmap.buckets 的溢出桶
+    oldoverflow *[]*bmap // hmap.oldbuckets 的溢出桶
 
-	// 下一个空闲的溢出桶（预分配）
-	nextOverflow *bmap
+    // 下一个空闲的溢出桶（预分配）
+    nextOverflow *bmap
 }
 
 // A bucket for a Go map.
 // 在编译期间会产生新的结构体 bucket
 type bmap struct {
-	// tophash 通常包含此 bucket 中每个键的哈希值的顶部字节。
+    // tophash 通常包含此 bucket 中每个键的哈希值的顶部字节。
     // 如果 tophash[0]＜minTopHash，则tophash[0] 为桶抽空状态。
-	tophash [bucketCnt]uint8 // 存储 hash 值的高 8 位
+    tophash [bucketCnt]uint8 // 存储 hash 值的高 8 位
     
     // 随后是 bucketCnt 个 keys 和 bucketCnt 个 elems。
-    // 注意：将所有键打包在一起，然后将所有元素打包在一起的代码比交替的 key/elem/key/elem/... 复杂，但它允许我们消除填充（内存对齐），e.g. map[int64]int8.
+    // 注意：将所有键打包在一起，然后将所有元素打包在一起的代码比交替的 key/elem/key/elem/... 复杂，
+    // 但它允许我们消除填充（内存对齐），e.g. map[int64]int8.
     // keys [bucketCnt]keytype
     // elems [bucketCnt]elemtype
     
@@ -338,9 +339,9 @@ type bmap struct {
 // make(map[k]v) 或 make(map[k]v, size) 当 size <= bucketCnt 时，
 // 用 makemap_small 创建，并且分配在 heap 上
 func makemap_small() *hmap {
-	h := new(hmap)
-	h.hash0 = fastrand()
-	return h
+    h := new(hmap)
+    h.hash0 = fastrand()
+    return h
 }
 
 // make(map[k]v, hint)
@@ -349,23 +350,23 @@ func makemap_small() *hmap {
 // 如果 h.buckets != nil，其指向的 bucket 可以作为第一个 bucket 来使用
 func makemap(t *maptype, hint int, h *hmap) *hmap {
     mem, overflow := math.MulUintptr(uintptr(hint), t.bucket.size)
-	if overflow || mem > maxAlloc {
-		hint = 0
-	}
+    if overflow || mem > maxAlloc {
+        hint = 0
+    }
 
-	// initialize Hmap
-	if h == nil {
-		h = new(hmap)
-	}
-	h.hash0 = fastrand()
+    // initialize Hmap
+    if h == nil {
+        h = new(hmap)
+    }
+    h.hash0 = fastrand()
 
-	// 按照提供的元素个数，找一个可以放得下这么多元素的 B 值
-	// For hint < 0 overLoadFactor returns false since hint < bucketCnt.
-	B := uint8(0)
-	for overLoadFactor(hint, B) {
-		B++
-	}
-	h.B = B
+    // 按照提供的元素个数，找一个可以放得下这么多元素的 B 值
+    // For hint < 0 overLoadFactor returns false since hint < bucketCnt.
+    B := uint8(0)
+    for overLoadFactor(hint, B) {
+        B++
+    }
+    h.B = B
     
     // 分配初始的 hash table
     // 如果 B == 0，buckets 字段会由 mapassign 来 lazily 分配
@@ -493,7 +494,7 @@ tophash：151                                                     (B=5)：10
 // mapaccess1 返回指向 h[key] 的指针。
 // 从不返回 nil，相反，如果键不在 Map 中，它将返回 elem 类型的零值对象的引用。
 func mapaccess1(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
-	// ...
+    // ...
     
     // 返回零值的引用
     return unsafe.Pointer(&zeroVal[0])
@@ -545,8 +546,8 @@ bucketloop:
             if b.tophash[i] != top {
                 // 剩余部分全部为空
                 if b.tophash[i] == emptyRest {
-					break bucketloop
-				}
+                    break bucketloop
+                }
                 continue
             }
             // key 定位公式
@@ -633,10 +634,10 @@ func mapassign(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
     // 如果达到了最大 load factor，或有太多的 overflow buckets
     // 并且还没有 growing，那就开始 growing
     if !h.growing() && (overLoadFactor(h.count+1, h.B) || tooManyOverflowBuckets(h.noverflow, h.B)) {
-		hashGrow(t, h)
+        hashGrow(t, h)
         // Growing 会使所有内容无效，所以需要再来一次
-		goto again
-	}
+        goto again
+    }
 }
 ```
 
@@ -675,42 +676,42 @@ func mapdelete(t *maptype, h *hmap, key unsafe.Pointer) {
 ```go
 // hash 扩容
 func hashGrow(t *maptype, h *hmap) {
-	// 如果已经超过了 load factor 的阈值，那么需要对 map 进行扩容，即 B = B + 1，bucket 总数会变为原来的二倍
+    // 如果已经超过了 load factor 的阈值，那么需要对 map 进行扩容，即 B = B + 1，bucket 总数会变为原来的二倍
     // 如果还没到阈值，那么只需要保持相同数量的 bucket，横向拍平就行了
-	bigger := uint8(1)
-	if !overLoadFactor(h.count+1, h.B) {
-		bigger = 0
-		h.flags |= sameSizeGrow
-	}
-	oldbuckets := h.buckets
-	newbuckets, nextOverflow := makeBucketArray(t, h.B+bigger, nil)
+    bigger := uint8(1)
+    if !overLoadFactor(h.count+1, h.B) {
+        bigger = 0
+        h.flags |= sameSizeGrow
+    }
+    oldbuckets := h.buckets
+    newbuckets, nextOverflow := makeBucketArray(t, h.B+bigger, nil)
 
-	flags := h.flags &^ (iterator | oldIterator)
-	if h.flags&iterator != 0 {
-		flags |= oldIterator
-	}
-	// commit the grow (atomic wrt gc)
-	h.B += bigger
-	h.flags = flags
-	h.oldbuckets = oldbuckets
-	h.buckets = newbuckets
-	h.nevacuate = 0
-	h.noverflow = 0
+    flags := h.flags &^ (iterator | oldIterator)
+    if h.flags&iterator != 0 {
+        flags |= oldIterator
+    }
+    // commit the grow (atomic wrt gc)
+    h.B += bigger
+    h.flags = flags
+    h.oldbuckets = oldbuckets
+    h.buckets = newbuckets
+    h.nevacuate = 0
+    h.noverflow = 0
 
-	if h.extra != nil && h.extra.overflow != nil {
-		// 把当前的 overflow 赋值给 oldoverflow
-		if h.extra.oldoverflow != nil {
-			throw("oldoverflow is not nil")
-		}
-		h.extra.oldoverflow = h.extra.overflow
-		h.extra.overflow = nil
-	}
-	if nextOverflow != nil {
-		if h.extra == nil {
-			h.extra = new(mapextra)
-		}
-		h.extra.nextOverflow = nextOverflow
-	}
+    if h.extra != nil && h.extra.overflow != nil {
+        // 把当前的 overflow 赋值给 oldoverflow
+        if h.extra.oldoverflow != nil {
+            throw("oldoverflow is not nil")
+        }
+        h.extra.oldoverflow = h.extra.overflow
+        h.extra.overflow = nil
+    }
+    if nextOverflow != nil {
+        if h.extra == nil {
+            h.extra = new(mapextra)
+        }
+        h.extra.nextOverflow = nextOverflow
+    }
 
     // 实际的哈希表元素的拷贝工作是在 growWork() 和 evacuate() 中增量慢慢地进行的
 }
@@ -718,20 +719,20 @@ func hashGrow(t *maptype, h *hmap) {
 // 报告放置在 2^B 桶中的项是否超过 loadFactor
 // 即 hmap.count > 6.5 * 2^B 
 func overLoadFactor(count int, B uint8) bool {
-	return count > bucketCnt && uintptr(count) > loadFactorNum*(bucketShift(B)/loadFactorDen)
+    return count > bucketCnt && uintptr(count) > loadFactorNum*(bucketShift(B)/loadFactorDen)
 }
 
 // 报告对于具有 2^B 桶的 map，noverflow bucket 是否过多。
 // 注意：overflow bucket 中的大部分桶必须稀疏使用，如果使用密集（8个中使用大于 6.5个），则已经触发 overLoadFactor Grow。
 func tooManyOverflowBuckets(noverflow uint16, B uint8) bool {
-	// 如果阈值太低，会做额外的工作
+    // 如果阈值太低，会做额外的工作
     // 如果阈值太高，map 的扩容和收缩会保留大量未使用的内存（太多意味着 overflow 与 bucket 一样多）
     // See incrnoverflow for more details.
-	if B > 15 {
-		B = 15
-	}
-	// 编译器在这里没有看到 B<16；mask B 以生成较短的移位码。
-	return noverflow >= uint16(1)<<(B&15)
+    if B > 15 {
+        B = 15
+    }
+    // 编译器在这里没有看到 B<16；mask B 以生成较短的移位码。
+    return noverflow >= uint16(1)<<(B&15)
 }
 
 func growWork(t *maptype, h *hmap, bucket uintptr) {
@@ -903,29 +904,29 @@ indirectkey 和 indirectvalue 在 map 里实际存储的是指针，会造成 GC
 /* src/runtime/chan.go */
 
 type hchan struct {
-	qcount   uint           // 队列中的元素数
-	dataqsiz uint           // 环形队列的总大小（容量）
-	buf      unsafe.Pointer // 指向环形数组
-	elemsize uint16	// chan 元素的大小
-	closed   uint32 // 是否被关闭
-	elemtype *_type // element type
-	sendx    uint   // 发送索引
-	recvx    uint   // 接收索引
-	recvq    waitq  // 接收等待者 G 队列
-	sendq    waitq  // 发送等待者 G 队列
+    qcount   uint           // 队列中的元素数
+    dataqsiz uint           // 环形队列的总大小（容量）
+    buf      unsafe.Pointer // 指向环形数组
+    elemsize uint16    // chan 元素的大小
+    closed   uint32 // 是否被关闭
+    elemtype *_type // element type
+    sendx    uint   // 发送索引
+    recvx    uint   // 接收索引
+    recvq    waitq  // 接收等待者 G 队列
+    sendq    waitq  // 发送等待者 G 队列
 
-	// lock protects all fields in hchan, as well as several
-	// fields in sudogs blocked on this channel.
-	//
-	// Do not change another G's status while holding this lock
-	// (in particular, do not ready a G), as this can deadlock
-	// with stack shrinking.
-	lock mutex
+    // lock protects all fields in hchan, as well as several
+    // fields in sudogs blocked on this channel.
+    //
+    // Do not change another G's status while holding this lock
+    // (in particular, do not ready a G), as this can deadlock
+    // with stack shrinking.
+    lock mutex
 }
 
 type waitq struct {
-	first *sudog
-	last  *sudog
+    first *sudog
+    last  *sudog
 }
 ```
 
@@ -933,52 +934,52 @@ type waitq struct {
 
 ```go
 func makechan(t *chantype, size int) *hchan {
-	elem := t.elem
+    elem := t.elem
 
-	// compiler checks this but be safe.
-	if elem.size >= 1<<16 {
-		throw("makechan: invalid channel element type")
-	}
-	if hchanSize%maxAlign != 0 || elem.align > maxAlign {
-		throw("makechan: bad alignment")
-	}
+    // compiler checks this but be safe.
+    if elem.size >= 1<<16 {
+        throw("makechan: invalid channel element type")
+    }
+    if hchanSize%maxAlign != 0 || elem.align > maxAlign {
+        throw("makechan: bad alignment")
+    }
 
-	mem, overflow := math.MulUintptr(elem.size, uintptr(size))
-	if overflow || mem > maxAlloc-hchanSize || size < 0 {
-		panic(plainError("makechan: size out of range"))
-	}
+    mem, overflow := math.MulUintptr(elem.size, uintptr(size))
+    if overflow || mem > maxAlloc-hchanSize || size < 0 {
+        panic(plainError("makechan: size out of range"))
+    }
 
-	// 如果 hchan 中的元素不包含有指针，那么就没什么和 GC 相关的信息了
-	var c *hchan
-	switch {
-	case mem == 0:
-		// Queue or element size is zero.
+    // 如果 hchan 中的元素不包含有指针，那么就没什么和 GC 相关的信息了
+    var c *hchan
+    switch {
+    case mem == 0:
+        // Queue or element size is zero.
         // 如果 channel 的缓冲区大小是 0: var a = make(chan int)
         // 或者 channel 中的元素大小是 0: struct{}{}
-		c = (*hchan)(mallocgc(hchanSize, nil, true))
-		// Race detector uses this location for synchronization.
-		c.buf = c.raceaddr()
-	case elem.ptrdata == 0:
-		// Elements do not contain pointers.
-		// Allocate hchan and buf in one call.
+        c = (*hchan)(mallocgc(hchanSize, nil, true))
+        // Race detector uses this location for synchronization.
+        c.buf = c.raceaddr()
+    case elem.ptrdata == 0:
+        // Elements do not contain pointers.
+        // Allocate hchan and buf in one call.
         // 通过位运算知道 channel 中的元素不包含指针
         // 占用空间 = hchan + 元素数*元素大小
         // 这种情况下 gc 不会对 channel 中的元素进行 scan
-		c = (*hchan)(mallocgc(hchanSize+mem, nil, true))
-		c.buf = add(unsafe.Pointer(c), hchanSize)
-	default:
-		// Elements contain pointers.
+        c = (*hchan)(mallocgc(hchanSize+mem, nil, true))
+        c.buf = add(unsafe.Pointer(c), hchanSize)
+    default:
+        // Elements contain pointers.
         // 和上面那个 case 的写法的区别:调用了两次分配空间的函数 new/mallocgc
-		c = new(hchan)
-		c.buf = mallocgc(mem, elem, true)
-	}
+        c = new(hchan)
+        c.buf = mallocgc(mem, elem, true)
+    }
 
-	c.elemsize = uint16(elem.size)
-	c.elemtype = elem
-	c.dataqsiz = uint(size)
-	lockInit(&c.lock, lockRankHchan)
+    c.elemsize = uint16(elem.size)
+    c.elemtype = elem
+    c.dataqsiz = uint(size)
+    lockInit(&c.lock, lockRankHchan)
 
-	return c
+    return c
 }
 ```
 
@@ -988,7 +989,7 @@ func makechan(t *chantype, size int) *hchan {
 // 编译代码中 c <- x 的入口点
 //go:nosplit
 func chansend1(c *hchan, elem unsafe.Pointer) {
-	chansend(c, elem, true, getcallerpc())
+    chansend(c, elem, true, getcallerpc())
 }
 
 // 单通道 send/recv 通用
@@ -996,126 +997,126 @@ func chansend1(c *hchan, elem unsafe.Pointer) {
 // 当睡眠通道被关闭时，使用 g.param == nil 唤醒睡眠。
 func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
     // chan 未初始化
-	if c == nil {
+    if c == nil {
         // 对于不阻塞的，直接返回
-		if !block {
-			return false
-		}
+        if !block {
+            return false
+        }
         // 向 nil channel 发送数据会永久阻塞
         // gopark() 挂起当前 G
-		gopark(nil, nil, waitReasonChanSendNilChan, traceEvGoStop, 2)
-		throw("unreachable")
-	}
+        gopark(nil, nil, waitReasonChanSendNilChan, traceEvGoStop, 2)
+        throw("unreachable")
+    }
 
-	if raceenabled {
-		racereadpc(c.raceaddr(), callerpc, funcPC(chansend))
-	}
+    if raceenabled {
+        racereadpc(c.raceaddr(), callerpc, funcPC(chansend))
+    }
     
     // 对于不阻塞的 sender，快速检测失败场景
     // 
     // 未关闭 && 队列满
     if !block && c.closed == 0 && full(c) {
-		return false
-	}
+        return false
+    }
 
-	var t0 int64
-	if blockprofilerate > 0 {
-		t0 = cputicks()
-	}
+    var t0 int64
+    if blockprofilerate > 0 {
+        t0 = cputicks()
+    }
 
     // 并发安全
-	lock(&c.lock)
+    lock(&c.lock)
     
     // 已关闭
     if c.closed != 0 {
         // 解锁
-		unlock(&c.lock)
-		panic(plainError("send on closed channel"))
-	}
+        unlock(&c.lock)
+        panic(plainError("send on closed channel"))
+    }
     
     // 找到一个等待中的 receiver。
     // 将要发送的值直接传递给 receiver，绕过 chan.buf（如果有的话）。
     if sg := c.recvq.dequeue(); sg != nil {
-		// Found a waiting receiver. We pass the value we want to send
-		// directly to the receiver, bypassing the channel buffer (if any).
-		send(c, sg, ep, func() { unlock(&c.lock) }, 3)
-		return true
-	}
+        // Found a waiting receiver. We pass the value we want to send
+        // directly to the receiver, bypassing the channel buffer (if any).
+        send(c, sg, ep, func() { unlock(&c.lock) }, 3)
+        return true
+    }
     
     // 缓冲区还有空间
     if c.qcount < c.dataqsiz {
         // 从 c.sendx 位置入队
-		qp := chanbuf(c, c.sendx)
-		if raceenabled {
-			racenotify(c, c.sendx, nil)
-		}
+        qp := chanbuf(c, c.sendx)
+        if raceenabled {
+            racenotify(c, c.sendx, nil)
+        }
         // 将 G 的数据拷贝到 buffer 中，ep => qp
-		typedmemmove(c.elemtype, qp, ep)
-		// 环形数组
+        typedmemmove(c.elemtype, qp, ep)
+        // 环形数组
         c.sendx++
-		if c.sendx == c.dataqsiz {
-			c.sendx = 0
-		}
-		c.qcount++
+        if c.sendx == c.dataqsiz {
+            c.sendx = 0
+        }
+        c.qcount++
         // 解锁
-		unlock(&c.lock)
-		return true
-	}
+        unlock(&c.lock)
+        return true
+    }
 
     // 如果不需要阻塞，则直接返回错误
-	if !block {
-		unlock(&c.lock)
-		return false
-	}
+    if !block {
+        unlock(&c.lock)
+        return false
+    }
     
     // chan 满了， sender 会阻塞
     gp := getg() // 当前 G
-	mysg := acquireSudog()
-	mysg.releasetime = 0
-	if t0 != 0 {
-		mysg.releasetime = -1
-	}
+    mysg := acquireSudog()
+    mysg.releasetime = 0
+    if t0 != 0 {
+        mysg.releasetime = -1
+    }
     // 构造 sudog
     mysg.elem = ep
-	mysg.waitlink = nil
-	mysg.g = gp
-	mysg.isSelect = false
-	mysg.c = c
-	gp.waiting = mysg
-	gp.param = nil
+    mysg.waitlink = nil
+    mysg.g = gp
+    mysg.isSelect = false
+    mysg.c = c
+    gp.waiting = mysg
+    gp.param = nil
     // 入 sendq 队列
-	c.sendq.enqueue(mysg)
-	// 当前 G 休眠：从 Grunning -> Gwaiting
-	atomic.Store8(&gp.parkingOnChan, 1)
-	gopark(chanparkcommit, unsafe.Pointer(&c.lock), waitReasonChanSend, traceEvGoBlockSend, 2)
-	// 确保正在发送的值在接收方将其复制出来之前保持活跃。
+    c.sendq.enqueue(mysg)
+    // 当前 G 休眠：从 Grunning -> Gwaiting
+    atomic.Store8(&gp.parkingOnChan, 1)
+    gopark(chanparkcommit, unsafe.Pointer(&c.lock), waitReasonChanSend, traceEvGoBlockSend, 2)
+    // 确保正在发送的值在接收方将其复制出来之前保持活跃。
     // sudog 有一个指向栈对象的指针，但 sudog 不被视为栈跟踪程序的根。
-	KeepAlive(ep)
+    KeepAlive(ep)
 
     // 有人将我们唤醒
-	// someone woke us up.
-	if mysg != gp.waiting {
+    // someone woke us up.
+    if mysg != gp.waiting {
         // 先判断当前是不是合法的休眠中
-		throw("G waiting list is corrupted")
-	}
-	gp.waiting = nil
-	gp.activeStackChans = false
-	closed := !mysg.success
-	gp.param = nil
-	if mysg.releasetime > 0 {
-		blockevent(mysg.releasetime-t0, 2)
-	}
+        throw("G waiting list is corrupted")
+    }
+    gp.waiting = nil
+    gp.activeStackChans = false
+    closed := !mysg.success
+    gp.param = nil
+    if mysg.releasetime > 0 {
+        blockevent(mysg.releasetime-t0, 2)
+    }
     // 解绑 mysg 上的 chan
-	mysg.c = nil
-	releaseSudog(mysg)
-	if closed {
-		if c.closed == 0 {
-			throw("chansend: spurious wakeup")
-		}
+    mysg.c = nil
+    releaseSudog(mysg)
+    if closed {
+        if c.closed == 0 {
+            throw("chansend: spurious wakeup")
+        }
         // 唤醒后发现 channel 被关了
-		panic(plainError("send on closed channel"))
-	}
-	return true
+        panic(plainError("send on closed channel"))
+    }
+    return true
 }
 
 // send processes a send operation on an empty channel c.
@@ -1131,52 +1132,52 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 // sg 必须已经从 chan 中出队（调用处已经 c.recvq.dequeue()）
 // ep 必须 non-nil，且指向堆或调用者的栈
 func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
-	if raceenabled {
-		if c.dataqsiz == 0 {
-			racesync(c, sg)
-		} else {
-			racenotify(c, c.recvx, nil)
-			racenotify(c, c.recvx, sg)
-			c.recvx++
-			if c.recvx == c.dataqsiz {
-				c.recvx = 0
-			}
-			c.sendx = c.recvx // c.sendx = (c.sendx+1) % c.dataqsiz
-		}
-	}
+    if raceenabled {
+        if c.dataqsiz == 0 {
+            racesync(c, sg)
+        } else {
+            racenotify(c, c.recvx, nil)
+            racenotify(c, c.recvx, sg)
+            c.recvx++
+            if c.recvx == c.dataqsiz {
+                c.recvx = 0
+            }
+            c.sendx = c.recvx // c.sendx = (c.sendx+1) % c.dataqsiz
+        }
+    }
     // receiver 的 sudog 已经在对应区域分配过空间，直接拷贝数据即可
     // sender 发送的值 ep 被复制到 receiver sg
-	if sg.elem != nil {
-		sendDirect(c.elemtype, sg, ep)
-		sg.elem = nil
-	}
+    if sg.elem != nil {
+        sendDirect(c.elemtype, sg, ep)
+        sg.elem = nil
+    }
     // receiverG
-	gp := sg.g
+    gp := sg.g
     // 解锁
-	unlockf()
-	gp.param = unsafe.Pointer(sg)
-	sg.success = true
-	if sg.releasetime != 0 {
-		sg.releasetime = cputicks()
-	}
+    unlockf()
+    gp.param = unsafe.Pointer(sg)
+    sg.success = true
+    if sg.releasetime != 0 {
+        sg.releasetime = cputicks()
+    }
     // 唤醒 receiverG
     // skip 打印栈相关
-	goready(gp, skip+1)
+    goready(gp, skip+1)
 }
 
 // 向无缓冲的 chan 发送数据、从无元素的 chan 接收数据，
 // 都会导致一个 G 操作另一个 G 的栈
 func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
-	// src is on our stack, dst is a slot on another stack.
+    // src is on our stack, dst is a slot on another stack.
 
-	// 直接进行内存"搬迁"
-	// 如果目标地址的栈发生了栈收缩，当我们读出了 sg.elem 后，就不能修改真正的 dst 位置的值了
-	// 因此需要在读和写之前加上一个屏障
-	dst := sg.elem
-	typeBitsBulkBarrier(t, uintptr(dst), uintptr(src), t.size)
-	// No need for cgo write barrier checks because dst is always
-	// Go memory.
-	memmove(dst, src, t.size)
+    // 直接进行内存"搬迁"
+    // 如果目标地址的栈发生了栈收缩，当我们读出了 sg.elem 后，就不能修改真正的 dst 位置的值了
+    // 因此需要在读和写之前加上一个屏障
+    dst := sg.elem
+    typeBitsBulkBarrier(t, uintptr(dst), uintptr(src), t.size)
+    // No need for cgo write barrier checks because dst is always
+    // Go memory.
+    memmove(dst, src, t.size)
 }
 ```
 
@@ -1186,7 +1187,7 @@ func sendDirect(t *_type, sg *sudog, src unsafe.Pointer) {
 // 编译代码中 <-ch 的入口点
 // go:nosplit
 func chanrecv1(c *hchan, elem unsafe.Pointer) {
-	chanrecv(c, elem, true)
+    chanrecv(c, elem, true)
 }
 
 // 编译代码中 v, ok := <-ch 的入口点
@@ -1194,8 +1195,8 @@ func chanrecv1(c *hchan, elem unsafe.Pointer) {
 // ok 接收 received 
 // go:nosplit
 func chanrecv2(c *hchan, elem unsafe.Pointer) (received bool) {
-	_, received = chanrecv(c, elem, true)
-	return
+    _, received = chanrecv(c, elem, true)
+    return
 }
 
 // 在 chan 上接收并将接收到的数据写入 ep
@@ -1205,142 +1206,142 @@ func chanrecv2(c *hchan, elem unsafe.Pointer) (received bool) {
 // 否则，用元素填充 *ep 并返回 true, true
 // 如果 ep 非 nil 必须指向堆或调用方的栈
 func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) {
-	// raceenabled: don't need to check ep, as it is always on the stack
-	// or is new memory allocated by reflect.
+    // raceenabled: don't need to check ep, as it is always on the stack
+    // or is new memory allocated by reflect.
 
-	if debugChan {
-		print("chanrecv: chan=", c, "\n")
-	}
+    if debugChan {
+        print("chanrecv: chan=", c, "\n")
+    }
 
-	if c == nil {
+    if c == nil {
         // 非阻塞模式下的 nil chan，直接返回 false, false
-		if !block {
-			return
-		}
+        if !block {
+            return
+        }
         // 从 nil channel 接收数据会永久阻塞
         // gopark() 挂起当前 G
-		gopark(nil, nil, waitReasonChanReceiveNilChan, traceEvGoStop, 2)
-		throw("unreachable")
-	}
+        gopark(nil, nil, waitReasonChanReceiveNilChan, traceEvGoStop, 2)
+        throw("unreachable")
+    }
 
     // 在非阻塞模式下，快速检测到失败，不用获取锁，快速返回
     // 观察到 chan 未准备好接收（无数据）
-	if !block && empty(c) {
-		// 继续观察到 chan 未关闭，使用原子加载
+    if !block && empty(c) {
+        // 继续观察到 chan 未关闭，使用原子加载
         // 由于 chan 不能重复开启，因此其后观察到的 chan 未关闭，
         // 意味着第一次观察时 chan 也未关闭。
         // 这种情况下直接返回 false, false
-		if atomic.Load(&c.closed) == 0 {
-			return
-		}
+        if atomic.Load(&c.closed) == 0 {
+            return
+        }
         // chan 被不可逆转的关闭
-		// 重新检查 chan 是否有待接收的数据
-		if empty(c) {
-			// closed and empty.
-			if raceenabled {
-				raceacquire(c.raceaddr())
-			}
+        // 重新检查 chan 是否有待接收的数据
+        if empty(c) {
+            // closed and empty.
+            if raceenabled {
+                raceacquire(c.raceaddr())
+            }
             // ep 置零
-			if ep != nil {
-				typedmemclr(c.elemtype, ep)
-			}
-			return true, false
-		}
-	}
+            if ep != nil {
+                typedmemclr(c.elemtype, ep)
+            }
+            return true, false
+        }
+    }
 
-	var t0 int64
-	if blockprofilerate > 0 {
-		t0 = cputicks()
-	}
+    var t0 int64
+    if blockprofilerate > 0 {
+        t0 = cputicks()
+    }
 
-	lock(&c.lock)
-	// closed and empty.
-	if c.closed != 0 && c.qcount == 0 {
-		if raceenabled {
-			raceacquire(c.raceaddr())
-		}
-		unlock(&c.lock)
+    lock(&c.lock)
+    // closed and empty.
+    if c.closed != 0 && c.qcount == 0 {
+        if raceenabled {
+            raceacquire(c.raceaddr())
+        }
+        unlock(&c.lock)
         // 置零
-		if ep != nil {
-			typedmemclr(c.elemtype, ep)
-		}
-		return true, false
-	}
+        if ep != nil {
+            typedmemclr(c.elemtype, ep)
+        }
+        return true, false
+    }
 
     // 寻找一个等待中的 sender
     // 1. 非缓冲型 chan：直接进行内存拷贝（sender G => receiver G）
     // 2. 缓冲型 chan：从队列头部接收数据并将发送方的值添加到队列尾部（对于环形队列，是同一个位置）
-	if sg := c.sendq.dequeue(); sg != nil {
-		recv(c, sg, ep, func() { unlock(&c.lock) }, 3)
-		return true, true
-	}
+    if sg := c.sendq.dequeue(); sg != nil {
+        recv(c, sg, ep, func() { unlock(&c.lock) }, 3)
+        return true, true
+    }
 
     // 缓冲区中有数据，正常接收
-	if c.qcount > 0 {
-		// Receive directly from queue
+    if c.qcount > 0 {
+        // Receive directly from queue
         // 从 c.recvx 位置获取值
-		qp := chanbuf(c, c.recvx)
-		if raceenabled {
-			racenotify(c, c.recvx, nil)
-		}
-		if ep != nil {
-			typedmemmove(c.elemtype, ep, qp)
-		}
+        qp := chanbuf(c, c.recvx)
+        if raceenabled {
+            racenotify(c, c.recvx, nil)
+        }
+        if ep != nil {
+            typedmemmove(c.elemtype, ep, qp)
+        }
         // 清理环形数组中相应位置的值
-		typedmemclr(c.elemtype, qp)
-		// 环形数组
+        typedmemclr(c.elemtype, qp)
+        // 环形数组
         c.recvx++
-		if c.recvx == c.dataqsiz {
-			c.recvx = 0
-		}
-		c.qcount--
-		unlock(&c.lock)
-		return true, true
-	}
+        if c.recvx == c.dataqsiz {
+            c.recvx = 0
+        }
+        c.qcount--
+        unlock(&c.lock)
+        return true, true
+    }
 
-	if !block {
-		unlock(&c.lock)
-		return false, false
-	}
+    if !block {
+        unlock(&c.lock)
+        return false, false
+    }
 
     // 没有可用的 sender 阻塞 chan
-	// no sender available: block on this channel.
-	gp := getg()
-	mysg := acquireSudog()
-	mysg.releasetime = 0
-	if t0 != 0 {
-		mysg.releasetime = -1
-	}
-	// No stack splits between assigning elem and enqueuing mysg
-	// on gp.waiting where copystack can find it.
-	mysg.elem = ep // 接收数据的地址，存入 elem
-	mysg.waitlink = nil
-	gp.waiting = mysg
-	mysg.g = gp
-	mysg.isSelect = false
-	mysg.c = c
-	gp.param = nil
+    // no sender available: block on this channel.
+    gp := getg()
+    mysg := acquireSudog()
+    mysg.releasetime = 0
+    if t0 != 0 {
+        mysg.releasetime = -1
+    }
+    // No stack splits between assigning elem and enqueuing mysg
+    // on gp.waiting where copystack can find it.
+    mysg.elem = ep // 接收数据的地址，存入 elem
+    mysg.waitlink = nil
+    gp.waiting = mysg
+    mysg.g = gp
+    mysg.isSelect = false
+    mysg.c = c
+    gp.param = nil
     // receiver sudog Enqueue c.recvq
-	c.recvq.enqueue(mysg)
-	// 将当前 G 挂起
-	atomic.Store8(&gp.parkingOnChan, 1)
-	gopark(chanparkcommit, unsafe.Pointer(&c.lock), waitReasonChanReceive, traceEvGoBlockRecv, 2)
+    c.recvq.enqueue(mysg)
+    // 将当前 G 挂起
+    atomic.Store8(&gp.parkingOnChan, 1)
+    gopark(chanparkcommit, unsafe.Pointer(&c.lock), waitReasonChanReceive, traceEvGoBlockRecv, 2)
 
-	// 被唤醒
+    // 被唤醒
     // someone woke us up
-	if mysg != gp.waiting {
-		throw("G waiting list is corrupted")
-	}
-	gp.waiting = nil
-	gp.activeStackChans = false
-	if mysg.releasetime > 0 {
-		blockevent(mysg.releasetime-t0, 2)
-	}
-	success := mysg.success
-	gp.param = nil
-	mysg.c = nil
-	releaseSudog(mysg)
-	return true, success
+    if mysg != gp.waiting {
+        throw("G waiting list is corrupted")
+    }
+    gp.waiting = nil
+    gp.activeStackChans = false
+    if mysg.releasetime > 0 {
+        blockevent(mysg.releasetime-t0, 2)
+    }
+    success := mysg.success
+    gp.param = nil
+    mysg.c = nil
+    releaseSudog(mysg)
+    return true, success
 }
 // recv processes a receive operation on a full channel c.
 // There are 2 parts:
@@ -1366,59 +1367,59 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 // non-nil 的 ep 必须指向堆或调用方栈
 func recv(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
     // 非缓冲型 chan
-	if c.dataqsiz == 0 {
-		if raceenabled {
-			racesync(c, sg)
-		}
+    if c.dataqsiz == 0 {
+        if raceenabled {
+            racesync(c, sg)
+        }
         // 未忽略接收的数据
-		if ep != nil {
-			// copy data from sender
+        if ep != nil {
+            // copy data from sender
             // 直接从 sender: sg 复制到当前 G: ep
-			recvDirect(c.elemtype, sg, ep)
-		}
-	} else {
+            recvDirect(c.elemtype, sg, ep)
+        }
+    } else {
         // 缓冲型 chan，且队列已满
         // 从队头取出一条数据，使发送方在队尾入队数据（环形数组特点，队列满时为同一位置）
-		qp := chanbuf(c, c.recvx)       
-		if raceenabled {
-			racenotify(c, c.recvx, nil)
-			racenotify(c, c.recvx, sg)
-		}
-		// copy data from queue to receiver
-		if ep != nil {
-			typedmemmove(c.elemtype, ep, qp) // 1. recv 出队头
-		}
-		// copy data from sender to queue
-		typedmemmove(c.elemtype, qp, sg.elem) // 2. send 入队尾
-		// 环形数组
+        qp := chanbuf(c, c.recvx)       
+        if raceenabled {
+            racenotify(c, c.recvx, nil)
+            racenotify(c, c.recvx, sg)
+        }
+        // copy data from queue to receiver
+        if ep != nil {
+            typedmemmove(c.elemtype, ep, qp) // 1. recv 出队头
+        }
+        // copy data from sender to queue
+        typedmemmove(c.elemtype, qp, sg.elem) // 2. send 入队尾
+        // 环形数组
         c.recvx++
-		if c.recvx == c.dataqsiz {
-			c.recvx = 0
-		}
+        if c.recvx == c.dataqsiz {
+            c.recvx = 0
+        }
         // c.sendx++
-		c.sendx = c.recvx // c.sendx = (c.sendx+1) % c.dataqsiz
-	}
-	sg.elem = nil
+        c.sendx = c.recvx // c.sendx = (c.sendx+1) % c.dataqsiz
+    }
+    sg.elem = nil
     // senderG
-	gp := sg.g
+    gp := sg.g
     // 解锁
-	unlockf()
-	gp.param = unsafe.Pointer(sg)
-	sg.success = true
-	if sg.releasetime != 0 {
-		sg.releasetime = cputicks()
-	}
+    unlockf()
+    gp.param = unsafe.Pointer(sg)
+    sg.success = true
+    if sg.releasetime != 0 {
+        sg.releasetime = cputicks()
+    }
     // 唤醒 senderG
-	goready(gp, skip+1)
+    goready(gp, skip+1)
 }
 
 // 非缓冲型，直接复制
 func recvDirect(t *_type, sg *sudog, dst unsafe.Pointer) {
-	// dst 在我们的堆或栈上，src 在另一个栈上。
+    // dst 在我们的堆或栈上，src 在另一个栈上。
     // chan clocked，因此 src 在此操作期间不会移动。
-	src := sg.elem
-	typeBitsBulkBarrier(t, uintptr(dst), uintptr(src), t.size)
-	memmove(dst, src, t.size)
+    src := sg.elem
+    typeBitsBulkBarrier(t, uintptr(dst), uintptr(src), t.size)
+    memmove(dst, src, t.size)
 }
 ```
 
@@ -1427,88 +1428,88 @@ func recvDirect(t *_type, sg *sudog, dst unsafe.Pointer) {
 ```go
 func closechan(c *hchan) {
     // 关闭一个 nil channel，panic
-	if c == nil {
-		panic(plainError("close of nil channel"))
-	}
+    if c == nil {
+        panic(plainError("close of nil channel"))
+    }
 
     // 加锁判断是否已关闭
-	lock(&c.lock)
-	if c.closed != 0 {
-		unlock(&c.lock)
+    lock(&c.lock)
+    if c.closed != 0 {
+        unlock(&c.lock)
         // 关闭 closed channel，panic
-		panic(plainError("close of closed channel"))
-	}
+        panic(plainError("close of closed channel"))
+    }
 
-	if raceenabled {
-		callerpc := getcallerpc()
-		racewritepc(c.raceaddr(), callerpc, funcPC(closechan))
-		racerelease(c.raceaddr())
-	}
+    if raceenabled {
+        callerpc := getcallerpc()
+        racewritepc(c.raceaddr(), callerpc, funcPC(closechan))
+        racerelease(c.raceaddr())
+    }
 
     // 修改为关闭状态
-	c.closed = 1
+    c.closed = 1
 
     // gList 是 Gs 列表
     // G 一次只能在一个 gQueue 或 gList 上
-	var glist gList
+    var glist gList
 
-	// release all readers
+    // release all readers
     // 释放所有 receiver waiter
-	for {
-		sg := c.recvq.dequeue()
-		if sg == nil {
-			break
-		}
+    for {
+        sg := c.recvq.dequeue()
+        if sg == nil {
+            break
+        }
         // 待接收数据的地址
-		if sg.elem != nil {
+        if sg.elem != nil {
             // 置零
-			typedmemclr(c.elemtype, sg.elem)
-			sg.elem = nil
-		}
-		if sg.releasetime != 0 {
-			sg.releasetime = cputicks()
-		}
+            typedmemclr(c.elemtype, sg.elem)
+            sg.elem = nil
+        }
+        if sg.releasetime != 0 {
+            sg.releasetime = cputicks()
+        }
         // receiverG
-		gp := sg.g
-		gp.param = unsafe.Pointer(sg)
-		sg.success = false
-		if raceenabled {
-			raceacquireg(gp, c.raceaddr())
-		}
-		glist.push(gp)
-	}
+        gp := sg.g
+        gp.param = unsafe.Pointer(sg)
+        sg.success = false
+        if raceenabled {
+            raceacquireg(gp, c.raceaddr())
+        }
+        glist.push(gp)
+    }
 
-	// release all writers (they will panic)
+    // release all writers (they will panic)
     // 释放所有 sender waiter（他们会 panic）。
     // 在不了解 channel 还有没有接收者的情况下，不能贸然关闭 channel。
-	for {
-		sg := c.sendq.dequeue()
-		if sg == nil {
-			break
-		}
+    for {
+        sg := c.sendq.dequeue()
+        if sg == nil {
+            break
+        }
         // 待发送的数据 清除
-		sg.elem = nil
-		if sg.releasetime != 0 {
-			sg.releasetime = cputicks()
-		}
+        sg.elem = nil
+        if sg.releasetime != 0 {
+            sg.releasetime = cputicks()
+        }
         // senderG
-		gp := sg.g
-		gp.param = unsafe.Pointer(sg)
-		sg.success = false
-		if raceenabled {
-			raceacquireg(gp, c.raceaddr())
-		}
-		glist.push(gp)
-	}
-	unlock(&c.lock)
+        gp := sg.g
+        gp.param = unsafe.Pointer(sg)
+        sg.success = false
+        if raceenabled {
+            raceacquireg(gp, c.raceaddr())
+        }
+        glist.push(gp)
+    }
+    unlock(&c.lock)
 
-	// Ready all Gs now that we've dropped the channel lock.
+    // Ready all Gs now that we've dropped the channel lock.
     // chan 已解锁，唤醒所有 Gs。
-	for !glist.empty() {
-		gp := glist.pop()
-		gp.schedlink = 0
-		goready(gp, 3)
-	}
+    for !glist.empty() {
+        gp := glist.pop()
+        gp.schedlink = 0
+        goready(gp, 3)
+    }
 }
 ```
 
@@ -1523,15 +1524,15 @@ var done = make(chan bool)
 var msg string
 
 func hello() {
-	msg = "hello"
-	done <- true
+    msg = "hello"
+    done <- true
 }
 
 func main() {
-	go hello()
+    go hello()
     // 先发送才能接收完成，msg 赋值为 hello
     <-done
-	println(msg)
+    println(msg)
 }
 
 // ==================
@@ -1549,16 +1550,16 @@ var done = make(chan bool)
 var msg string
 
 func hello() {
-	msg = "hello"
-	<-done
+    msg = "hello"
+    <-done
 }
 
 func main() {
-	go hello()
+    go hello()
     // 非缓冲型的 chan
     // receive 一定发生在 send finished 前
-	done <- true
-	println(msg)
+    done <- true
+    println(msg)
 }
 
 // ==================
@@ -1572,15 +1573,15 @@ var done = make(chan bool)
 var msg string
 
 func hello() {
-	msg = "hello"
-	<-done
+    msg = "hello"
+    <-done
 }
 
 func main() {
     // 先 send，则 deadlock
-	done <- true
-	go hello()
-	println(msg)
+    done <- true
+    go hello()
+    println(msg)
 }
 
 // ==================
@@ -1588,7 +1589,7 @@ func main() {
 //
 // goroutine 1 [chan send]:
 // main.main()
-// 	F:/GoProject/memory/main.go:12 +0x45
+//     F:/GoProject/memory/main.go:12 +0x45
 ```
 
 - channel close 一定 `happened before` receiver 得到通知。
@@ -1609,7 +1610,7 @@ func main() {
     // …………
     for _, w := range work {
         go func() {
-        	defer <-limit
+            defer <-limit
             
             limit <- 1
             w()
@@ -1634,16 +1635,16 @@ func main() {
 //     Test()  
 // }
 type iface struct {
-	tab  *itab
-	data unsafe.Pointer
+    tab  *itab
+    data unsafe.Pointer
 }
 
 // eface 不包含 func 的 interface
 //
 // var x interface{}
 type eface struct {
-	_type *_type         // size 8 正好对应 assembly 部分 *face 结构插入
-	data  unsafe.Pointer // 数据部分
+    _type *_type         // size 8 正好对应 assembly 部分 *face 结构插入
+    data  unsafe.Pointer // 数据部分
 }
 
 // layout of Itab known to compilers
@@ -1651,17 +1652,17 @@ type eface struct {
 // Needs to be in sync with
 // ../cmd/compile/internal/gc/reflect.go:/^func.dumptabs.
 type itab struct {
-	inter *interfacetype // 接口的类型
-	_type *_type		 // 实体的类型
-	hash  uint32 // copy of _type.hash. Used for type switches.
-	_     [4]byte
-	fun   [1]uintptr // variable sized. fun[0]==0 means _type does not implement inter.
+    inter *interfacetype // 接口的类型
+    _type *_type         // 实体的类型
+    hash  uint32 // copy of _type.hash. Used for type switches.
+    _     [4]byte
+    fun   [1]uintptr // variable sized. fun[0]==0 means _type does not implement inter.
 }
 
 /* src/runtime/type.go */
 type _type struct {
     // 类型大小
-	size       uintptr 
+    size       uintptr 
     ptrdata    uintptr // 保存所有指针的内存前缀大小
     // 类型的 hash 值
     hash       uint32
@@ -1671,12 +1672,12 @@ type _type struct {
     align      uint8
     fieldalign uint8
     // 类型的编号，有bool, slice, struct 等等等等
-	kind       uint8
-	alg        *typeAlg
-	// gc 相关
-	gcdata    *byte
-	str       nameOff
-	ptrToThis typeOff
+    kind       uint8
+    alg        *typeAlg
+    // gc 相关
+    gcdata    *byte
+    str       nameOff
+    ptrToThis typeOff
 }
 ```
 
@@ -1693,12 +1694,12 @@ type Test struct {
 // 这里用指针接收者的话
 // var _ io.Writer = Test{} 编译不通过
 func (t Test) Write(p []byte) (n int, err error) {
-	return 0, nil
+    return 0, nil
 }
 
 func main() {
-	var _ io.Writer = Test{}
-	var _ io.Writer = (*Test)(nil)
+    var _ io.Writer = Test{}
+    var _ io.Writer = (*Test)(nil)
 }
 
 ```
@@ -1834,36 +1835,36 @@ M 想要执行、放回 G 都必须访问全局 G 队列，并且多个 M 访问
 // src/runtime/runtime2.go
 
 const (
-	// G status
+    // G status
     
-	_Gidle            = iota // 0 => G 刚刚分配，尚未初始化。
-	_Grunnable               // 1 => G 在可运行队列中（就绪）。
-	_Grunning                // 2 => G 正在运行（分配到了 MP）。
-	_Gsyscall                // 3 => G 正在执行系统调用。
-	_Gwaiting                // 4 => G 运行时被阻塞。（在等待队列中）
-	_Gmoribund_unused        // 5 => G 当前未使用，但在 gdb 脚本中进行了硬编码。
-	_Gdead                   // 6 => G 当前未使用。它可能只是退出，在自由列表中，或者只是被初始化。
-	_Genqueue_unused         // 7 => G 当前未使用。
-	_Gcopystack              // 8 => G 的堆栈正在移动。
-	_Gpreempted              // 9 => G 为了一个暂停的 G 抢占而自行停止。
+    _Gidle            = iota // 0 => G 刚刚分配，尚未初始化。
+    _Grunnable               // 1 => G 在可运行队列中（就绪）。
+    _Grunning                // 2 => G 正在运行（分配到了 MP）。
+    _Gsyscall                // 3 => G 正在执行系统调用。
+    _Gwaiting                // 4 => G 运行时被阻塞。（在等待队列中）
+    _Gmoribund_unused        // 5 => G 当前未使用，但在 gdb 脚本中进行了硬编码。
+    _Gdead                   // 6 => G 当前未使用。它可能只是退出，在自由列表中，或者只是被初始化。
+    _Genqueue_unused         // 7 => G 当前未使用。
+    _Gcopystack              // 8 => G 的堆栈正在移动。
+    _Gpreempted              // 9 => G 为了一个暂停的 G 抢占而自行停止。
 )
 
 // g 包含了当前 goroutine 的状态、堆栈、上下文。
 type g struct {
-	// stack 描述了实际的堆栈内存：[stack.lo，stack.hi)。
-	stack stack // offset known to runtime/cgo
-	// stackguard0 是 Go 堆栈增长序中比较的堆栈指针。
-	// 它通常是 stack.lo+StackGuard，也可以是 StackPreempt 以触发抢占。
-	stackguard0 uintptr // offset known to liblink
-	// stackguard1 是 C 堆栈增长序中比较的堆栈指针。
-	// 它是 g0 和 gsignal 堆栈上的 stack.lo+StackGuard
-	// 它在其他 goroutine 堆栈上为 ~0，以触发对 morestack 的调用（并崩溃）。
-	stackguard1 uintptr // offset known to liblink
+    // stack 描述了实际的堆栈内存：[stack.lo，stack.hi)。
+    stack stack // offset known to runtime/cgo
+    // stackguard0 是 Go 堆栈增长序中比较的堆栈指针。
+    // 它通常是 stack.lo+StackGuard，也可以是 StackPreempt 以触发抢占。
+    stackguard0 uintptr // offset known to liblink
+    // stackguard1 是 C 堆栈增长序中比较的堆栈指针。
+    // 它是 g0 和 gsignal 堆栈上的 stack.lo+StackGuard
+    // 它在其他 goroutine 堆栈上为 ~0，以触发对 morestack 的调用（并崩溃）。
+    stackguard1 uintptr // offset known to liblink
 
-	// 当前绑定的 M
-	m *m // current m; offset known to arm liblink
+    // 当前绑定的 M
+    m *m // current m; offset known to arm liblink
 
-	// ...
+    // ...
 }
 ```
 
@@ -1877,18 +1878,18 @@ M 是运行 goroutine 的实体；
 // src/runtime/runtime2.go
 
 type m struct {
-	// 带有调度堆栈的 goroutine
+    // 带有调度堆栈的 goroutine
     g0      *g     // goroutine with scheduling stack
-	morebuf gobuf  // gobuf arg to morestack
-	divmod  uint32 // div/mod denominator for arm - known to liblink
+    morebuf gobuf  // gobuf arg to morestack
+    divmod  uint32 // div/mod denominator for arm - known to liblink
     
     // 附加 P 用于执行 go 代码（如果不执行 go 代码，则为 nil）
     p             puintptr
     nextp         puintptr
     // 在执行系统调用之前附加的 P
-	oldp          puintptr
+    oldp          puintptr
     // m 正在执行 cgo 调用
-    incgo		  bool 
+    incgo          bool 
 }
 ```
 
@@ -1900,20 +1901,20 @@ type m struct {
 // src/runtime/runtime2.go
 
 const (
-	// P status
+    // P status
     
-	// P 空闲或正在其它状态之间切换
-	_Pidle = iota
-	// P 由 M 拥有，仅允许该 M 更改 P 的状态（转换为：_Pidle、_Psyscall、_Pgcstop）。M 还可以将 P 移交给另一 M。
-	_Prunning
-	// P 应系统调用空闲，使用轻量级转换并保持 M 关联性（m.oldp -> P）。
-	// 离开 _Psyscall 必须使用 CAS 完成，以窃取或重新获取 P。
-	_Psyscall
-	// P 被停止用于 STW，并由 STW 的 M 拥有。从 _Prunning 转换到_Pgcstop 会导致 M 释放 P 并停止。
-	// P 保留其运行队列，STW 将在具有非空运行队列的 P 上重新启动调度程序。
-	_Pgcstop
-	// 不再使用 P（GOMAXPROCS 减少）
-	_Pdead
+    // P 空闲或正在其它状态之间切换
+    _Pidle = iota
+    // P 由 M 拥有，仅允许该 M 更改 P 的状态（转换为：_Pidle、_Psyscall、_Pgcstop）。M 还可以将 P 移交给另一 M。
+    _Prunning
+    // P 应系统调用空闲，使用轻量级转换并保持 M 关联性（m.oldp -> P）。
+    // 离开 _Psyscall 必须使用 CAS 完成，以窃取或重新获取 P。
+    _Psyscall
+    // P 被停止用于 STW，并由 STW 的 M 拥有。从 _Prunning 转换到_Pgcstop 会导致 M 释放 P 并停止。
+    // P 保留其运行队列，STW 将在具有非空运行队列的 P 上重新启动调度程序。
+    _Pgcstop
+    // 不再使用 P（GOMAXPROCS 减少）
+    _Pdead
 )
 
 type p struct {
@@ -1925,13 +1926,13 @@ type p struct {
     // 到相关 M 的反向链接（如果空闲，则为 nil）
     m           muintptr
     mcache      *mcache
-	pcache      pageCache
+    pcache      pageCache
     
     // Queue of runnable goroutines. Accessed without lock.
     // 可运行的 goroutines 队列（本地队列，最多 256 个）。无锁访问。
-	runqhead uint32
-	runqtail uint32
-	runq     [256]guintptr
+    runqhead uint32
+    runqtail uint32
+    runq     [256]guintptr
     
     // 亲缘性调度优化（优先执行）
     // 如果 G 的时间片到但还未执行完，那么它应该被添加到 runnext 而不是 runq 中。
@@ -1990,31 +1991,31 @@ type p struct {
 func schedule() {
     // 1 每隔一段时间（每61轮调度后）检查一次全局可运行队列，以确保公平性，防止全局队列饥饿。
     if gp == nil {
-		// Check the global runnable queue once in a while to ensure fairness.
-		// Otherwise two goroutines can completely occupy the local runqueue
-		// by constantly respawning each other.
-		if _g_.m.p.ptr().schedtick%61 == 0 && sched.runqsize > 0 {
-			lock(&sched.lock)
-			gp = globrunqget(_g_.m.p.ptr(), 1)
-			unlock(&sched.lock)
-		}
-	}
+        // Check the global runnable queue once in a while to ensure fairness.
+        // Otherwise two goroutines can completely occupy the local runqueue
+        // by constantly respawning each other.
+        if _g_.m.p.ptr().schedtick%61 == 0 && sched.runqsize > 0 {
+            lock(&sched.lock)
+            gp = globrunqget(_g_.m.p.ptr(), 1)
+            unlock(&sched.lock)
+        }
+    }
     
     // 2 如果未找到，检查本地队列
-	if gp == nil {
-		gp, inheritTime = runqget(_g_.m.p.ptr())
-		// We can see gp != nil here even if the M is spinning,
-		// if checkTimers added a local goroutine via goready.
-	}
+    if gp == nil {
+        gp, inheritTime = runqget(_g_.m.p.ptr())
+        // We can see gp != nil here even if the M is spinning,
+        // if checkTimers added a local goroutine via goready.
+    }
     
     // 3 如果未找到，查找要执行的可运行 goroutine
-	if gp == nil {
-		gp, inheritTime = findrunnable() // blocks until work is available
-	}
-	
+    if gp == nil {
+        gp, inheritTime = findrunnable() // blocks until work is available
+    }
+    
     // ...
     
-	execute(gp, inheritTime)
+    execute(gp, inheritTime)
 } 
 
 // 查找要执行的可运行 goroutine。
@@ -2149,10 +2150,10 @@ Go 调度器很轻量也很简单，足以撑起 goroutine 的调度工作，并
 // Design doc at https://golang.org/s/go11sched.
 
 var (
-	m0           m
-	g0           g
-	mcache0      *mcache
-	raceprocctx0 uintptr
+    m0           m
+    g0           g
+    mcache0      *mcache
+    raceprocctx0 uintptr
 )
 ```
 
@@ -2237,28 +2238,28 @@ Go 基于两种断点将 G 调度到线程上：
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"runtime/trace"
+    "fmt"
+    "log"
+    "os"
+    "runtime/trace"
 )
 
 func main() {
 
-	f, err := os.Create("trace.out")
-	if err != nil {
-		log.Fatalln("os.Create:", err)
-	}
-	defer f.Close()
+    f, err := os.Create("trace.out")
+    if err != nil {
+        log.Fatalln("os.Create:", err)
+    }
+    defer f.Close()
 
     // trace 记录运行时的信息
-	if err := trace.Start(f); err != nil {
-		log.Fatalln("trace.Start:", err)
-	}
-	defer trace.Stop()
+    if err := trace.Start(f); err != nil {
+        log.Fatalln("trace.Start:", err)
+    }
+    defer trace.Stop()
 
     // main
-	fmt.Println("Hello World")
+    fmt.Println("Hello World")
 }
 ```
 
@@ -2371,20 +2372,20 @@ Go 有两个地方可以分配内存：一个全局堆空间用来动态分配�
 package main
 
 import (
-	"fmt"
-	"math/rand"
+    "fmt"
+    "math/rand"
 )
 
 // 逃逸分析案例
 func main() {
-	r := getRandom()
+    r := getRandom()
 
-	fmt.Println(*r)
+    fmt.Println(*r)
 }
 
 func getRandom() *int {
-	r := rand.Intn(10000)
-	return &r
+    r := rand.Intn(10000)
+    return &r
 }
 
 /*
@@ -2397,9 +2398,9 @@ go run -gcflags '-m'
 .\main.go:10:16: inlining call to getRandom
 .\main.go:10:16: inlining call to rand.Intn
 .\main.go:12:13: inlining call to fmt.Println
-.\main.go:12:14: *r escapes to heap		// *r 逃逸到堆
+.\main.go:12:14: *r escapes to heap        // *r 逃逸到堆
 .\main.go:12:13: []interface {}{...} does not escape
-.\main.go:16:2: moved to heap: r		// r 已移动到堆
+.\main.go:16:2: moved to heap: r        // r 已移动到堆
 <autogenerated>:1: .this does not escape
 <autogenerated>:1: .this does not escape
 8081
@@ -2697,7 +2698,7 @@ GoV1.8-三色标记法，混合写屏障机制， 栈空间不启动，堆空间
 ```bash
 $ time go run main.go
 
-real    0m0.919s	
+real    0m0.919s    
 user    0m0.000s
 sys     0m0.015s
 ```
@@ -2847,15 +2848,15 @@ gc 15 @245.807s 0%: 0.038+0.73+0.009 ms clock, 0.23+0/0.37/0.17+0.059 ms cpu, 0-
 gc # @#s #%: #+#+# ms clock, #+#/#/#+# ms cpu, #->#-># MB, # MB goal, # P
 
 # 含义：
-	gc #        GC次数的编号，每次GC时递增
-	@#s         距离程序开始执行时的时间
-	#%          GC占用的执行时间百分比
-	#+#+#		垃圾回收的时间，分别为STW（stop-the-world）清扫的时间+并发标记和扫描的时间+STW标记的时间
-	#+#/#/#+#   GC占用cpu时间
-	#->#-># MB  GC开始，结束，以及当前活跃堆内存的大小，单位M
-	# MB goal   全局堆内存大小
-	# P         GC使用processor的数量
-	(forced)	本次 GC 由 runtime.GC() 调用触发
+    gc #        GC次数的编号，每次GC时递增
+    @#s         距离程序开始执行时的时间
+    #%          GC占用的执行时间百分比
+    #+#+#        垃圾回收的时间，分别为STW（stop-the-world）清扫的时间+并发标记和扫描的时间+STW标记的时间
+    #+#/#/#+#   GC占用cpu时间
+    #->#-># MB  GC开始，结束，以及当前活跃堆内存的大小，单位M
+    # MB goal   全局堆内存大小
+    # P         GC使用processor的数量
+    (forced)    本次 GC 由 runtime.GC() 调用触发
 ```
 
 结论：
@@ -2949,12 +2950,12 @@ go run main.go
 
 ```
 import (
-	"net/http"
-	_ "net/http/pprof"
+    "net/http"
+    _ "net/http/pprof"
 )
 
 go func() {
-	log.Println(http.ListenAndServe("localhost:6060", nil))
+    log.Println(http.ListenAndServe("localhost:6060", nil))
 }()
 
 # 查看堆剖面

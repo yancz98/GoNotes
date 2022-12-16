@@ -55,7 +55,7 @@
 
 
 
-## 二、数据结构的实现
+## 二、数据结构
 
 ### 1、基本类型
 
@@ -194,7 +194,7 @@ func growslice(et *_type, old slice, cap int) slice {
 
 
 
-#### （3）slice 与 unsafe.Pointer相互转换 
+#### （3）slice 与 unsafe.Pointer 相互转换 
 
 有时候可能需要使用一些比较 tricky 的技巧，比如利用 make 弄一块内存自己管理，或者用 cgo 之类的方式得到的内存，转换为 Go 类型使用。
 
@@ -443,16 +443,16 @@ func makeBucketArray(t *maptype, b uint8, dirtyalloc unsafe.Pointer) (buckets un
 ┌──────────┬─────────────────────────────────────────────────────┬───────┐ 
 │ 10010111 │ 000011110110110010001111001010100010010110010101010 │ 01010 │
 └──────────┴─────────────────────────────────────────────────────┴───────┘ 
-tophash：151                                                     (B=5)：10
+tophash：151                                                      低(B=5)位：10
 ```
 
 - 落桶规则：根据 hash(key) 的低 B 位决定落入哪个桶。
 
   B=5 时，桶数量为 2^5^=32，落入桶 bucket[10]。
 
-- 桶内位置：根据 hash(key) 的高 8 位决定落入桶内的位置。
+- 桶内位置：根据 hash(key) 的高 8 位计算 tophash。
 
-  - 最开始桶内还没有 key，新加入的 key 会找到第一个空位，放入；
+  - 最开始桶内还没有 key，新加入的 key 会放入桶的第一个空位；
 
   - 当两个不同的 key 落在同一个桶中（哈希冲突）时，在 bucket 中，从前往后找到第一个空位；
   - 一个 bucket 在存储满 8 个元素后，会创建新的 overflowBucket，挂在 bucket 的 overflow 指针上；
@@ -462,7 +462,7 @@ tophash：151                                                     (B=5)：10
 
   
 
-哈希冲突解决方法：
+> **【Notes】** 哈希冲突的解决方法：
 
 - 1、闭散列（开放定址法）：将 key 放入冲突位置的下一个空位置（线性探测）。
 
@@ -581,6 +581,10 @@ func mapaccessK(t *maptype, h *hmap, key unsafe.Pointer) (unsafe.Pointer, unsafe
 
 #### （5）遍历
 
+- mapiterinit() 初始化 map 迭代器 hiter；
+- mapiternext() 中就会从 it.startBucket 的 it.offset 号的 cell 开始遍历，取出其中的 key 和 value，直到又回到起点 bucket，完成遍历过程。
+- 如果遇到扩容，遍历操作会按照新 bucket 的序号顺序进行，碰到老 bucket 未搬迁的情况时，要在老 bucket 中找到将来要搬迁到新 bucket 来的 key。  
+
 ```go
 // 主要靠这三个函数实现
 
@@ -609,15 +613,7 @@ func mapiternext(it *hiter) {}
 func mapaccessK(t *maptype, h *hmap, key unsafe.Pointer) (unsafe.Pointer, unsafe.Pointer) {}
 ```
 
-流程：
-
-- mapiterinit() 初始化 map 迭代器 hiter；
-- mapiternext() 中就会从 it.startBucket 的 it.offset 号的 cell 开始遍历，取出其中的 key 和 value，直到又回到起点 bucket，完成遍历过程。
-- 如果遇到扩容，遍历操作会按照新 bucket 的序号顺序进行，碰到老 bucket 未搬迁的情况时，要在老 bucket 中找到将来要搬迁到新 bucket 来的 key。  
-
 #### （6）赋值
-
-流程：
 
 - 计算 hash(key)，定位 bucket；
 - 如果 bucket 在 oldbuckets 中，将其重新 hash 到 buckets 中；
@@ -884,7 +880,7 @@ indirectkey 和 indirectvalue 在 map 里实际存储的是指针，会造成 GC
 1. key > 128 字节时，indirectkey = true
 2. value > 128 字节时，indirectvalue = true
 
-#### （10）结论
+#### （10）注意
 
 - 可比较的类型（除 slice、map、function）都可以作为 map 的 key。
 - 不能对 map 的 key 或 value 取址。
@@ -1718,39 +1714,25 @@ z = x.(int) // 类型断言（只有 interface{} 支持断言）
 
 
 
-## 三、GPM 模型
+## 三、GPM 调度器
 
-### 1、并发介绍
+### 1、Thread & Goroutine
 
-#### （1）主要概念
+#### （1）进程
 
-- **进程**：是程序在操作系统中的一次执行过程，系统进行资源分配和调度的一个独立单位。
+进程是程序在操作系统中的一次执行过程，系统进行资源分配和调度的一个独立单位。
 
-- **线程**：是进程的一个执行实体，是 CPU 调度和分配的基本单位，它是比进程更小的能独立运行的基本单位。
+#### （2）线程
 
-  一个进程可以创建和撤销多个线程，同一个进程中的多个线程之间可以并发执行。
+线程：是进程的一个执行实体，是 CPU 调度和分配的基本单位，它是比进程更小的能独立运行的基本单位。
 
-- **协程**：独立的栈空间，共享堆空间，调度由用户自己控制，本质上有点类似于用户级线程，这些用户级线程的调度也是自己实现的。
+一个进程可以创建和撤销多个线程，同一个进程中的多个线程之间可以**并发**执行。
 
-  一个线程上可以跑多个协程，协程是轻量级的线程。
+#### （3）协程（提高CPU利用率）
 
-- **Goroutine**：是一个与其他 goroutines 并行运行在同一地址空间的 Go 函数或方法。一个运行的程序由一个或更多个 goroutine 组成。它与线程、协程、进程等不同，它是一个 goroutine。—— Rob Pike
+协程：独立的栈空间，共享堆空间，调度由用户自己控制，本质上有点类似于用户级线程，这些用户级线程的调度也是自己实现的。
 
-#### （2）单进程时代（不需要调度器）
-
-- 单一的执行流程，计算机只能一个任务一个任务处理；
-- 进程阻塞所带来的 CPU 时间浪费。
-
-#### （3）多进程/多线程时代（并发）
-
-- 进程拥有太多的资源，进程的创建、切换、销毁都会占用很长的时间。进程/线程的数量越多，切换成本就越大，CPU 都浪费在进程调度上；
-- 多线程开发设计变得更加复杂，需要考虑很多同步竞争问题，如锁、竞争冲突等；
-- 进程/线程的高内存占用：
-  - 进程占用内存：虚拟内存 4GB（32 位 操作系统）；
-  - 线程占用内存：约 4MB；
-- 高 CPU 调度消耗：时间片轮转。
-
-#### （4）协程（提高CPU利用率）
+一个线程上可以跑多个协程，协程是轻量级的线程。
 
 一个线程可以分为：【内核态线程】和【用户态线程】。
 
@@ -1776,41 +1758,50 @@ z = x.(int) // 类型断言（只有 interface{} 支持断言）
 
 能够利用多核，但过于依赖协程调度器的优化和算法。
 
-> 协程跟线程的区别：
+#### （4）Goroutine
 
-线程由 CPU 调度是抢占式的；
-
-协程由用户态调度是协作式的，一个协程让出 CPU 后，才执行下一个协程。
-
-> **并发不是并行**：
-
-并发主要由切换时间片来实现“同时”运行，并行则是直接利用多核实现多线程的运行，go 可以设置并行数（GOMAXPROCS），以发挥多核计算机的能力。 
-
-#### （5）goroutine
+Goroutine：是一个与其他 goroutines 并行运行在同一地址空间的 Go 函数或方法。一个运行的程序由一个或更多个 goroutine 组成。它与线程、协程、进程等不同，它是一个 goroutine。—— Rob Pike
 
 goroutine 来自协程的概念，让一组可复用的函数运行在一组线程之上，即使有协程阻塞，该线程的其它协程也可以被 `runtime` 调度，转移到其它可运行的线程上。
 
 最关键的是，程序员看不到这些底层细节，降低了编程的难度，提供更容易的并发。
 
-Goroutine 的特点：
-
-- 占用内存更小（几 KB）
-- 调度更灵活（runtime 调度）
-
-
-
-> goroutine 与 thread 的区别：
+#### （5）Thread & Goroutine 对比
 
 |              | Goroutine                                                    | Thread                                                       | 进程                           |
 | ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------ |
-| 内存占用     | 2KB（不够用时会自动扩容）                                    | 为了避免操作系统线程栈的溢出，默认会为其分配一个较大的栈内存（1-8 MB，线程标准 POSIX），初始化完成后其大小不能改变。 | 虚拟内存 4GB（32 位 操作系统） |
+| 内存占用     | 2KB（不够用时会自动扩容）                                    | 为了避免操作系统线程栈的溢出，默认会为其分配一个较大的栈内存（1-8 MB，线程标准 POSIX），初始化完成后其大小不能改变。还需要一个 guard page 用于隔离。 | 虚拟内存 4GB（32 位 操作系统） |
 | 创建销毁开销 | 用户态线程，开销小。                                         | 内核级交互（陷入内核），开销大。                             |                                |
-| 调度         | 由 Go 的 runtime 调度，切换时间约 200 ns（用户态、3个寄存器），调度灵活。 | 线程切换会消耗 1000-1500 ns（上下文保存成本高、寄存器多、公平性、复杂时间计算统计） |                                |
+| 调度         | 由 Go 的 runtime 调度，切换时间约 200 ns（用户态、3个寄存器），调度灵活。 | 线程由 CPU 调度是抢占式的；线程切换会消耗 1000-1500 ns（上下文保存成本高、寄存器多、公平性、复杂时间计算统计） |                                |
 | 复杂性       | 简单                                                         | 线程的创建和退出复杂，线程间通讯复杂（share memory）         |                                |
 
-![Go_ThreadStacks](Images/Go_ThreadStacks.png)
+![Go_ThreadStacks](Images/Go_ThreadStacksAndGuardPage.png)
 
-### 2、旧版调度器（GM 模型）
+
+
+### 2、并发介绍
+
+#### （1）单进程时代（不需要调度器）
+
+- 单一的执行流程，计算机只能一个任务一个任务处理；
+- 进程阻塞所带来的 CPU 时间浪费。
+
+#### （2）多进程/多线程时代（并发）
+
+- 进程拥有太多的资源，进程的创建、切换、销毁都会占用很长的时间。进程/线程的数量越多，切换成本就越大，CPU 都浪费在进程调度上；
+- 多线程开发设计变得更加复杂，需要考虑很多同步竞争问题，如锁、竞争冲突等；
+- 进程/线程的高内存占用：
+  - 进程占用内存：虚拟内存 4GB（32 位 操作系统）；
+  - 线程占用内存：约 4MB；
+- 高 CPU 调度消耗：时间片轮转。
+
+#### （3）并发不是并行
+
+并发主要由切换时间片来实现“同时”运行，并行则是直接利用多核实现多线程的运行，go 可以设置并行数（GOMAXPROCS），以发挥多核计算机的能力。 
+
+
+
+### 3、旧版调度器（GM 模型）
 
 > GM 调度器（Go 1.2 前）
 
@@ -1827,7 +1818,7 @@ M 想要执行、放回 G 都必须访问全局 G 队列，并且多个 M 访问
 
 
 
-### 3、GMP 模型的设计思想
+### 4、GMP 模型
 
 #### （1）G：Goroutine
 
@@ -1836,7 +1827,8 @@ M 想要执行、放回 G 都必须访问全局 G 队列，并且多个 M 访问
 
 const (
     // G status
-    
+    // 除了指示 G 的一般状态之外，G 状态的作用类似于 goroutine 栈上的锁（因此它能够执行用户代码）。
+
     _Gidle            = iota // 0 => G 刚刚分配，尚未初始化。
     _Grunnable               // 1 => G 在可运行队列中（就绪）。
     _Grunning                // 2 => G 正在运行（分配到了 MP）。
@@ -1849,26 +1841,194 @@ const (
     _Gpreempted              // 9 => G 为了一个暂停的 G 抢占而自行停止。
 )
 
-// g 包含了当前 goroutine 的状态、堆栈、上下文。
 type g struct {
-    // stack 描述了实际的堆栈内存：[stack.lo，stack.hi)。
-    stack stack // offset known to runtime/cgo
-    // stackguard0 是 Go 堆栈增长序中比较的堆栈指针。
-    // 它通常是 stack.lo+StackGuard，也可以是 StackPreempt 以触发抢占。
+    // Stack parameters.
+    // stack describes the actual stack memory: [stack.lo, stack.hi).
+    // stackguard0 is the stack pointer compared in the Go stack growth prologue.
+    // It is stack.lo+StackGuard normally, but can be StackPreempt to trigger a preemption.
+    // stackguard1 is the stack pointer compared in the C stack growth prologue.
+    // It is stack.lo+StackGuard on g0 and gsignal stacks.
+    // It is ~0 on other goroutine stacks, to trigger a call to morestackc (and crash).
+
+    // stack 描述了实际的栈内存：[stack.lo, stack.hi).
+    stack       stack   // offset known to runtime/cgo
+    // stackguard0 是 Go 栈增长 prologue 中作比较的栈指针
+    // 用 sp 寄存器和 stackguard0 来做比较，如果 sp < stackguard0 （栈向低地址方向增长），
+    // 那么就触发栈拷贝和调度
+    // 正常情况下 stackguard0 = stack.lo + StackGuard
+    // 不过 stackguard0 在需要进行调度时，会被修改为 StackPreempt 以触发抢占
     stackguard0 uintptr // offset known to liblink
-    // stackguard1 是 C 堆栈增长序中比较的堆栈指针。
-    // 它是 g0 和 gsignal 堆栈上的 stack.lo+StackGuard
-    // 它在其他 goroutine 堆栈上为 ~0，以触发对 morestack 的调用（并崩溃）。
+    // stackguard1 是 C 栈增长 prologue 中作比较的栈指针
+    // 在 g0 和 gsignal 栈上，其值为 stack.lo + StackGuard
+    // 它在其它 G 栈上为 ~0（按 0 取反），以触发 morestack 调用（并奔溃）
     stackguard1 uintptr // offset known to liblink
 
+    _panic       *_panic // innermost panic - offset known to liblink
+    _defer       *_defer // innermost defer
     // 当前绑定的 M
-    m *m // current m; offset known to arm liblink
+    m            *m      // current m; offset known to arm liblink
+    // G 的运行现场
+    sched        gobuf
+    syscallsp    uintptr        // if status==Gsyscall, syscallsp = sched.sp to use during gc
+    syscallpc    uintptr        // if status==Gsyscall, syscallpc = sched.pc to use during gc
+    stktopsp     uintptr        // expected sp at top of stack, to check in traceback
+    // wakeup 时的传入参数
+    param        unsafe.Pointer // passed parameter on wakeup
+    atomicstatus uint32
+    stackLock    uint32 // sigprof/scang lock; TODO: fold in to atomicstatus
+    goid         int64
+    // 指向全局队列里下一个 g
+    schedlink    guintptr
+    // g 被阻塞之后的近似时间
+    waitsince    int64      // approx time when the g become blocked
+    waitreason   waitReason // if status==Gwaiting
 
-    // ...
+    // 抢占标记，这个为 true 时，stackguard0 是等于 stackpreempt 的
+    preempt       bool // preemption signal, duplicates stackguard0 = stackpreempt
+    preemptStop   bool // transition to _Gpreempted on preemption; otherwise, just deschedule
+    preemptShrink bool // shrink stack at synchronous safe point
+
+    // asyncSafePoint is set if g is stopped at an asynchronous
+    // safe point. This means there are frames on the stack
+    // without precise pointer information.
+    asyncSafePoint bool
+
+    paniconfault bool // panic (instead of crash) on unexpected fault address
+    gcscandone   bool // g has scanned stack; protected by _Gscan bit in status
+    throwsplit   bool // must not split stack
+    // activeStackChans indicates that there are unlocked channels
+    // pointing into this goroutine's stack. If true, stack
+    // copying needs to acquire channel locks to protect these
+    // areas of the stack.
+    // 表示有未锁定的 chan 指向这个 G 的栈。
+    // 如果为 true，则栈复制需要获取 chan 锁以保护栈的这些区域。
+    activeStackChans bool
+    // parkingOnChan indicates that the goroutine is about to
+    // park on a chansend or chanrecv. Used to signal an unsafe point
+    // for stack shrinking. It's a boolean value, but is updated atomically.
+    // 表示 G 即将在 chansend 或 chanrecv 上 park
+    parkingOnChan uint8
+
+    raceignore     int8     // ignore race detection events
+    sysblocktraced bool     // StartTrace has emitted EvGoInSyscall about this goroutine
+    // syscall 返回之后的 cputicks，用来做 tracing
+    sysexitticks   int64    // cputicks when syscall has returned (for tracing)
+    traceseq       uint64   // trace event sequencer
+    tracelastp     puintptr // last P emitted an event for this goroutine
+    lockedm        muintptr
+    sig            uint32
+    writebuf       []byte
+    sigcode0       uintptr
+    sigcode1       uintptr
+    sigpc          uintptr
+    // 创建该 G 的语句的指令地址
+    gopc           uintptr         // pc of go statement that created this goroutine
+    ancestors      *[]ancestorInfo // ancestor information goroutine(s) that created this goroutine (only used if debug.tracebackancestors)
+    // G 函数的指令地址
+    startpc        uintptr         // pc of goroutine function
+    racectx        uintptr
+    waiting        *sudog         // sudog structures this g is waiting on (that have a valid elem ptr); in lock order
+    cgoCtxt        []uintptr      // cgo traceback context
+    labels         unsafe.Pointer // profiler labels
+    timer          *timer         // cached timer for time.Sleep
+    // 该 g 是否正在参与 select，是否已经有人从 select 中胜出
+    selectDone     uint32         // are we participating in a select and did someone win the race?
+
+    // Per-G GC state
+
+    // gcAssistBytes is this G's GC assist credit in terms of
+    // bytes allocated. If this is positive, then the G has credit
+    // to allocate gcAssistBytes bytes without assisting. If this
+    // is negative, then the G must correct this by performing
+    // scan work. We track this in bytes to make it fast to update
+    // and check for debt in the malloc hot path. The assist ratio
+    // determines how this corresponds to scan work debt.
+    gcAssistBytes int64
+}
+
+// Stack 描述 Go 执行栈，范围是 [lo, hi)
+type stack struct {
+    lo uintptr // 低地址
+    hi uintptr // 高地址
+}
+
+// G 的运行现场
+type gobuf struct {
+    sp   uintptr        // sp 寄存器
+    pc   uintptr        // pc 寄存器
+    g    guintptr       // g 指针
+    ctxt unsafe.Pointer // GC 相关
+    ret  sys.Uintreg    // 保存系统调用的返回值
+    lr   uintptr        // 这是在 arm 上用的寄存器
+    bp   uintptr        // 开启 GOEXPERIMENT=framepointer，才会有这个
+}
+
+// sudog represents a g in a wait list, such as for sending/receiving
+// on a channel.
+//
+// sudog is necessary because the g ↔ synchronization object relation
+// is many-to-many. A g can be on many wait lists, so there may be
+// many sudogs for one g; and many gs may be waiting on the same
+// synchronization object, so there may be many sudogs for one object.
+//
+// sudogs are allocated from a special pool. Use acquireSudog and
+// releaseSudog to allocate and free them.
+
+// 当 g 遇到阻塞，或需要等待的场景时，会被打包成 sudog 这样一个结构。
+//
+// sudog 表示等待列表中的 g，例如在 chan 上的 sendq/recvq。
+// sudog 是必要的，因为 g ↔ 同步对象关系是多对多的。
+// 一个 g 可以在很多等待列表中，所以一个 g 可能有很多 sudog；
+// 许多 gs 可能正在等待同一个同步对象，因此一个对象可能有许多 sudog。
+// sudog 是从一个特殊的池中分配的。使用 acquireSudog 和 releaseSudog 来分配和释放它们。
+type sudog struct {
+    // The following fields are protected by the hchan.lock of the
+    // channel this sudog is blocking on. shrinkstack depends on
+    // this for sudogs involved in channel ops.
+    // 该 sudog 的以下字段由阻塞在 chan 中的 hchan.lock 保护
+    g *g
+
+    next *sudog
+    prev *sudog
+    elem unsafe.Pointer // data element (may point to stack)
+
+    // The following fields are never accessed concurrently.
+    // For channels, waitlink is only accessed by g.
+    // For semaphores, all fields (including the ones above)
+    // are only accessed when holding a semaRoot lock.
+    // 以下字段则永远不会被并发访问
+    // 对于 chan 来说，waitlink 只会被 g 访问
+    // 对于信号量来说，所有的字段，包括上面的那些字段都只在持有 semaRoot 锁时才可以被访问
+
+    acquiretime int64
+    releasetime int64
+    ticket      uint32
+
+    // isSelect indicates g is participating in a select, so
+    // g.selectDone must be CAS'd to win the wake-up race.
+    // isSelect 表示一个 g 是否正在参与 select 操作
+    // 所以 g.selectDone 必须用 CAS 来操作，以胜出唤醒的竞争
+    isSelect bool
+
+    // success indicates whether communication over channel c
+    // succeeded. It is true if the goroutine was awoken because a
+    // value was delivered over channel c, and false if awoken
+    // because c was closed.
+    // Success 表示通过通道 c 的通信是否成功。
+    // 如果唤醒 G 是因为向通道 c 传递了一个值，则为 true;
+    // 如果唤醒 G 是因为 c 被关闭，则为 false。
+    success bool
+
+    parent   *sudog // semaRoot binary tree
+    waitlink *sudog // g.waiting list or semaRoot
+    waittail *sudog // semaRoot
+    c        *hchan // channel
 }
 ```
 
-#### （2）M：Machine （thread）
+ ![G 的状态流转图](https://golang.design/go-questions/sched/assets/15.png) 
+
+#### （2）M：Machine （Thread）
 
 M 是运行 goroutine 的实体；
 
@@ -1877,19 +2037,111 @@ M 是运行 goroutine 的实体；
 ```go
 // src/runtime/runtime2.go
 
+// m 代表工作线程，保存了自身使用的栈信息
+// m 对应一个 pthread，pthread 也会对应唯一的内核线程（task_struct）
 type m struct {
-    // 带有调度堆栈的 goroutine
+    // 用来执行调度指令的 G
     g0      *g     // goroutine with scheduling stack
     morebuf gobuf  // gobuf arg to morestack
     divmod  uint32 // div/mod denominator for arm - known to liblink
-    
-    // 附加 P 用于执行 go 代码（如果不执行 go 代码，则为 nil）
-    p             puintptr
+
+    // Fields not known to debuggers.
+    procid        uint64       // for debuggers, but offset not hard-coded
+    gsignal       *g           // signal-handling g
+    goSigStack    gsignalStack // Go-allocated signal handling stack
+    sigmask       sigset       // storage for saved signal mask
+    // 通过 tls 结构体实现 m 与工作线程的绑定
+    // 这里是线程本地存储
+    tls           [6]uintptr   // thread-local storage (for x86 extern register)
+    mstartfn      func()
+    // 当前运行的 G
+    curg          *g       // current running goroutine
+    caughtsig     guintptr // goroutine running during fatal signal
+    // 当前 M 绑定的 P（如果不执行 go 代码，则为 nil）
+    p             puintptr // attached p for executing go code (nil if not executing go code)
     nextp         puintptr
     // 在执行系统调用之前附加的 P
-    oldp          puintptr
+    oldp          puintptr // the p that was attached before executing a syscall
+    // 工作线程 id
+    id            int64
+    mallocing     int32
+    throwing      int32
+    // 该字段不等于空的话，要保持 curg 始终在这个 m 上运行
+    preemptoff    string // if != "", keep curg running on this m
+    locks         int32
+    dying         int32
+    profilehz     int32
+    // m 正在自旋
+    spinning      bool // m is out of work and is actively looking for work
+    // m 正阻塞在 note 上
+    blocked       bool // m is blocked on a note
+
+    newSigstack   bool // minit on C thread called sigaltstack
+    printlock     int8
     // m 正在执行 cgo 调用
-    incgo          bool 
+    incgo         bool   // m is executing a cgo call
+    freeWait      uint32 // if == 0, safe to free g0 and delete m (atomic)
+    fastrand      [2]uint32
+    needextram    bool
+    traceback     uint8
+    ncgocall      uint64      // number of cgo calls in total
+    ncgo          int32       // number of cgo calls currently in progress
+    cgoCallersUse uint32      // if non-zero, cgoCallers in use temporarily
+    cgoCallers    *cgoCallers // cgo traceback if crashing in cgo call
+    doesPark      bool        // non-P running threads: sysmon and newmHandoff never use .park
+    park          note
+    // 记录所有 M 的链表
+    alllink       *m // on allm
+    schedlink     muintptr
+    lockedg       guintptr
+    createstack   [32]uintptr // stack that created this thread.
+    lockedExt     uint32      // tracking for external LockOSThread
+    lockedInt     uint32      // tracking for internal lockOSThread
+    // 正在等待锁的下一个 m
+    nextwaitm     muintptr    // next m waiting for lock
+    waitunlockf   func(*g, unsafe.Pointer) bool
+    waitlock      unsafe.Pointer
+    waittraceev   byte
+    waittraceskip int
+    startingtrace bool
+    syscalltick   uint32
+    freelink      *m // on sched.freem
+
+    // mFixup is used to synchronize OS related m state (credentials etc)
+    // use mutex to access.
+    mFixup struct {
+        lock mutex
+        fn   func(bool) bool
+    }
+
+    // these are here because they are too large to be on the stack
+    // of low-level NOSPLIT functions.
+    libcall   libcall
+    libcallpc uintptr // for cpu profiler
+    libcallsp uintptr
+    libcallg  guintptr
+    // 存储 windows 平台的 syscall 参数
+    syscall   libcall // stores syscall parameters on windows
+
+    vdsoSP uintptr // SP for traceback while in VDSO call (0 if not in call)
+    vdsoPC uintptr // PC for traceback while in VDSO call
+
+    // preemptGen counts the number of completed preemption
+    // signals. This is used to detect when a preemption is
+    // requested, but fails. Accessed atomically.
+    preemptGen uint32
+
+    // Whether this is a pending preemption signal on this M.
+    // Accessed atomically.
+    signalPending uint32
+
+    dlogPerM
+
+    mOS
+
+    // Up to 10 locks held by this m, maintained by the lock ranking code.
+    locksHeldLen int
+    locksHeld    [10]heldLockInfo
 }
 ```
 
@@ -1902,7 +2154,7 @@ type m struct {
 
 const (
     // P status
-    
+
     // P 空闲或正在其它状态之间切换
     _Pidle = iota
     // P 由 M 拥有，仅允许该 M 更改 P 的状态（转换为：_Pidle、_Psyscall、_Pgcstop）。M 还可以将 P 移交给另一 M。
@@ -1917,31 +2169,170 @@ const (
     _Pdead
 )
 
+// p 保存 go 运行时所必须的资源
 type p struct {
+    id          int32
     status      uint32 // one of pidle/prunning/...
-    
-    // 每次调度程序调用时递增（检查全局队列）
-    schedtick   uint32 
-    
-    // 到相关 M 的反向链接（如果空闲，则为 nil）
-    m           muintptr
+    link        puintptr
+    // 每次调度程序调用时自增（每 61 次检查全局队列）
+    schedtick   uint32     // incremented on every scheduler call
+    // 每次系统调用时自增
+    syscalltick uint32     // incremented on every system call
+    // 用于 sysmon 线程记录被监控 p 的系统调用时间和运行时间
+    sysmontick  sysmontick // last tick observed by sysmon
+    // 指向绑定的 m（如果空闲，则为 nil）
+    m           muintptr   // back-link to associated m (nil if idle)
     mcache      *mcache
     pcache      pageCache
-    
+    raceprocctx uintptr
+
+    deferpool    [5][]*_defer // pool of available defer structs of different sizes (see panic.go)
+    deferpoolbuf [5][32]*_defer
+
+    // Cache of goroutine ids, amortizes accesses to runtime·sched.goidgen.
+    goidcache    uint64
+    goidcacheend uint64
+
     // Queue of runnable goroutines. Accessed without lock.
     // 可运行的 goroutines 队列（本地队列，最多 256 个）。无锁访问。
     runqhead uint32
     runqtail uint32
     runq     [256]guintptr
-    
+    // runnext, if non-nil, is a runnable G that was ready'd by
+    // the current G and should be run next instead of what's in
+    // runq if there's time remaining in the running G's time
+    // slice. It will inherit the time left in the current time
+    // slice. If a set of goroutines is locked in a
+    // communicate-and-wait pattern, this schedules that set as a
+    // unit and eliminates the (potentially large) scheduling
+    // latency that otherwise arises from adding the ready'd
+    // goroutines to the end of the run queue.
+    //
     // 亲缘性调度优化（优先执行）
     // 如果 G 的时间片到但还未执行完，那么它应该被添加到 runnext 而不是 runq 中。
     // 消除 communicate-and-wait 模式下，将 G 添加到运行队列末尾所产生的延迟。
+    //
+    // runnext 非空时，代表的是一个 runnable 状态的 G，
+    // 这个 G 被当前 G 修改为 ready 状态，相比 runq 中的 G 有更高的优先级。
+    // 如果当前 G 还有剩余的可用时间，那么就应该运行这个 G
+    // 运行之后，nextG 会继承当前 G 的剩余时间
     runnext guintptr
+
+    // Available G's (status == Gdead)
+    // 空闲的 Gs
+    gFree struct {
+        gList
+        n int32
+    }
+
+    sudogcache []*sudog
+    sudogbuf   [128]*sudog
+
+    // Cache of mspan objects from the heap.
+    mspancache struct {
+        // We need an explicit length here because this field is used
+        // in allocation codepaths where write barriers are not allowed,
+        // and eliminating the write barrier/keeping it eliminated from
+        // slice updates is tricky, moreso than just managing the length
+        // ourselves.
+        len int
+        buf [128]*mspan
+    }
+
+    tracebuf traceBufPtr
+
+    // traceSweep indicates the sweep events should be traced.
+    // This is used to defer the sweep start event until a span
+    // has actually been swept.
+    traceSweep bool
+    // traceSwept and traceReclaimed track the number of bytes
+    // swept and reclaimed by sweeping in the current sweep loop.
+    traceSwept, traceReclaimed uintptr
+
+    palloc persistentAlloc // per-P to avoid mutex
+
+    _ uint32 // Alignment for atomic fields below
+
+    // The when field of the first entry on the timer heap.
+    // This is updated using atomic functions.
+    // This is 0 if the timer heap is empty.
+    timer0When uint64
+
+    // The earliest known nextwhen field of a timer with
+    // timerModifiedEarlier status. Because the timer may have been
+    // modified again, there need not be any timer with this value.
+    // This is updated using atomic functions.
+    // This is 0 if the value is unknown.
+    timerModifiedEarliest uint64
+
+    // Per-P GC state
+    gcAssistTime         int64 // Nanoseconds in assistAlloc
+    gcFractionalMarkTime int64 // Nanoseconds in fractional mark worker (atomic)
+
+    // gcMarkWorkerMode is the mode for the next mark worker to run in.
+    // That is, this is used to communicate with the worker goroutine
+    // selected for immediate execution by
+    // gcController.findRunnableGCWorker. When scheduling other goroutines,
+    // this field must be set to gcMarkWorkerNotWorker.
+    gcMarkWorkerMode gcMarkWorkerMode
+    // gcMarkWorkerStartTime is the nanotime() at which the most recent
+    // mark worker started.
+    // 当前标记 worker 的开始时间，单位纳秒
+    gcMarkWorkerStartTime int64
+
+    // gcw is this P's GC work buffer cache. The work buffer is
+    // filled by write barriers, drained by mutator assists, and
+    // disposed on certain GC state transitions.
+    gcw gcWork
+
+    // wbBuf is this P's GC write barrier buffer.
+    //
+    // TODO: Consider caching this in the running G.
+    wbBuf wbBuf
+
+    runSafePointFn uint32 // if 1, run sched.safePointFn at next safe point
+
+    // statsSeq is a counter indicating whether this P is currently
+    // writing any stats. Its value is even when not, odd when it is.
+    statsSeq uint32
+
+    // Lock for timers. We normally access the timers while running
+    // on this P, but the scheduler can also do it from a different P.
+    timersLock mutex
+
+    // Actions to take at some time. This is used to implement the
+    // standard library's time package.
+    // Must hold timersLock to access.
+    timers []*timer
+
+    // Number of timers in P's heap.
+    // Modified using atomic instructions.
+    numTimers uint32
+
+    // Number of timerModifiedEarlier timers on P's heap.
+    // This should only be modified while holding timersLock,
+    // or while the timer status is in a transient state
+    // such as timerModifying.
+    adjustTimers uint32
+
+    // Number of timerDeleted timers in P's heap.
+    // Modified using atomic instructions.
+    deletedTimers uint32
+
+    // Race context used while executing timer functions.
+    timerRaceCtx uintptr
+
+    // preempt is set to indicate that this P should be enter the
+    // scheduler ASAP (regardless of what G is running on it).
+    preempt bool
+
+    pad cpu.CacheLinePad
 }
 ```
 
-#### （4）调度器的设计策略
+ ![P 的状态流转图](https://golang.design/go-questions/sched/assets/16.png) 
+
+### 5、GMP 设计策略
 
 ![Go_GMP-调度器](https://cdn.nlark.com/yuque/0/2022/png/26269664/1650776301442-fb76123c-8d0e-4375-af35-b5728a5b1bc7.png?x-oss-process=image%2Fwatermark%2Ctype_d3F5LW1pY3JvaGVp%2Csize_29%2Ctext_5YiY5Li55YawQWNlbGQ%3D%2Ccolor_FFFFFF%2Cshadow_50%2Ct_80%2Cg_se%2Cx_10%2Cy_10%2Fresize%2Cw_750%2Climit_0)
 
@@ -1978,7 +2369,7 @@ type p struct {
 
 
 
-### 4、GMP 调度分析
+### 6、GMP 调度分析
 
 #### （1）WorkStealing
 
@@ -1989,6 +2380,15 @@ type p struct {
 // Never returns.
 // 一轮调度程序：找到一个可运行的 goroutine 并执行它。
 func schedule() {
+    // 其它资料的总结
+    // only 1/61 of the time, check the global runnable queue for a G.
+    // if not found, check the local queue.
+    // if not found,
+    //     try to steal from other Ps.
+    //     if not, check the global runnable queue.
+    //     if not found, poll network.
+    
+    
     // 1 每隔一段时间（每61轮调度后）检查一次全局可运行队列，以确保公平性，防止全局队列饥饿。
     if gp == nil {
         // Check the global runnable queue once in a while to ensure fairness.
@@ -2108,7 +2508,7 @@ gopark 将 G 置为 waiting 状态，等待显示 goready 唤醒，在 poller �
 
 Go 1.5 针对 communicate-and-wait（通信等待）模式，进行了亲缘性调度优化，引入了一个特殊字段 runnext，优先执行 unblock-G。
 
-#### （7）GMP 总结
+#### （7）GMP 总结 - 临时位置
 
 Go 调度器很轻量也很简单，足以撑起 goroutine 的调度工作，并且让 Go 具有了原生（强大）并发的能力。Go 调度本质是把大量的 goroutine 分配到少量线程上去执行，并利用多核并行，实现更强大的并发。
 
@@ -2128,9 +2528,16 @@ Go 调度器很轻量也很简单，足以撑起 goroutine 的调度工作，并
 
   通过引入自旋，保证任何时候都有处于等待状态的自旋 M，避免在等待可用的 P 和 G 时频繁的阻塞和唤醒。
 
+#### （8）scheduler 情景
+
+- `go func()`：新建 G，Go scheduler 会考虑调度；
+- GC：由于 GC 的 G 也需要在 M 上运行，因此肯定会发生调度。
+- syscall：G 阻塞 M，所以会被调度走。
+- 内存同步访问：atomic、mutex、channel 操作会使 G 阻塞，因此被调度走。
 
 
-### 5、GMP 生命周期
+
+### 7、Goroutine 的生命周期
 
 > 源码
 
@@ -2226,7 +2633,9 @@ Go 基于两种断点将 G 调度到线程上：
   - PC 和堆栈指针是从其内部结构中获取的；
   - 程序跳转到对应的 PC 地址；
 
-### 6、可视化 GMP 编程
+
+
+### 8、可视化 GMP 编程
 
 #### （1） go tool trace
 
@@ -2333,8 +2742,12 @@ SCHED 0ms: gomaxprocs=6 idleprocs=5 threads=6 spinningthreads=0 idlethreads=3 ru
 
 Go 有两个地方可以分配内存：一个全局堆空间用来动态分配内存，另一个是每个 goroutine 都有的自身栈空间（2KB）。
 
-- 栈：栈区的内存一般由编译器自动进行分配和释放，其中存储着函数的入参以及局部变量，这些参数会随着函数的创建而创建，函数的返回而销毁。（CPU push & release）
+- 栈：栈区的内存一般由编译器自动进行分配和释放，其中存储着函数的入参以及局部变量，这些参数会随着函数的创建而创建，函数的返回而销毁。（push & release）
 - 堆：堆区的内存一般由编译器和工程师自己共同进行管理分配，交给 runtime GC 来释放。堆上分配必须找到一块足够大的内存来存放新的变量数据。后续释放时，垃圾回收器扫描堆空间寻找不再被使用的对象。
+
+堆和栈相比，堆适合不可预知大小的内存分配。但是为此付出的代价是分配速度较慢，而且会形成内存碎片。栈内存分配则会很快，栈分配内存只需要两个 CPU 指令（分配：`PUSH` 和 释放：`RELEASE`）。而堆分配内存首先需要去找到一块大小合适的内存块，之后要通过垃圾回收才能释放，会占用比较大的系统开销（占用 CPU 25%）。
+
+通过逃逸分析，可以尽量把那些不需要分配到堆上的变量直接分配到栈上，减轻分配堆内存开销，减少 GC 的压力，提高程序的运行速度。
 
 #### （2）[stack_or_heap](https://go.dev/doc/faq#stack_or_heap)
 
@@ -2366,49 +2779,38 @@ Go 有两个地方可以分配内存：一个全局堆空间用来动态分配�
 
 当 getRandom() 返回时，它的栈空间会回收，而 main().r -> getRandom().r，会出现悬空指针，故 getRandom().r 需要分配到堆上。
 
-#### （5）逃逸案例
+#### （5）`-gcflags` 逃逸分析
 
 ```go
 package main
 
 import (
     "fmt"
-    "math/rand"
 )
+
+func getNum() *int {
+    num := 100
+    return &num
+}
 
 // 逃逸分析案例
 func main() {
-    r := getRandom()
+    x := getNum()
 
-    fmt.Println(*r)
+    fmt.Println(*x)
 }
 
-func getRandom() *int {
-    r := rand.Intn(10000)
-    return &r
-}
-
-/*
-# 查看内存是否逃逸
-go run -gcflags '-m'
-
-# command-line-arguments
-.\main.go:15:6: can inline getRandom
-.\main.go:16:16: inlining call to rand.Intn
-.\main.go:10:16: inlining call to getRandom
-.\main.go:10:16: inlining call to rand.Intn
-.\main.go:12:13: inlining call to fmt.Println
-.\main.go:12:14: *r escapes to heap        // *r 逃逸到堆
-.\main.go:12:13: []interface {}{...} does not escape
-.\main.go:16:2: moved to heap: r        // r 已移动到堆
-<autogenerated>:1: .this does not escape
-<autogenerated>:1: .this does not escape
-8081
-
-*/
+// ===================================
+// go run -gcflags '-m -l' main.go      # -l 让 getNum() 不被内联
+// ===================================
+// # command-line-arguments
+// escape_analysis\main.go:8:5: moved to heap: num   // num 已移动到堆
+// escape_analysis\main.go:16:16: ... argument does not escape
+// escape_analysis\main.go:16:17: *x escapes to heap // *x 逃逸到堆
+// 100
 ```
 
-
+`*x` 逃逸分析：因为 fmt.Println() 参数为 interface{}，编译期间很难确定其参数的具体类型，所以也会发生逃逸。
 
 > 常见的逃逸情景：
 
@@ -2467,6 +2869,8 @@ Go 运行时判断栈空间是否足够，所以在 call function 中会插入 r
 
 - 大于 StackBig
   SP-stackguard+StackGuard <= framesize + (StackGuard-StackSmall)
+
+
 
 ### 3、内存结构
 
@@ -2538,6 +2942,8 @@ Go 没法使用工作线程的本地缓存 mcache 和全局中心缓存 mcentral
 - Go 内存管理的基本单元是 mspan，每种 mspan 可以分配特定大小的 object。
 - mcache, mcentral, mheap 是 Go 内存管理的三大组件，mcache 管理线程在本地缓存的 mspan；mcentral 管理全局的 mspan 供所有线程。
 
+
+
 ### 4、优化实践
 
 - 小对象结构体合并
@@ -2550,7 +2956,7 @@ Go 没法使用工作线程的本地缓存 mcache 和全局中心缓存 mcentral
 
 
 
-## 五、Golang 的 GC 机制
+## 五、GC 机制
 
 垃圾回收（Garbage Collection，简称GC）是编程语言中提供的自动的内存管理机制，自动释放不需要的对象，让出存储器资源，无需程序员手动执行。
 
@@ -2562,6 +2968,8 @@ Golang 中的垃圾回收主要应用三色标记法，GC 过程和其他用户 
 - 追踪式垃圾回收；
 
 Go 现在用的三色标记法就属于追踪式垃圾回收算法的一种。
+
+
 
 ### 1、Mark and Sweep
 
@@ -2587,7 +2995,9 @@ Root：根对象是 mutator 不需要通过其它对象就可以直接访问到�
 - 标记需要扫描整个 heap，分配速度慢。
 - 清除数据会产生 heap 碎片，内存碎片率高。
 
-### 2、三色并发标记法
+
+
+### 2、三色并发标记
 
 > Go V1.5 主要使用三色并发标记法。
 
@@ -2621,7 +3031,8 @@ Root：根对象是 mutator 不需要通过其它对象就可以直接访问到�
 
 
 
-在并发标记过程中，若出现以下两个条件，会导致数据丢失：
+> 在并发标记过程中，若出现以下两个条件，会导致数据丢失：
+>
 
 - 白色对象被黑色对象引用；（白色被挂载黑色下）
 - 灰色对象到白色对象的可达关系遭到破坏；（灰色同时丢了该白色）
@@ -2660,11 +3071,9 @@ Root：根对象是 mutator 不需要通过其它对象就可以直接访问到�
 
 - 三色标记流程
 
+缺点：回收精度低，某对象即使被删除了最后一个指向它的指针也依旧可以活过这一轮，在下一轮 GC 中才被回收。
 
 
-缺点：
-
-回收精度低，某对象即使被删除了最后一个指向它的指针也依旧可以活过这一轮，在下一轮 GC 中才被回收。
 
 ### 4、混合写屏障
 
@@ -2679,6 +3088,8 @@ Root：根对象是 mutator 不需要通过其它对象就可以直接访问到�
 
 Golang 中的混合写屏障满足`弱三色不变式`，结合了删除写屏障和插入写屏障的优点，只需要在开始时并发扫描各个 goroutine 的栈，使其变黑并一直保持，这个过程不需要 STW，而标记结束后，因为栈在扫描后始终是黑色的，也无需再进行 re-scan 操作了，减少了 STW 的时间。
 
+
+
 ### 5、总结
 
 GoV1.3- 普通标记清除法，整体过程需要启动STW，效率极低。
@@ -2689,7 +3100,7 @@ GoV1.8-三色标记法，混合写屏障机制， 栈空间不启动，堆空间
 
 
 
-## 六、Golang 性能分析工具
+## 六、性能分析工具
 
 ### 1、运行时间与 CPU 利用率
 
@@ -2984,10 +3395,76 @@ http://localhost:6060/debug/pprof/
 ```
 go tool compile -S main.go
 
-    -l 
+    -l 关闭内联
     -S
     -N 关闭编译器优化
 ```
+
+
+
+### 5、Go 编译&链接过程
+
+#### （1）文本文件
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("hello world")
+}
+```
+
+> 用 vim 打开 main.go 文件，在命令行模式下输入： `:%!xxd`
+>
+> 就能在 vim 里以十六进制查看文件内容。
+
+```powershell
+# 地址值   # 文本对应的 ASCII 字符                     # 代码
+00000000: 7061 636b 6167 6520 6d61 696e 0a0a 696d  package main..im
+00000010: 706f 7274 2022 666d 7422 0a0a 6675 6e63  port "fmt"..func
+00000020: 206d 6169 6e28 2920 7b0a 2020 2020 666d   main() {.    fm
+00000030: 742e 5072 696e 746c 6e28 2268 656c 6c6f  t.Println("hello
+00000040: 2077 6f72 6c64 2229 0a7d 0a               world").}.
+```
+
+#### （2）从源文件到可执行文件
+
+![compile](https://golang.design/go-questions/compile/assets/7.png) 
+
+#### （3）编译过程
+
+编译过程就是对源文件进行词法分析、语法分析、语义分析、优化，最后生成汇编代码文件，以 `.s` 作为文件后缀。
+
+之后，汇编器会将汇编代码转变成机器可以执行的指令。由于每一条汇编语句几乎都与一条机器指令相对应，所以只是一个简单的一一对应，比较简单，没有语法、语义分析，也没有优化这些步骤。
+
+编译器是将高级语言翻译成机器语言的一个工具，编译过程一般分为 6 步：扫描、语法分析、语义分析、源代码优化、代码生成、目标代码优化。 
+
+![编译过程总览](https://golang.design/go-questions/compile/assets/8.png) 
+
+- 词法分析（lexical analysis）：是计算机科学中将字符序列转换为标记（Tokens）序列的过程。
+
+  进行词法分析的程序或函数叫作词法分析器，也叫扫描器（Scanner），该函数可供语法分析器调用。
+
+  Golang 扫描器支持的 Tokens：`${GOROOT}/src/cmd/compile/internal/syntax/tokens.go`。
+
+  Golang 的扫描器：`${GOROOT}/src/cmd/compile/internal/syntax/scanner.go`。
+
+- 语法分析：语法分析是根据某种特定的形式文法（Grammar）对 Tokens 序列构成的输入文本进行分析并确定其语法结构的一种过程，生成以表达式为节点的语法树（Syntax Tree）。
+
+  Golang 的语法分析器：`${GOROOT}/src/cmd/compile/internal/syntax/parser.go`。
+
+- 语义分析：类型检查是 Go 语言编译的第二个阶段，在词法和语法分析之后我们得到了每个文件对应的抽象语法树，随后的类型检查会遍历抽象语法树中的节点，对每个节点的类型进行检验，找出其中存在的语法错误。 
+
+- 中间代码生成：中间代码的生成过程其实就是从 AST 抽象语法树到 SSA 中间代码的转换过程，在这期间会对语法树中的关键字在进行一次更新，更新后的语法树会经过多轮处理转变最后的 SSA 中间代码。
+- 目标代码生成与优化：目的就是要生成能在不同 CPU 架构上运行的代码。
+
+#### （4）链接过程
+
+编译过程是针对单个文件进行的，文件与文件之间不可避免地要引用定义在其他模块的全局变量或者函数，这些变量或函数的地址只有在此阶段才能确定。
+
+链接过程就是要把编译器生成的一个个目标文件链接成可执行文件。最终得到的文件是分成各种段的，比如数据段、代码段、BSS段等等，运行时会被装载到内存中。各个段具有不同的读写、执行属性，保护了程序的安全运行。
 
 
 

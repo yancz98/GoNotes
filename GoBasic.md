@@ -4,19 +4,17 @@
 
 > [Go 官网](https://golang.google.cn/)
 
-![Go 版本选择](Images\Go版本选择.png)
-
 （1）Windows
 
-直接解压得到的 go 文件夹就是 SDK 环境，完成环境变量配置即可开始使用。
+下载解压 `go1.17.windows-amd64.zip` 就得到 Go SDK 环境，配置环境变量即可开始使用。
 
 （2）Linux
 
-> BUG：直接下载 **.tar.gz 到 Linux 后，无法解压。
+> BUG：直接下载 go**.tar.gz 到 Linux 后，无法解压。
 
 ```
 # 将 Windows 下载好的 go1.17.linux-amd64.tar.gz 复制到 Linux
-scp .\go1.17.linux-amd64.tar.gz root@192.168.56.101:/tmp
+scp ./go1.17.linux-amd64.tar.gz root@192.168.56.101:/tmp
 
 # 解压
 tar -zxvf go1.17.linux-amd64.tar.gz
@@ -1133,7 +1131,7 @@ func main() {
 
 ### 8、函数
 
-> 参数传递方式
+> 参数传递方式：值传递
 >
 > 值类型：int、float、bool、string、数组、结构体
 >
@@ -1145,6 +1143,8 @@ func 函数名 (形参列表) (返回值列表) {
 	return 返回值列表
 }
 ```
+
+在Go语言中，函数参数都是以复制的方式(不支持以引用的方式)传递（比较特殊的是，Go语言闭包函数对外部变量是以引用的方式使用）。
 
 #### （1）mian() 函数
 

@@ -8,7 +8,7 @@ Golang 开发主要技术栈的笔记。
 
 - [x] [Go 面试题](GoInterview.md)
 
-- [x] [MySQL](Mysql.md)
+- [x] [MySQL](MySQL.md)
 
 - [x] [Redis](Redis.md)
 

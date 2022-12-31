@@ -175,7 +175,7 @@ func binary1Num() {
 
 
 
-## 二、基础数据结构
+## 二、数据结构
 
 ### 1、单向链表
 
@@ -650,11 +650,235 @@ func (this *QueueWithStack) Empty() bool {
 }
 ```
 
+### 4、树
 
 
-## 三、递归
 
-递归思想：
+### 5、图
 
-递归的时间复杂度算法：
 
+
+## 三、查找
+
+
+
+## 四、排序
+
+
+
+## 五、递归
+
+### 1、递归的概念
+
+递归是指在子程序（子函数）直接调用自己，是一种常用算法。
+
+递归底层是利用系统栈实现的，任何递归形式都可以改成非递归形式。
+
+> 递归有两个基本要素：
+
+- 边界条件：即确定递归到何时终止，也称为递归出口；
+- 递归模式：即大问题是如何分解为小问题的，也称为递归体。
+
+> 递归的时间复杂度计算公式：Master 公式
+>
+
+符合 T(N) = a*T(N/b) + O(N^d^) 的递归函数，可以直接通过 Master 公式来确定时间复杂度。
+
+- log~b~^a^ < d，复杂度为 O(N^d^)
+- log~b~^a^ > d，复杂度为 O(N^log(b,a)^)
+- log~b~^a^ = d，复杂度为 O(N^d^ * logN)
+
+### 2、阶乘函数
+
+```go
+// 阶乘函数
+//
+// 递归出口：
+//  - Factorial(0) = 1
+//  - Factorial(1) = 1
+// 递归体：
+//  - Factorial(n) = n * Factorial(n - 1)
+func factorial(n int) int {
+    if n < 0 {
+        panic("无效值")
+    }
+
+    if n == 0 || n == 1 {
+        return 1
+    }
+
+    return n * factorial(n-1)
+}
+```
+
+### 3、反转单链表（递归法）
+
+```go
+// 反转单链表 - 递归形式
+//
+// 递归出口：
+//  - 链表为空或只有一个节点，直接返回，不用反转
+// 递归体：
+//  - 递归处理下一个节点 head.Next 的反转
+//  - 然后将下一个节点指向当前节点，当前节点指向 nil
+//
+// 时间复杂度 = O(N)
+func reverseSingleListByRecursion(head *SingleNode) *SingleNode {
+    // 递归出口
+    if head == nil || head.Next == nil {
+        // 此时会找到链表中的最后一个元素，将作为新的头节点
+        return head
+    }
+
+    // 递归处理下一个节点
+    // 返回的新头结点保持不动
+    newh := reverseSingleListByRecursion(head.Next)
+    // 反转，后一个节点指向前一个
+    head.Next.Next = head
+    head.Next = nil
+
+    return newh
+}
+```
+
+
+
+## 六、分治
+
+### 1、分治的概念
+
+分治法的设计思想是将一个难以解决的大问题分解成一些规模较小的相同问题，分而治之。
+
+一般来说，分治算法在每一层递归上都有 3 个步骤：
+
+- 分解：将原问题分解成一系列子问题。
+- 求解：递归地求解各子问题，若子问题足够小，则直接求解。
+- 合并：将子问题的解合并成原问题的解。
+
+### 2、归并排序
+
+> 递归实现
+
+```go
+// 归并排序
+//  - 分解：将长为 N 的数组分为 N/2 的左右两段
+//  - 求解：递归调用分别将左右两边排好序
+//  - 合并：合并两个有序的子序列使整体有序
+func MergeSort(arr []int) {
+    binarySort(arr, 0, len(arr)-1)
+}
+
+// 二分排序
+// 递归出口：仅有一个数时，认为有序
+// 递归体：一直二分，二分到左右各一个元素，然后合并排序
+func binarySort(arr []int, l, r int) {
+    // 递归出口
+    if l == r {
+        return
+    }
+
+    // 中位
+    m := l + (r-l)>>1
+    // 递归将左右两边排好序
+    binarySort(arr, l, m)
+    binarySort(arr, m+1, r)
+    // 合并两个有序子序列
+    // 目前 [l, m] [m+1, r] 已分别有序
+    merge(arr, l, m, r)
+}
+
+// 合并思路：
+// 对比左右两个数组，将较小的数先放入有序数组
+// 将有序数组替换到元素的 [l, r] 位置
+func merge(arr []int, l, m, r int) {
+    // 存储合并后的数组
+    orderly := make([]int, r-l+1)
+
+    // 左右数组的起始索引
+    i := 0
+    li := l
+    ri := m + 1
+
+    // 任何一个越界，就结束比较
+    for li <= m && ri <= r {
+        // 将较小的数先放入 orderly
+        if arr[li] < arr[ri] {
+            orderly[i] = arr[li]
+            li++
+        } else {
+            orderly[i] = arr[ri]
+            ri++
+        }
+        i++
+    }
+
+    // 把左边或右边剩余的部分全部放入 orderly
+    for li <= m {
+        orderly[i] = arr[li]
+        i++
+        li++
+    }
+    for ri <= r {
+        orderly[i] = arr[ri]
+        i++
+        ri++
+    }
+
+    // 将 orderly 写入原 arr
+    for j := 0; j < len(orderly); j++ {
+        arr[l+j] = orderly[j]
+    }
+}
+```
+
+> 迭代实现
+
+```go
+// 归并排序 - 迭代实现
+//
+// 每轮将 eg 个数当作一组，迭代合并左右两组使有序
+// 第一轮：eg = 1，依次迭代，使相邻的 2 个数有序
+// 第二轮：eg = eg<<1，依次迭代，使相邻的 4 个数有序
+// ...
+// 当 eg >= len(arr) 时，结束迭代
+func MergeSortByIterate(arr []int) {
+    // 每组数量
+    eg := 1
+    len := len(arr)
+
+    // 左+右两组的数组小于 len 说明还未完全合并
+    for 2*eg < len {
+        // 按每组 eg 个迭代，每次会合并掉 2*eg
+        for l := 0; l+eg < len; l += 2 * eg {
+            // 右边界，注意不能越界
+            r := l + eg
+            if r >= len {
+                r = len
+            }
+            // 中位
+            m := l + (r-l)>>1
+            // 合并有序
+            merge(arr, l, m, int(r))
+        }
+
+        // eg * 2
+        eg <<= 1
+    }
+}
+```
+
+
+
+## 七、动态规划
+
+
+
+## 八、贪心
+
+
+
+## 九、回溯
+
+
+
+## 十、分支限界法

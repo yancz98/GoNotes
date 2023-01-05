@@ -752,7 +752,7 @@ func reverseSingleListByRecursion(head *SingleNode) *SingleNode {
 一般来说，分治算法在每一层递归上都有 3 个步骤：
 
 - 分解：将原问题分解成一系列子问题。
-- 求解：递归地求解各子问题，若子问题足够小，则直接求解。
+- 递归求解：递归地求解各子问题，若子问题足够小，则直接求解。
 - 合并：将子问题的解合并成原问题的解。
 
 ### 2、归并排序
@@ -838,32 +838,223 @@ func merge(arr []int, l, m, r int) {
 //
 // 每轮将 eg 个数当作一组，迭代合并左右两组使有序
 // 第一轮：eg = 1，依次迭代，使相邻的 2 个数有序
-// 第二轮：eg = eg<<1，依次迭代，使相邻的 4 个数有序
+// 第二轮：eg = 2，依次迭代，使相邻的 4 个数有序
+// 第三轮：eg = 4，依次迭代，使相邻的 8 个数有序
 // ...
-// 当 eg >= len(arr) 时，结束迭代
+// 当 2*eg > len(arr) 时，结束迭代
 func MergeSortByIterate(arr []int) {
     // 每组数量
     eg := 1
     len := len(arr)
 
-    // 左+右两组的数组小于 len 说明还未完全合并
-    for 2*eg < len {
+    // eg 代表本轮要合并相邻的 2*eg 个数
+    // 2*eg == len 本轮正好合并完成
+    // 2*eg < len  说明还未完全合并
+    for 2*eg <= len {
         // 按每组 eg 个迭代，每次会合并掉 2*eg
-        for l := 0; l+eg < len; l += 2 * eg {
-            // 右边界，注意不能越界
-            r := l + eg
+        for l := 0; l < len; l += 2 * eg {
+            // 右边界，最大为 len-1
+            r := l + 2*eg - 1
             if r >= len {
-                r = len
+                r = len - 1
             }
             // 中位
             m := l + (r-l)>>1
             // 合并有序
-            merge(arr, l, m, int(r))
+            merge(arr, l, m, r)
         }
 
         // eg * 2
         eg <<= 1
     }
+}
+```
+
+### 3、计算数组的小和
+
+> 总结：计算每一个数的左边或右边比它大或小的元素的数量时，都可以用归并排序。
+
+```go
+/**
+ * NC349：计算数组的小和
+ *  数组中第 i 个数的左侧比 i 小的数的和，叫数的小和，
+ *  数组中所有数的小和叫数组的小和。
+ *
+ * 例如：数组 s = [1, 3, 5, 2, 4, 6]
+ *  s[0] 的小和为 0；
+ *  s[1] 的小和为 1；
+ *  s[2] 的小和为 1+3=4；
+ *  s[3] 的小和为 1；
+ *  s[4] 的小和为 1+3+2=6；
+ *  s[5] 的小和为 1+3+5+2+4=15。
+ *  所以数组 s 的小和为 0+1+4+1+6+15=27
+ *
+ * Tags：分治 归并排序
+ */
+
+// 小和问题的等价问题：
+//  当前值的右组有多少个数大于当前值，当前值就得累加多少次。
+//  若当前值的右边有序，则不用迭代即可立即得出有多少个大于当前值的数。
+//  利用归并排序的红利，每次比较都不浪费，使左右两边分别有序。
+func SmallSum(arr []int) int {
+    if len(arr) == 0 {
+        return 0
+    }
+
+    return binarySortAndSum(arr, 0, len(arr)-1)
+}
+
+// 二分排序并求和
+//  先用二分排序使左右两组分别有序，并得到左右两组的小和，
+//  再合并有序的左右组，并求出小和
+func binarySortAndSum(arr []int, l, r int) int {
+    // 递归出口
+    // 一个元素的数组没有小和
+    if l == r {
+        return 0
+    }
+
+    m := l + (r-l)>>2
+    // 左组的小和 + 右组的小和 + 合并后的小和
+    return binarySortAndSum(arr, l, m) +
+        binarySortAndSum(arr, m+1, r) +
+        mergeAndSum(arr, l, m, r)
+}
+
+// 合并 & 求和（求小和的核心思路）
+//  合并之前，左右已分别有序，依次比较左右组的元素，
+//  仅当左小右大时（arr[li] < arr[ri]）产生小和，
+//  小和为 左侧值 arr[li] * 右侧 ri ~ r 的数量
+func mergeAndSum(arr []int, l, m, r int) int {
+    // 已合并
+    orderly := make([]int, r-l+1)
+
+    // 左右指针
+    li, ri := l, m+1
+    i := 0
+    sum := 0
+    for li <= m && ri <= r {
+        // 左边小，产生小和
+        if arr[li] < arr[ri] {
+            // arr[li] 产生的小和数量为 ri ~ r
+            sum += arr[li] * (r - ri + 1)
+            orderly[i] = arr[li]
+            li++
+        } else {
+            orderly[i] = arr[ri]
+            ri++
+        }
+
+        i++
+    }
+
+    // 左右剩余元素
+    for li <= m {
+        orderly[i] = arr[li]
+        i++
+        li++
+    }
+    for ri <= r {
+        orderly[i] = arr[ri]
+        i++
+        ri++
+    }
+
+    // 已排序回写原数组
+    for j := 0; j < len(orderly); j++ {
+        arr[l+j] = orderly[j]
+    }
+
+    return sum
+}
+```
+
+
+
+### 4、数组中的逆序对
+
+> 总结：计算每一个数的左边或右边比它大或小的元素的数量时，都可以用归并排序。
+
+```go
+/**
+ * 剑指 Offer 51 数组中的逆序对
+ * NC118 数组中的逆序对
+ *  在数组中的两个数字，如果前面一个数字大于后面的数字，则这两个数字组成一个逆序对。
+ *  输入一个数组，求出这个数组中的逆序对的总数。
+ *
+ * 示例 1：
+ *  输入: [7,5,6,4]
+ *  输出: 5
+ *
+ * Tags：分治 归并排序
+ */
+
+// 数组中的逆序对
+//  当前值的左边有多少个数大于当前值，当前值就能产生多少个逆序对
+//  同样利用归并排序的红利，不需要迭代，可立即得出数量
+func ReversePair(arr []int) int {
+    return binarySortAndNum(arr, 0, len(arr)-1)
+}
+
+// 二分排序并统计逆序数量
+func binarySortAndNum(arr []int, l, r int) int {
+    // 递归出口
+    // 一个元素时，没有逆序对
+    if l == r {
+        return 0
+    }
+
+    // 中位
+    m := l + (r-l)>>1
+    return binarySortAndNum(arr, l, m) +
+        binarySortAndNum(arr, m+1, r) +
+        mergeAndNum(arr, l, m, r)
+}
+
+// 合并 & 统计逆序数量（核心）
+//  仅当左大右小时（arr[li] > arr[ri]）产生逆序对，
+//  逆序对的数量为 左侧 li ~ m 的数量
+func mergeAndNum(arr []int, l, m, r int) int {
+    // 有序
+    orderly := make([]int, r-l+1)
+
+    // 左右指针
+    li, ri := l, m+1
+    i := 0
+    num := 0
+    for li <= m && ri <= r {
+        // 右边小，产生逆序对
+        if arr[li] > arr[ri] {
+            // arr[ri] 产生的逆序对数量为 li ~ m
+            num += m - li + 1
+            orderly[i] = arr[ri]
+            ri++
+        } else {
+            orderly[i] = arr[li]
+            li++
+        }
+
+        i++
+    }
+
+    // 左右剩余
+    for li <= m {
+        orderly[i] = arr[li]
+        i++
+        li++
+    }
+    for ri <= r {
+        orderly[i] = arr[ri]
+        i++
+        ri++
+    }
+
+    // 有序回填
+    for j := 0; j < len(orderly); j++ {
+        arr[l+j] = orderly[j]
+    }
+
+    return num
 }
 ```
 

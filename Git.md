@@ -1,4 +1,4 @@
-[toc]
+
 
 ## 1、安装
 
@@ -478,13 +478,7 @@ master> git merge dev
 
 
 
-
-
-
-
-
-
-## 9、应用
+## 5、其它
 
 ### （1）初始化项目
 
@@ -514,14 +508,6 @@ git add .
 git commit -m msg
 git push -u origin master
 ```
-
-### （2）关于 Laravel 项目
-
-从远程服务器克隆laravel项目到本地后的注意事项
-
-> ①执行 composer install 安装 vendor。
->
-> ②复制 .env 配置文件到根目录下。
 
 ### （3）解决冲突
 
@@ -564,3 +550,349 @@ git push -u origin master
 > 启用提交窗口
 >
 > - [x] use non-modal commit interface
+
+
+
+## 九、Git 内部原理
+
+### 1、`.git` 目录
+
+```
+.git
+├── branches       # 分支
+│   └── ...
+├── config         # 仓库配置文件
+├── description    # 仅供 GitWeb 程序使用
+├── HEAD           # HEAD 指向目前被检出的分支
+├── hooks          # 客户端或服务器的钩子脚本
+│   ├── *.sample
+│   └── ...
+├── index          # 保存暂存区信息（尚未创建，git add 后创建）
+├── info           # 包含全局性排除文件
+│   └── exclude
+├── objects        # 存储所有数据内容
+│   ├── info
+│   └── pack       # 包文件 `git gc`
+└── refs           # 存储指向数据（分支、远程仓库和标签等）的提交对象的指针
+    ├── heads      # head 引用
+    └── tags       # tag 引用
+```
+
+注：
+
+- 执行 `git init` 时，Git 会创建一个 `.git` 目录。这个目录包含了所有 Git 存储和操作的东西。
+- 仓库配置文件：`.git/config`，用 `git config key value` 命令配置。
+- 全局配置文件：`~/.gitconfig`，用 `git config --global key value` 命令配置。
+- `.git/info`：包含一个全局性排除文件 `.git/info/exclude` ，放置那些不希望被记录在 `.gitignore` 文件中的忽略模式。
+
+
+
+### 2、Git 对象
+
+#### （1）数据对象 blob
+
+> blob 对象仅保存了文件的内容，文件名并没有被保存。
+
+```shell
+# ------------------------
+# 底层命令：git hash-object
+# ------------------------
+# 可将任意数据保存于 .git/objects 目录（即对象数据库），并返回指向该数据对象的唯一键（长度为 40 个字符的校验和）
+# 由 SHA-1(header + 待存储的数据) 运算而得的校验和
+
+# version 1
+$ echo 'version 1' > main.go
+$ git hash-object -w main.go
+83baae61804e65cc73a7201a7252750c76066a30
+
+# version 2
+$ echo 'version 2' > main.go
+$ git hash-object -w main.go
+1f7a7a472abf3dd9643fd615f6da379c4acb3e3a
+
+# -------------------------------
+# 对象数据库记录下了该文件的两个不同版本
+# -------------------------------
+
+# 一个文件对应一条内容。
+# 校验和的前两个字符用于命名子目录，余下的 38 个字符则用作文件名。
+$ tree .git/objects/
+.git/objects/
+├── 1f
+│   └── 7a7a472abf3dd9643fd615f6da379c4acb3e3a
+├── 83
+│   └── baae61804e65cc73a7201a7252750c76066a30
+├── info
+└── pack
+
+# -----------------------------------------
+# 底层命令：git cat-file -p    从 Git 取回数据
+# -----------------------------------------
+
+# 取回 v1
+$ git cat-file -p 83baae61804e65cc73a7201a7252750c76066a30
+version 1
+
+# 取回 v2
+$ git cat-file -p 1f7a7a472abf3dd9643fd615f6da379c4acb3e3a
+version 2
+
+# --------------------------------------
+# 底层命令：git cat-file -t    查看对象类型
+# --------------------------------------
+$ git cat-file -t 83baae61804e65cc73a7201a7252750c76066a30
+blob
+
+# --------------------------------------
+# 底层命令：git cat-file -t    查看对象大小
+# --------------------------------------
+$ git cat-file -s 83baae61804e65cc73a7201a7252750c76066a30
+10
+```
+
+#### （2）树对象 tree
+
+> 树对象解决了文件名保存的问题，也允许我们将多个文件组织到一起。
+
+```shell
+# master^{tree} 表示 master 分支上最新的提交所指向的树对象
+# 做完一下操作才会有这个 tree 结构
+$ git cat-file -p master^{tree} 
+040000 tree 1906578c622f8547a657319a6151e08421ede398	bak
+100644 blob 1f7a7a472abf3dd9643fd615f6da379c4acb3e3a	main.go
+100644 blob fa49b077972391ad58037050f2a75f74e3671e92	new.go
+
+# Git 根据某一时刻暂存区（即 index 区）所表示的状态创建并记录一个对应的树对象，如此重复便可依次记录（某个时间段内）一系列的树对象。
+# 因此，为创建一个树对象，首先需要创建一个暂存区。
+
+# ---------------------------------------------
+# 底层命令：git update-index    为单个文件创建暂存区
+# ---------------------------------------------
+
+# 将 v1 暂存
+$ git update-index --add --cacheinfo 100644 83baae61804e65cc73a7201a7252750c76066a30 main.go
+
+Options:
+    --add        必须，该文件并不在暂存区中
+    --cacheinfo  必须，将要添加的文件位于 Git 数据库中，而不是位于当前目录下。
+    
+Git 文件（即数据对象）的合法模式：
+    100644  表明这是一个普通文件
+    100755  表示一个可执行文件
+    120000  表示一个符号链接
+
+# ---------------------------------------------
+# 底层命令：git write-tree    将暂存区内容写入树对象
+# ---------------------------------------------
+# 如果某个树对象此前并不存在的话，当调用此命令时，它会根据当前暂存区状态自动创建一个新的树对象。
+
+# 创建 v1 的树对象
+$ git write-tree
+1906578c622f8547a657319a6151e08421ede398
+
+# 查看 v1 树对象类型 & 内容
+$ git cat-file -p 1906578c622f8547a657319a6151e08421ede398
+tree
+$ git cat-file -p 1906578c622f8547a657319a6151e08421ede398
+100644 blob 83baae61804e65cc73a7201a7252750c76066a30	main.go  # v1
+
+# 将 version 2 和 new.go 文件暂存
+$ echo 'new file' > new.go
+$ git update-index --add --cacheinfo 100644 \
+1f7a7a472abf3dd9643fd615f6da379c4acb3e3a main.go
+$ git update-index --add new.go    # 从当前目录暂存
+
+# 创建 v2 + new 的树对象
+$ git write-tree
+6142a6bde59e4b546fc8b6752c318f7f175e6830
+
+# 查看 v2 树对象类型 & 内容
+$ git cat-file -t 6142a6bde59e4b546fc8b6752c318f7f175e6830
+tree
+$ git cat-file -p 6142a6bde59e4b546fc8b6752c318f7f175e6830
+100644 blob 1f7a7a472abf3dd9643fd615f6da379c4acb3e3a	main.go  # v2
+100644 blob fa49b077972391ad58037050f2a75f74e3671e92	new.go   # new
+
+# 将 v1-tree 加入到 v2-tree
+# -----------------------------------------------------
+# 底层命令：git read-tree --prefix=bak    将树对象读入暂存区
+# -----------------------------------------------------
+# 将 v1-tree 当作子树读入暂存区
+$ git read-tree --prefix=bak 1906578c622f8547a657319a6151e08421ede398
+$ git write-tree
+1a3b9d425f870644fc663c4714e1a0deeb1b7ee7
+$ git cat-file -p 1a3b9d425f870644fc663c4714e1a0deeb1b7ee7
+040000 tree 1906578c622f8547a657319a6151e08421ede398	bak      # v1-tree
+100644 blob 1f7a7a472abf3dd9643fd615f6da379c4acb3e3a	main.go  # v2
+100644 blob fa49b077972391ad58037050f2a75f74e3671e92	new.go   # new
+```
+
+#### （3）提交对象 commit
+
+> 如果你做完了以上所有操作，那么现在就有了三个树对象，分别代表我们想要跟踪的不同项目快照。
+>
+> 然而问题依旧：若想重用这些快照，你必须记住所有三个 SHA-1 哈希值。并且，你也完全不知道是谁保存了这些快照，在什么时刻保存的，以及为什么保存这些快照。而以上这些，正是提交对象（commit object）能为你保存的基本信息。
+
+```shell
+# -----------------------------------------
+# 底层命令：git commit-tree    创建一个提交对象
+# -----------------------------------------
+
+# 创建 v1 的提交对象
+# 注意：只能为 tree-object 创建提交对象
+$ git commit-tree -m 'version 1' 1906578c622f8547a657319a6151e08421ede398
+6b5de9a4044ad1adeddee8ce55803b4da6950f76  # 每次都不一样（携带时间戳）
+
+# 查看提交对象的类型 & 内容
+$ git cat-file -t 6b5de9a4044ad1adeddee8ce55803b4da6950f76
+commit
+$ git cat-file -p 6b5de9a4044ad1adeddee8ce55803b4da6950f76
+tree 1906578c622f8547a657319a6151e08421ede398
+author root <root@localhost.localdomain> 1678777819 +0800
+committer root <root@localhost.localdomain> 1678777819 +0800
+
+version 1
+
+# 创建 v2 & v3 的提交对象（它们分别引用各自的上一个提交作为其父提交对象）
+$ git commit-tree -m 'version 2' 6142a6bde59e4b546fc8b6752c318f7f175e6830
+0348de75892186425e593cc53c55a9c198b0e546  # 每次都不一样（携带时间戳）
+$ git commit-tree -m 'version 3' 1a3b9d425f870644fc663c4714e1a0deeb1b7ee7
+3dc6836374bf679f9bf4ccc1b7b890fdc982e6ca  # 每次都不一样（携带时间戳）
+
+# 这三个提交对象分别指向之前创建的三个树对象快照
+# 以上即为 `git add` 和 `git commit` 的底层实现
+
+# 可以通过 git log 查看 Git 的提交历史了
+$ git log --stat  #（理论上可以）
+fatal: bad default revision 'HEAD'
+# 需更新引用（超纲）
+# 将 master 指向某一系列提交之首
+git update-ref refs/heads/master 3dc6836374bf679f9bf4ccc1b7b890fdc982e6ca
+```
+
+#### （4）对象存储
+
+> Git 仓库的所有对象都会有个头部信息一并被保存。
+>
+> 头信息 header = "blob #{content.length}\0"
+>
+> 如：`blob 10\0version 1`
+
+### 3、Git 引用（分支）
+
+> Git 引用：用一个文件来保存 SHA-1 值，然后给该文件取个简单的名字，用这个名字指针替代原始的 SHA-1 值。
+
+```shell
+# 若要创建一个新引用来帮助记忆最新提交所在的位置，从技术上讲我们只需简单地做如下操作：（不建议直接编辑引用文件）
+$ echo 3dc6836374bf679f9bf4ccc1b7b890fdc982e6ca > .git/refs/heads/master
+
+# ----------------------------------
+# 底层命令：git update-ref    更新引用
+# ----------------------------------
+
+# 更新引用 master
+git update-ref refs/heads/master 3dc6836374bf679f9bf4ccc1b7b890fdc982e6ca
+
+注：
+    这基本就是 Git 分支的本质：一个指向某一系列提交之首的指针或引用。
+    运行类似于 `git branch <branch>` 这样的命令时，Git 实际上会运行 update-ref 命令，取得当前所在分支最新提交对应的 SHA-1 值，并将其加入你想要创建的任何新引用中。
+```
+
+#### HEAD 引用
+
+> Git 如何知道最新提交的 SHA-1 值呢？ 答案是 HEAD 文件。
+>
+> `.git/HEAD` 文件：通常是一个符号引用（指向其他引用的指针），指向目前所在的分支。
+
+```shell
+# 正常情况下，HEAD 指向 master 引用
+# 然而在某些罕见的情况下，HEAD 文件可能会包含一个 git 对象的 SHA-1 值。 
+# 当你在检出一个标签、提交或远程分支，让你的仓库变成 “分离 HEAD” 状态时，就会出现这种情况。
+$ cat .git/HEAD
+ref: refs/heads/master
+
+# 当我们执行 git commit 时，该命令会创建一个提交对象，并用 HEAD 文件中那个引用所指向的 SHA-1 值设置其父提交字段。
+
+# 查看 HEAD 引用的值
+$ git symbolic-ref HEAD
+refs/heads/master
+
+# 设置 HEAD 引用的值
+$ git symbolic-ref HEAD refs/heads/test
+```
+
+#### 标签引用
+
+> 标签对象：类似提交对象，主要的区别在于，标签对象通常指向一个提交对象，而不是一个树对象。
+>
+> 它像是一个永不移动的分支引用——永远指向同一个提交对象。
+
+```shell
+# 创建一个轻量标签
+$ git update-ref refs/tags/v1.0 cac0cab538b970a37ea1e769cbbde608743bc96d
+
+# 创建一个附注标签
+$ git tag -a v1.1 1a410efbd13591db07496601ebc7a059dd55cfe9 -m 'test tag'
+
+```
+
+#### 远程引用
+
+> 如果你添加了一个远程版本库并对其执行过推送操作，Git 会记录下最近一次推送操作时每一个分支所对应的值，并保存在 refs/remotes 目录下。
+>
+> 远程引用（refs/remotes/）和分支（refs/heads/）之间最主要的区别在于，远程引用是只读的。 
+>
+> 虽然可以 git checkout 到某个远程引用，但是 Git 并不会将 HEAD 引用指向该远程引用。因此，你永远不能通过 commit 命令来更新远程引用。
+>
+> Git 将这些远程引用作为记录远程服务器上各分支最后已知位置状态的书签来管理。
+
+### 4、包文件
+
+> 手动执行 git gc 命令让 Git 对对象进行打包。
+>
+> 当版本库中有太多的松散对象，或者向远程服务器执行推送时，Git 都会自动打包。 
+
+```shell
+# 手动打包
+$ git gc
+Counting objects: 8, done.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (8/8), done.
+Total 8 (delta 1), reused 0 (delta 0)
+
+# 打包后
+$ tree .git/objects/
+.git/objects/
+├── 19
+│   └── 5a60ad34ac46dfcd53e779aed8e0e33c26946c
+├── info
+│   └── packs
+└── pack
+    ├── pack-c39d225178055e0ed0698ccebfb4787807936e95.idx
+    └── pack-c39d225178055e0ed0698ccebfb4787807936e95.pack
+
+# --------------------------------------
+# 底层命令：git verify-pack 查看已打包的内容
+# --------------------------------------
+$ git verify-pack -v .git/objects/pack/pack-c39d225178055e0ed0698ccebfb4787807936e95.idx
+# 解析：                   |    SHA-1    | type |size|  |  |
+cb070c8923e4834bb945764f859246101d17cc03 commit 268 173 12
+2819caa241044f7a41666bc2bc1ae72993d4f8f2 commit 31 42 185 1 cb070c8923e4834bb945764f859246101d17cc03
+856fa4b281d296680517cfe9056d92bf013e6435 commit 169 114 227
+6142a6bde59e4b546fc8b6752c318f7f175e6830 tree   69 75 341
+1f7a7a472abf3dd9643fd615f6da379c4acb3e3a blob   10 19 416
+fa49b077972391ad58037050f2a75f74e3671e92 blob   9 18 435
+1906578c622f8547a657319a6151e08421ede398 tree   35 45 453
+83baae61804e65cc73a7201a7252750c76066a30 blob   10 19 498
+非 delta：7 个对象
+链长 = 1: 1 对象
+.git/objects/pack/pack-c39d225178055e0ed0698ccebfb4787807936e95.pack: ok
+
+```
+
+### 5、引用规范
+
+
+
+### 6、传输协议
+

@@ -396,13 +396,12 @@ source ~/.vimrc
 
 ### 4、其它
 
-```
-自动补全（命令、参数）：tab
-清屏：clear
-显示历史命令：history
-结束进程：Ctrl+c
+```shell
+# 自动补全（命令、参数）：tab
+# 清屏：clear
+# 结束进程：Ctrl+c
 
-重定向：
+# 重定向：
     将本该显示在终端上的内容 输出、追加到指定文件中
     >    表示输出到文件，会覆盖文件原有的内容
     >>   表示追加，追加到文件的末尾
@@ -413,20 +412,50 @@ source ~/.vimrc
     还可以将其他命令的输出结果追加到文件中：
     tree laravel >> laravel_directory_structure.txt
 
-管道：|
+# 管道：|
     Linux允许将一个命令的输出通过管道作为另一个命令的输入。
     常与管道搭配使用的命令有：
     more
     grep
 
-通配符：
+# 通配符：
     *
     ?	匹配1个字符
     []	字符组中的任何一个（如：[abc] [1-9]）
 
-帮助指令：
+# 帮助指令：
     man <command>  获得帮助信息
     help <command> 获得Shell内置命令的帮助信息
+
+# 查看已经执行过的历史命令
+history     # 显示全部
+history 10  # 显示最近10条
+!15         # 执行历史第15条命令
+
+# ---------------
+#  日期时间
+# ---------------
+
+# 显示日期
+$ date
+2023年 03月 19日 星期日 01:09:11 CST
+
+$ date '+%Y-%m-%d %H:%M:%S'
+2023-03-19 01:10:41
+
+# 设置日期
+$ date -s "0000-00-00 00:00:00"
+# 显示日历：
+cal [选项] [[[日] 月] 年]
+
+选项：
+    -1, --one        只显示当前月份(默认)
+    -3, --three      显示上个月、当月和下个月
+    -s, --sunday     周日作为一周第一天
+    -m, --monday     周一用为一周第一天
+    -j, --julian     输出儒略日
+    -y, --year       输出整年
+
 ```
 
 ### 5、运行级别
@@ -469,34 +498,60 @@ Options:
     -b  对非空行进行编号
     -n  对所有行进行编号（包含空行）
     
-注：如果没有指定文件，或者文件为 `-`，则从标准输入读取。
+注：
+    如果没有指定文件，或者文件为 `-`，则从标准输入读取。
+    与 more 结合，翻页显示 cat <File> | more
 
 # 倒序输出 cat
 tac [Options] <文件, ...>
-
-# 打印每个文件的【前|后】 n 行（默认10行）
-head [Options] <文件, ...>
-tail [Options] <文件, ...>
-
-Options：
-    -c, --bytes  打印前 c 字节
-    -n, --lines  打印前 n 行
 
 # 分页显示文件内容（留痕）
 more [Options] <文件 ,...>
 
 说明：
-    当内容显示满屏时停止
-    空格向下翻页
-    回车向下显示一行
-    q 退出（结束分页）
-    其它命令 | more ：分页显示其它命令执行的结果
-
-# 与 more 功能一样，增加了一个上下翻行显示（无痕浏览）
+    more 指令是一个基于 VI 编辑器的文本过滤器，它以全屏幕的方式按页显示文本内容。
+    【其它命令 | more】：分页显示其它命令执行的结果。
+    more 内置了若干快捷键（交互指令）：
+    |--------|------------------|
+    | space  | 向下翻一页         |
+    | Enter  | 向下翻一行         |
+    | q      | 退出（结束分页）    |
+    | Ctrl+F | 向下滚动一屏       |
+    | Ctrl+B | 返回上一屏         |
+    | =      | 输出当前行号       |
+    | :f     | 输出文件名和当前行号 |
+    |--------|------------------|
+    
+# 与 more 功能一样（动态加载）
 less [选项] 文件名
 
 说明：
     其它命令 | less：分页显示其它命令执行的结果
+
+# 输出内容到控制台
+echo [Options] <Content>
+
+例：
+    输出环境变量：echo $PATH 
+    输出内容并写入文件：echo 'Hello World' > hello
+
+# 打印每个文件的【前|后】 n 行（默认10行）
+head [Options] <文件, ...>
+
+Options：
+    -c, --bytes   打印前 c 字节
+    -n, --lines   打印前 n 行
+
+tail [Options] <文件, ...>
+
+Options：
+    -c, --bytes   打印前 c 字节
+    -n, --lines   打印前 n 行
+    -f, --follow  监听文件的更新
+    -F            等同 --follow=name --retry
+      --max-unchanged-stats=N  with -f，重新打开一个在迭代 N 次（默认5）后没有更改大小的 FILE，检查它是否已被取消链接或重命名（旋转日志）。
+      --pid=PID                with -f，在 PID 终止后进程终止
+    --retry       若文件无法访问，重试
 ```
 
 ### 2、文件操作
@@ -579,14 +634,14 @@ ln [-s] 源文件 目标文件：
 > 在每个 FILE 或是标准输入中查找 PATTERN，默认的 PATTERN 是一个基本正则表达式。
 
 ```
-grep [选项] PATTERN [FILE ...]
------
-其他返回结果 | grep [选项] PATTERN
+grep [选项] PATTERN <FILE ...>
 
 选项：
-    -i	不区分大小写
+    -i	不区分大小写查找
     -v	显示不包含匹配文本的所有行（排除）
     -n	显示匹配行及行号
+
+管道：其他命令返回结果 | grep [选项] PATTERN
 ```
 
 **（2）find**
@@ -603,13 +658,13 @@ find [目录] [条件] [动作]
 动作：对搜索结果进行特定的处理。
 
 选项：
-    -name：指定文件名，可以通过*模糊匹配
-    -type：指定文件类型（b/c/d/p/l/f）
-    -size：指定文件大小，+表示大于，-表示小于
-    -user：指定用户
-    -group：指定组
-    -mtime/atime/ctime：指定修改/访问/创建时间，单位为天，+表示几天前，-表示几天内
-    -mmin/amin/cmin：同上，单位为分钟
+    -name     指定文件名，可以通过*模糊匹配
+    -type     指定文件类型（b/c/d/p/l/f）
+    -size     指定文件大小，+表示大于，-表示小于
+    -user     指定用户
+    -group    指定组
+    -mtime/atime/ctime  指定修改/访问/创建时间，单位为天，+表示几天前，-表示几天内
+    -mmin/amin/cmin     同上，单位为分钟
 
 例：
     find：查找当前目录下的所有文件。
@@ -669,30 +724,22 @@ export PATH=$PATH:dir1[:dir2]
 
 ### 5、文件压缩与解压
 
-**（1）gzip 压缩文件**
+**（1）gzip / gunzip：压缩、解压文件**
 
 > 只能压缩单个文件，不压缩目录
 
 ```
+# 压缩文件：生成 FILE.gz，删除原文件
 gzip [选项] [文件]
 
 选项：
-    -d	等价于 gunzip 解压文件
-	
-说明：
-    执行命令会生成file.gz，删除原文件
-```
+    -d  等价于 gunzip 解压文件
 
-**（2）gunzip 解压文件**
-
-```
+# 解压文件，删除原压缩文件
 gunzip [选项] [文件]
-
-说明：
-    解压文件，删除原压缩文件
 ```
 
-**（3）bzip2 / bunzip2：压缩、解压文件**
+**（2）bzip2 / bunzip2：压缩、解压文件**
 
 ```
 bzip2  [选项] [文件]
@@ -706,7 +753,7 @@ bunzip2 [选项] [文件]
     使用 bzip2 压缩文件的后缀为 bz2。
 ```
 
-**（4）tar** 
+**（3）tar** 
 
 > 可以将多个文件或目录进行压缩
 
@@ -732,7 +779,7 @@ tar [选项...] [FILE]...
 
 ```
 结果说明：
-    文件类型及权限 | 引用数 | 用户 | 组 | 大小 | 月 | 日 | 年/时间 | 文件名
+    文件类型及权限 | 引用数 | 文件所有者 | 文件所属组组 | 大小 | 月 | 日 | 年/时间 | 文件名
 	
 例如：	
     -rw-r--r--. 1 root root 7.4M 9月  23 16:19 tree.txt
@@ -744,11 +791,15 @@ tar [选项...] [FILE]...
     8/9/10   其它用户的读/写/执行权限
     .        表示启用了selinux，空表示没有开启
 
+注：
+    所属组的权限将被组中成员继承；
+    对文件拥有写（权限）不代表可以删除文件，同时还需要对该目录的写权限才可删除文件。
+
 文件类型说明：
     -    普通文件
     d    目录
-    b    块设备
-    c    字符设备
+    b    块设备：硬盘
+    c    字符设备：鼠标、键盘
     l    链接
     s    套接字
     p    管道	
@@ -766,9 +817,9 @@ chmod [选项] [模式|八进制模式] 文件
     +    添加权限
     -    去除权限
     =    设置权限
-    u    用户
-    g    组
-    o    其它
+    u    所有者
+    g    所属组
+    o    其它组
     777	 八进制模式，777 => 111 111 111 这三组二进制分别代表了三个角色的三种权限
 	
 实例：
@@ -817,6 +868,22 @@ chattr [-RVf] [-+=aAcCdDeijsStTu] [-v version] files...
 
 ```
 lsattr [-RVadlv] [files...]
+```
+
+**（6）修改文件所有者及组**
+
+```shell
+# 设置/修改文件所属组
+chgrp 组 文件,...
+
+# 设置/修改文件所属者[及组]
+chown 所属者[:组] 文件,...
+
+Options:
+    -R, --recursive 递归操作文件和目录
+
+注：
+    修改所属者及组时，可以使用UID或GID；
 ```
 
 
@@ -902,18 +969,6 @@ Options:
     -d, --delete USER       从组中删除用户 USER
     -M, --members USER,...  设置组的成员列表（批量）
 
-# 设置/修改文件所属组
-chgrp 组 文件,...
-
-# 设置/修改文件所属者[及组]
-chown 所属者[:组] 文件,...
-
-Options:
-    -R, --recursive 递归操作文件和目录
-
-注：
-    修改所属者及组时，可以使用UID或GID；
-
 # 查看系统中的所有组
 cat /etc/group
 
@@ -955,9 +1010,145 @@ root:x:0:
 组名:密码:gid:组内用户列表（隐藏）
 ```
 
+## 五、定时任务 Cron
+
+### 1、cron 服务
+
+```
+# 查看 cron 状态
+service cron status
+
+# 操作 cron 服务
+/etc/init.d/cron start
+/etc/init.d/cron stop
+/etc/init.d/cron restart
+```
+
+### 2、crontab 用法
+
+```
+# 修改 crontab 文件，如果文件不存在会自动创建。 
+crontab –e
+
+# 显示 crontab 文件
+crontab –l
+
+# 删除 crontab 文件
+crontab -r
+
+# 删除 crontab 文件前提醒用户
+crontab -ir
+```
+
+### 3、crontab 格式
+
+```shell
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12)
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7)
+# |  |  |  |  |
+# *  *  *  *  * <command>
+
+# 特殊符号
+    * 代表所有的取值范围内的数字
+    / 代表每的意思，"/5" 表示每5个单位
+    - 代表从某个数字到某个数字
+    , 分开几个离散的数字
+	
+# 例
+    * * * * *		# 每分钟执行
+    0 6 * * *		# 每天 6:00 执行
+    */30 * * * *	# 每 30 分钟执行
+    * 9-18/1 * * *	# 9:00-18:00 每小时执行
+    * 0,8,16 * * *	# 每天的 0:00,8:00,16:00 执行
+```
 
 
-## 七、网络相关设置
+
+## 六、磁盘管理
+
+### 1、磁盘分区机制
+
+> 硬盘分类：
+>
+> - IDE 硬盘：驱动器标识符为 `hdx~` ，其中 hd 表明分区所在设备类型（IDE 硬盘），x 为盘号（a：基本盘，b：基本从属盘，c：辅助主盘，d：辅助从属盘），~ 代表分（1~4：主分区或从属分区，从 5 开始就是逻辑分区）。
+> - SCSI 硬盘：标识符为 `sdx~`，其中 sd 表示分区所在设备的类型（SCSI 硬盘），其余同上。
+
+```shell
+# 查看所有设备挂载情况
+$ lsblk
+NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda               8:0    0    8G  0 disk               # SCSI 硬盘 a盘
+├─sda1            8:1    0    1G  0 part /boot         # a盘 1号分区
+└─sda2            8:2    0    7G  0 part               # a盘 2号分区
+  ├─centos-root 253:0    0  6.2G  0 lvm  /
+  └─centos-swap 253:1    0  820M  0 lvm  [SWAP]
+sr0              11:0    1 1024M  0 rom
+
+# 输出文件系统信息
+lsblk -f
+NAME            FSTYPE   LABEL UUID                                   MOUNTPOINT
+sda
+├─sda1          xfs            ac8726ac-c47a-444d-89fa-787167a2145f   /boot
+└─sda2          LVM2_mem       mqDLcn-V2Ru-po0v-J9yZ-Oe8I-LSwc-JHcC17
+  ├─centos-root xfs            e8fa9679-32ed-49f2-9e0c-ccc0088164d7   /
+  └─centos-swap swap           909cb6a9-2262-4f6e-b970-75cb6dc00e25   [SWAP]
+sr0
+```
+
+### 2、增加磁盘
+
+```shell
+# ------------------
+#  添加磁盘的步骤
+# ------------------
+# 1 在虚拟机中添加一个磁盘
+
+# 2 分区
+fdisk
+
+# 3 格式化磁盘
+mkfs
+
+# 4 挂载
+# 注：命令行模式下的挂载是临时的，重启后失效
+# 永久挂载：vi /etc/fstab
+mount
+
+# 5 卸载
+umount
+```
+
+### 3、查看磁盘使用情况
+
+```shell
+$ df -h
+文件系统                 容量  已用  可用 已用% 挂载点
+devtmpfs                 484M     0  484M    0% /dev
+tmpfs                    496M     0  496M    0% /dev/shm
+tmpfs                    496M  6.8M  489M    2% /run
+tmpfs                    496M     0  496M    0% /sys/fs/cgroup
+/dev/mapper/centos-root  6.2G  1.5G  4.8G   24% /
+/dev/sda1               1014M  137M  878M   14% /boot
+tmpfs                    100M     0  100M    0% /run/user/0
+
+# 查看指定目录的磁盘占用情况（默认当前目录）
+$ du -h <目录>
+
+Options：
+    -s  指定目录占用大小汇总
+    -h  带计量单位
+    -a  含文件
+    --max-depth=1 子目录深度
+    -c  列出明细的同时，增加汇总值
+```
+
+
+
+## 七、网络管理
 
 ### 1、查看网卡信息
 
@@ -1099,7 +1290,7 @@ service iptables status			查看防火墙状态
 
 
 
-## 八、进程与服务
+## 八、进程管理
 
 ### 1、vmstat：系统整体信息
 
@@ -1889,60 +2080,4 @@ pdbedit -a readonly
 > 利用 SFTP 协议利用 SSH 可以直接连接，无需搭建 FTP 服务。
 
 
-
-## 十一、Cron
-
-### 1、cron 服务
-
-```
-# 查看 cron 状态
-service cron status
-
-# 操作 cron 服务
-/etc/init.d/cron start
-/etc/init.d/cron stop
-/etc/init.d/cron restart
-```
-
-### 2、crontab 用法
-
-```
-# 修改 crontab 文件，如果文件不存在会自动创建。 
-crontab –e
-
-# 显示 crontab 文件
-crontab –l
-
-# 删除 crontab 文件
-crontab -r
-
-# 删除 crontab 文件前提醒用户
-crontab -ir
-```
-
-### 3、crontab 格式
-
-```
-# Example of job definition:
-# .---------------- minute (0 - 59)
-# |  .------------- hour (0 - 23)
-# |  |  .---------- day of month (1 - 31)
-# |  |  |  .------- month (1 - 12)
-# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7)
-# |  |  |  |  |
-# *  *  *  *  * <command>
-
-# 特殊符号
-    * 代表所有的取值范围内的数字
-    / 代表每的意思，"/5" 表示每5个单位
-    - 代表从某个数字到某个数字
-    , 分开几个离散的数字
-	
-# 例
-    * * * * *		# 每分钟执行
-    0 6 * * *		# 每天 6:00 执行
-    */30 * * * *	# 每 30 分钟执行
-    * 9-18/1 * * *	# 9:00-18:00 每小时执行
-    * 0,8,16 * * *	# 每天的 0:00,8:00,16:00 执行
-```
 

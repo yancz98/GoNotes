@@ -223,8 +223,7 @@ ls [选项] [目录]
     s    套接字
     p    管道	
 		
-# 以树形结构打印目录
-tree [目录]
+
 ```
 
 ### 3、vi-vim 编辑器
@@ -1146,6 +1145,23 @@ Options：
     -c  列出明细的同时，增加汇总值
 ```
 
+### 4、磁盘实用指令
+
+```shell 
+# 统计当前目录下的文件数量
+$ ls -l | grep '^-' | wc -l
+
+# 统计当前目录下的目录数量
+$ ls -l | grep '^d' | wc -l
+
+# 递归统计（包括子孙）文件/文件夹 数量
+$ ls -lR | grep '^-' | wc -l
+
+# 以树形结构打印目录
+$ yum install tree
+$ tree [目录]
+```
+
 
 
 ## 七、网络管理
@@ -1176,6 +1192,26 @@ ifconfig eth0 up    开启网卡，等价于 ifup eth0
 注：ifconfig 需安装工具才能使用（yum -y install net-tools）
 ```
 
+（3）设置主机名和 hosts 映射
+
+~~~shell
+# 查看主机名
+hostname
+
+# 修改主机名（修改后需重启电脑）
+vi /etc/hostname
+
+# 添加本地域名解析服务：`/etc/hosts`
+```
+127.0.0.1    www.test.com
+```
+
+# 通过 <hostname> 通信
+ping <hostname>
+~~~
+
+
+
 ### 2、配置网卡信息
 
 （1）网卡配置文件目录：`/etc/sysconfig/network-scripts/`
@@ -1201,6 +1237,8 @@ ifconfig eth0 up    开启网卡，等价于 ifup eth0
 或
 service network start|stop|restart
 ```
+
+> 注：用 `ll /etc/init.d/` 列出任然可以用 service <服务名> start | status | stop 管理的服务。
 
 ### 4、防火墙管理
 
@@ -1361,16 +1399,26 @@ service iptables status			查看防火墙状态
 ps [选项]
 
 选项：
-       -a 显示控制终端的所有进程
-       -u 显示用户信息
-       -x 显示没有控制终端的进程
+    -a 显示控制终端的所有进程
+    -u 显示用户信息
+    -x 显示没有控制终端的进程
+    -e 显示所有进程
+    -f 全格式显示
 
 ps -aux
+
+ps -ef
 
 | USER | PID | %CPU | %MEM | VSZ | RSS | TTY | STAT | START | TIME | COMMAND |
 ```
 
-> STAT 代表进程状态：
+> ps -u 参数详解
+
+| USER     | PID    | %CPU          | %MEM           | VSZ               | RSS               | TTY      | STAT     | START        | TIME                | COMMAND              |
+| -------- | ------ | ------------- | -------------- | ----------------- | ----------------- | -------- | -------- | ------------ | ------------------- | -------------------- |
+| 运行用户 | 进程ID | 所占CPU百分比 | 所占内存百分比 | 所占虚拟内存（B） | 所占物理内存（B） | 终端名称 | 进程状态 | 进程启动时间 | 进程使用CPU的总时长 | 启动进程的命令和参数 |
+
+- STAT 状态：
 
 R——Runnable（运行）：正在运行或在运行队列中等待
 
@@ -1382,7 +1430,7 @@ Z——zombie（僵死）：进程已终止，但进程描述还在，直到父�
 
 T——traced or stoppd(停止)：进程收到SiGSTOP,SIGSTP,SIGTOU信号后停止运行
 
-> 状态后缀：
+- STAT 状态后缀：
 
 <：优先级高的进程
 
@@ -1396,10 +1444,22 @@ l：ismulti-threaded (using CLONE_THREAD, like NPTL pthreads do)
 
 +：位于后台的进程组 
 
+> ps -f 参数详解
+
+| UID    | PID    | PPID     | C                           | STIME        | TTY      | TIME    | CMD                  |
+| ------ | ------ | -------- | --------------------------- | ------------ | -------- | ------- | -------------------- |
+| 用户ID | 进程ID | 父进程ID | CPU用于计算执行优先级的因子 | 进程启动时间 | 终端名称 | CPU时间 | 启动进程的命令和参数 |
+
+- C：CPU用于计算执行优先级的因子。
+
+  数值越大，表明进程是 CPU 密集型运算，执行优先级低；
+
+  数值越小，表明进程是 I/O 密集型运算，执行优先级高。
+
 ### 6、kill：结束进程
 
 ```
-kill [选项] 进程
+kill [选项] <PID>
 	
 选项：
     -9 强制结束

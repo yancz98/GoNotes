@@ -778,6 +778,10 @@ git update-ref refs/heads/master 3dc6836374bf679f9bf4ccc1b7b890fdc982e6ca
 >
 > 如：`blob 10\0version 1`
 
+#### （5）MerkleTrie
+
+![MerkleTrie](Images\Git_MerkleTrie.png)
+
 ### 3、Git 引用（分支）
 
 > Git 引用：用一个文件来保存 SHA-1 值，然后给该文件取个简单的名字，用这个名字指针替代原始的 SHA-1 值。

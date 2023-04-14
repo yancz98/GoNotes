@@ -2,22 +2,132 @@
 
 ### 1、概述
 
-### 2、安装
+NoSQL 的特点：非关系型的、分布式的、开源的、水平可扩展的。
 
-[MongoDB 社区服务器下载](https://www.mongodb.com/try/download/community)
+MongoDB 是一个高性能、开源、无模式的文档型数据库，是当前 NoSQL 数据库产品中最热门的一种。它在许多场景下可用于替代传统的关系型数据库或 key/value 存储方式，MongoDB 使用 C++开发。[官网](https://www.mongodb.com/)
+
+MongoDB 是一个介于关系数据库和非关系数据库之间的产品，是非关系数据库当中功能最
+丰富，最像关系数据库的。
+
+MongoDB 最大的特点是他支持的查询语言非常强大，其语法有点类似于面向对象的查询语言，几乎可以实现类似关系数据库单表查询的绝大部分功能，而且还支持对数据建立索引。
+
+它是一个面向集合的、模式自由的文档型数据库。
+
+> 数据类型
+
+MongoDB 支持的数据结构非常松散，是类似 JSON 的 BSON 格式，因此可以存储比较复杂的数据类型。
+
+存储的数据是键/值对的集合，键是字符串，值可以是数据类型集合里的任意类型，包括数组和文档。
+
+BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进行远程过程调用。
+
+> 三高：
+
+- 高并发（High Performance）：对数据库高并发读写的需求。
+- 高效存储（Huge Storage）：对海量数据的高效率存储和访问的需求。
+- 高可扩展 & 高可用（High Scalability & High Availability）：对数据库的高可扩展性和高可用性的需求。
+
+> 特点：
+
+- 面向集合的存储：适合存储对象及 JSON 形式的数据。
+- 动态查询：MongoDB 支持丰富的查询表达式。查询指令使用 JSON 形式的标记，可轻易查询文档中内嵌的对象及数组。
+- 完整的索引支持：包括文档内嵌对象及数组。MongoDB 的查询优化器会分析查询表达式，并生成一个高效的查询计划。
+- 查询监视：MongoDB 包含一系列监视工具用于分析数据库操作的性能。
+- 复制及自动故障转移：MongoDB 数据库支持服务器之间的数据复制，支持主-从模式及服务器之间的相互复制。复制的主要目标是提供冗余及自动故障转移。
+- 高效的传统存储方式：支持二进制数据及大型对象（如照片或图片）。
+- 自动分片以支持云级别的伸缩性：自动分片功能支持水平的数据库集群，可动态添加额外的机器。
+
+> 适用场景：
+
+- 网站数据：MongoDB 非常适合实时的插入，更新与查询，并具备网站实时数据存储所需的复制及高度伸缩性。
+- 缓存：由于性能很高，MongoDB 也适合作为信息基础设施的缓存层。在系统重启之后，由 MongoDB 搭建的持久化缓存层可以避免下层的数据源过载。
+- 大尺寸，低价值的数据：使用传统的关系型数据库存储一些数据时可能会比较昂贵，在此之前，很多时候程序员往往会选择传统的文件进行存储。
+- 高伸缩性的场景：MongoDB 非常适合由数十或数百台服务器组成的数据库。MongoDB 的路线图中已经包含对 MapReduce 引擎的内置支持。
+- 用于对象及 JSON 数据的存储：MongoDB 的 BSON 数据格式非常适合文档化格式的存储及查询。
+
+### 2、[安装](https://www.mongodb.com/docs/manual/administration/install-community/)
+
+- 下载：[MongoDB 社区服务器下载](https://www.mongodb.com/try/download/community)
+
+- 解压到：D:\MongoDB-5.0
+- 创建数据文件及日志文件的存放目录：
+  - D:\MongoDB-5.0\data 
+  - D:\MongoDB-5.0\log
 
 - 配置环境变量
-- 安装成功
 
-```shell 
-# 连接到 MongoDB 服务（mongod.exe）
-> mongo.exe
-MongoDB shell version v5.0.15
-connecting to: mongodb://127.0.0.1:27017/?compressors=disabled&gssapiServiceName=mongodb
-Implicit session: session { "id" : UUID("3d81ac46-77e3-4b41-95d6-9a9529fc6bd7") }
-MongoDB server version: 5.0.15
-......
+- 启动 MongoDB 服务：
 
+  ```shell
+  # 启动 MongoDB 服务
+  > mongod --dbpath=D:\MongoDB-5.0\data
+  
+  # 配置文件方式启动
+  > mongod -f /etc/mongodb.cfg
+  
+  # Daemon 方式启动
+  > mongod -f /etc/mongodb.cfg --fork
+  ```
+
+- 将 MongoDB 作为 Windows 服务
+
+  ```shell
+  # 将 MongoDB 作为 Windows 服务随机启动
+  > mongod --dapath=D:\MongoDB-5.0\data --logpath=D:\MongoDB-5.0\log\mongod.log --install
+  
+  > net start mongodb
+  ```
+
+- 客户端连接验证
+
+  ```shell
+  # 连接到 MongoDB 服务（mongod.exe）
+  > mongo
+  MongoDB shell version v5.0.15
+  connecting to: mongodb://127.0.0.1:27017/?compressors=disabled&gssapiServiceName=mongodb
+  Implicit session: session { "id" : UUID("3d81ac46-77e3-4b41-95d6-9a9529fc6bd7") }
+  MongoDB server version: 5.0.15
+  ......
+  
+  # 新版中没有 mongo 
+  # 需要额外安装 mongosh
+  ```
+
+
+
+> 配置参数说明
+
+```
+
+ dbpath:
+数据文件存放路径，每个数据库会在其中创建一个子目录，用于防止同一个实例多次运行的 mongod.lock 也保存在此目录中。
+ logpath
+错误日志文件
+ logappend
+错误日志采用追加模式（默认是覆写模式）
+ bind_ip
+对外服务的绑定 ip，一般设置为空，及绑定在本机所有可用 ip 上，如有需要可以单独指定
+ port
+对外服务端口。Web 管理端口在这个 port 的基础上+1000
+ fork
+以后台 Daemon 形式运行服务
+ journal
+开启日志功能，通过保存操作日志来降低单机故障的恢复时间，在 1.8 版本后正式加入，取代在 1.7.5 版本中的 dur 参数。
+ syncdelay
+系统同步刷新磁盘的时间，单位为秒，默认是 60 秒。
+ directoryperdb
+每个 db 存放在单独的目录中，建议设置该参数。与 MySQL 的独立表空间类似
+ maxConns
+最大连接数
+ repairpath
+执行 repair 时的临时目录。在如果没有开启 journal，异常 down 机后重启，必须执行 repair 操作。
+```
+
+
+
+### 3、常用命令
+
+```
 # 查看帮助信息
 > help
     db.help()                    help on db methods
@@ -31,11 +141,18 @@ MongoDB server version: 5.0.15
     help mr                      mapreduce
     ...
     exit                         quit the mongo shell
+    
+# 停止 MongoDB 服务
+> use admin
+> db.shutdownServer()
+
+# 查看实例运行状态
+db.serverStatus()
+
+
 ```
 
-### 3、数据类型
 
-BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进行远程过程调用。
 
 ### 4、SQL 到 MongoDB 映射表
 
@@ -63,6 +180,8 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 | :-------------- | :-------- | :------- | :-------- | :---------- | :----------- |
 | Database Server | `mongod`  | `mysqld` | `oracle`  | `IDS`       | `DB2 Server` |
 | Database Client | `mongosh` | `mysql`  | `sqlplus` | `DB-Access` | `DB2 Client` |
+
+注：`mongos`：分片路由，如果使用了 sharding 功能，则应用程序连接的是 mongos 而不是 mongod。
 
 
 
@@ -150,7 +269,7 @@ true
 
 
 
-## 三、MongoDB DML（CURD）
+## 三、MongoDB DML（CRUD）
 
 ### 1、Insert
 
@@ -293,13 +412,21 @@ db.<collection>.find( { status: { $gte: 1 } } )
 # ... WHERE status <= 1
 db.<collection>.find( { status: { $lte: 1 } } )
 
-# ==============
-#  $in  IN 查询
-# ==============
+# ==================
+#  $in   IN 查询
+#  $nin  NOT IN 查询
+# ==================
 
 # 注：对同一字段进行相等性检查时，使用 $in 运算而不是 $or 运算
 # ... WHERE status IN (1, 2, 3)
 db.<collection>.find( { status: { $in: [ 1, 2, 3 ] } } )
+
+# ===============
+#  $mod  取模运算
+# ===============
+# 查询 status % 3 == 1 的数据
+db.<collection>.find( { status: { $mod: [ 3, 1 ] } } )
+
 
 # ===================
 #  $regex  LIKE 查询
@@ -408,48 +535,48 @@ db.mycoll.distinct( key, query, <optional params> )
 # EXPLAIN SELECT * FROM <collection>
 > db.<collection>.find().explain()
 {
-        "explainVersion" : "1",
-        "queryPlanner" : {
-                "namespace" : "test.collection",
-                "indexFilterSet" : false,
-                "parsedQuery" : {
+    "explainVersion" : "1",
+    "queryPlanner" : {
+        "namespace" : "test.collection",
+        "indexFilterSet" : false,
+        "parsedQuery" : {
 
-                },
-                "queryHash" : "8B3D4AB8",
-                "planCacheKey" : "D542626C",
-                "maxIndexedOrSolutionsReached" : false,
-                "maxIndexedAndSolutionsReached" : false,
-                "maxScansToExplodeReached" : false,
-                "winningPlan" : {
-                        "stage" : "COLLSCAN",
-                        "direction" : "forward"
-                },
-                "rejectedPlans" : [ ]
         },
-        "command" : {
-                "find" : "collection",
-                "filter" : {
+        "queryHash" : "8B3D4AB8",
+        "planCacheKey" : "D542626C",
+        "maxIndexedOrSolutionsReached" : false,
+        "maxIndexedAndSolutionsReached" : false,
+        "maxScansToExplodeReached" : false,
+        "winningPlan" : {
+            "stage" : "COLLSCAN",
+            "direction" : "forward"
+        },
+        "rejectedPlans" : [ ]
+    },
+    "command" : {
+        "find" : "collection",
+        "filter" : {
 
-                },
-                "$db" : "test"
         },
-        "serverInfo" : {
-                "host" : "DESKTOP-JRJQPP2",
-                "port" : 27017,
-                "version" : "5.0.15",
-                "gitVersion" : "935639beed3d0c19c2551c93854b831107c0b118"
-        },
-        "serverParameters" : {
-                "internalQueryFacetBufferSizeBytes" : 104857600,
-                "internalQueryFacetMaxOutputDocSizeBytes" : 104857600,
-                "internalLookupStageIntermediateDocumentMaxSizeBytes" : 104857600,
-                "internalDocumentSourceGroupMaxMemoryBytes" : 104857600,
-                "internalQueryMaxBlockingSortMemoryUsageBytes" : 104857600,
-                "internalQueryProhibitBlockingMergeOnMongoS" : 0,
-                "internalQueryMaxAddToSetBytes" : 104857600,
-                "internalDocumentSourceSetWindowFieldsMaxMemoryBytes" : 104857600
-        },
-        "ok" : 1
+        "$db" : "test"
+    },
+    "serverInfo" : {
+        "host" : "DESKTOP-JRJQPP2",
+        "port" : 27017,
+        "version" : "5.0.15",
+        "gitVersion" : "935639beed3d0c19c2551c93854b831107c0b118"
+    },
+    "serverParameters" : {
+        "internalQueryFacetBufferSizeBytes" : 104857600,
+        "internalQueryFacetMaxOutputDocSizeBytes" : 104857600,
+        "internalLookupStageIntermediateDocumentMaxSizeBytes" : 104857600,
+        "internalDocumentSourceGroupMaxMemoryBytes" : 104857600,
+        "internalQueryMaxBlockingSortMemoryUsageBytes" : 104857600,
+        "internalQueryProhibitBlockingMergeOnMongoS" : 0,
+        "internalQueryMaxAddToSetBytes" : 104857600,
+        "internalDocumentSourceSetWindowFieldsMaxMemoryBytes" : 104857600
+    },
+    "ok" : 1
 }
 ```
 
@@ -870,22 +997,391 @@ db.<collection>.find(
     { score: { $meta: "textScore" } }
 ).sort( { score: { $meta: "textScore" } } )
 
-# 聚合管道中的文本搜索
-...
+# ==================
+#  聚合管道中的文本搜索
+# ==================
+# 聚合管道中的文本搜索限制：
+# - 包含 $text 的 $match 阶段必须是管道中的第一个阶段。
+# - 一个 $text 运算符在阶段中只能出现一次。
+# - $text 运算符表达式不能出现在 $or 或 $not 表达式中。
+# - 要按匹配分数排序，在阶段 $meta 中使用聚合表达式 $sort。
+
+# 计算包含一个词的文章的总浏览量
+db.articles.aggregate(
+   [
+     { $match: { $text: { $search: "cake" } } },
+     { $group: { _id: null, views: { $sum: "$views" } } }
+   ]
+)
+
+# 返回按文本搜索分数排序的结果
+db.articles.aggregate(
+   [
+     { $match: { $text: { $search: "cake tea" } } },
+     { $sort: { score: { $meta: "textScore" } } },
+     { $project: { title: 1, _id: 0 } }
+   ]
+)
+
+# 匹配文本分数
+db.articles.aggregate(
+   [
+     { $match: { $text: { $search: "cake tea" } } },
+     { $project: { title: 1, _id: 0, score: { $meta: "textScore" } } },
+     { $match: { score: { $gt: 1.0 } } }
+   ]
+)
+
+# 指定文本搜索的语言
+db.articles.aggregate(
+   [
+     { $match: { $text: { $search: "saber -claro", $language: "es" } } },
+     { $group: { _id: null, views: { $sum: "$views" } } }
+   ]
+)
+```
+
+> 文本搜索语言
+
+| 语言名称     | ISO 639-1（双字母代码） |
+| :----------- | :---------------------- |
+| `danish`     | `da`                    |
+| `dutch`      | `nl`                    |
+| `english`    | `en`                    |
+| `finnish`    | `fi`                    |
+| `french`     | `fr`                    |
+| `german`     | `de`                    |
+| `hungarian`  | `hu`                    |
+| `italian`    | `it`                    |
+| `norwegian`  | `nb`                    |
+| `portuguese` | `pt`                    |
+| `romanian`   | `ro`                    |
+| `russian`    | `ru`                    |
+| `spanish`    | `es`                    |
+| `swedish`    | `sv`                    |
+| `turkish`    | `tr`                    |
+
+### 7、[地理空间查询](https://www.mongodb.com/docs/manual/geospatial-queries/)
+
+### 8、[Read 隔离（Read Concern）](https://www.mongodb.com/docs/manual/reference/read-concern/)
+
+> ReadConcern 选项允许您控制从副本集和副本集分片读取的数据的一致性和隔离性。
+
+通过写关注点和读关注点的有效使用，可以适当调整一致性和可用性保证的级别。
+
+未显式指定读关注点的操作会继承全局默认读关注的设置。
+
+```shell
+# 设置全局默认读写关注点
+db.adminCommand(
+    {
+        setDefaultRWConcern : 1,
+        defaultReadConcern: { <read concern> },
+        defaultWriteConcern: { <write concern> },
+        writeConcern: { <write concern> },
+        comment: <any>
+    }
+)
+```
+
+> 读关注点的级别
+
+| Level                                                        | 描述                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [`local`](https://www.mongodb.com/docs/v5.0/reference/read-concern-local/#mongodb-readconcern-readconcern.-local-) | 查询从实例返回数据，但不保证数据已写入大多数副本集成员（即可能回滚）。<br />针对主要和次要读取的默认值。 |
+| [`available`](https://www.mongodb.com/docs/v5.0/reference/read-concern-available/#mongodb-readconcern-readconcern.-available-) | 查询从实例返回数据，但不保证数据已写入大多数副本集成员（即可能回滚）。 |
+| [`majority`](https://www.mongodb.com/docs/v5.0/reference/read-concern-majority/#mongodb-readconcern-readconcern.-majority-) | 查询返回已被大多数副本集成员确认的数据。                     |
+| [`linearizable`](https://www.mongodb.com/docs/v5.0/reference/read-concern-linearizable/#mongodb-readconcern-readconcern.-linearizable-) | 查询返回的数据反映了在读取操作开始之前完成的所有成功的多数确认写入。在返回结果之前，查询可能会等待并发执行的写入传播到大多数副本集成员。 |
+| [`snapshot`](https://www.mongodb.com/docs/v5.0/reference/read-concern-snapshot/#mongodb-readconcern-readconcern.-snapshot-) | 具有读取关注的查询`"snapshot"`返回多数提交的数据，因为它出现在最近的特定单个时间点的分片中。 |
+
+
+
+### 9、[Write 确认（Write Concern）](https://www.mongodb.com/docs/manual/reference/write-concern/)
+
+> Write Concern 描述了 MongoDB 对独立mongod、副本集或分片集群的写操作请求的确认级别。在分片集群中，mongos 实例将把写关注传递给分片。
+
+未指定显式写关注的操作继承全局默认写关注设置。
+
+```shell
+# 设置全局默认读写关注点
+db.adminCommand(
+    {
+        setDefaultRWConcern : 1,
+        defaultReadConcern: { <read concern> },
+        defaultWriteConcern: { <write concern> },
+        writeConcern: { <write concern> },
+        comment: <any>
+    }
+)
+```
+
+> 写关注规范
+
+```shell
+{ w: <value>, j: <boolean>, wtimeout: <number> }
+```
+
+- `w`：用于确认写操作已传播到指定数量的mongod 实例或具有指定标记的 mongod 实例。
+
+  | w：<取值>                     | 描述 |
+  | ----------------------------- | ---- |
+  | `majority`                    |      |
+  | `<number>`                    |      |
+  | `<custom write concern name>` |      |
+
+- `j`：用于确认写操作已写入磁盘日志。
+- `wtimeout`：指定写操作的时间限制。wtimeout 仅适用于 `w > 1` 的值。
+
+
+
+## 四、CRUD 概念
+
+### 1、原子性和事务
+
+原子性：在 MongoDB 中，写操作在单个文档级别上是原子的，即使该操作修改了单个文档中的多个嵌套文档。
+
+多文档事务：当单个写操作（如：db.collection.updateMany()）修改多个文档时，每个文档的修改时原子的，但整个操作不是原子的。
+
+因此，在需要对多个文档进行读写原子性的情况时，应使用 多文档事务。
+
+并发控制：findAndModify 对文档的操作是原子的。
+
+### 2、读取隔离、一致性和新近度
+
+### 3、分布式查询
+
+### 4、查询计划
+
+### 5、查询优化
+
+### 6、写操作性能
+
+### 7、可尾游标
+
+### 8、带 . 和 $ 的字段名称
+
+
+
+## 五、聚合操作
+
+> 聚合操作处理多个文档返回计算结果，可以使用聚合操作实现：
+>
+> - 将来自多个文档的值组合在一起；
+> - 对分组数据执行操作以返回单个结果；
+> - 分析数据随时间的变化。
+
+### 1、单一目的聚合方法
+
+```shell
+# 返回集合或视图中文档的近似计数
+db.collection.estimatedDocumentCount()
+
+# 返回集合或视图中的文档数
+db.collection.count()
+
+# 返回指定字段具有不同值的文档数组
+db.collection.distinct()
+
+```
+
+### 2、集合管道
+
+> 聚合管道由一个或多个处理文档的阶段组成：
+>
+> - 每个阶段对输入文档执行操作。
+> - 从一个阶段输出的文档被传递到下一个阶段。
+> - 聚合管道可以返回文档组的结果。
+
+```shell
+# 填充数据
+db.<collection>.insertMany([
+    {
+        "grade": "高一年级",
+        "class": "高一（1）班",
+        "student_num": 50,
+        "score": 84
+    },
+    {
+        "grade": "高一年级",
+        "class": "高一（2）班",
+        "student_num": 55,
+        "score": 97
+    },
+    {
+        "grade": "高一年级",
+        "class": "高一（3）班",
+        "student_num": 58,
+        "score": 91
+    },
+    {
+        "grade": "高二年级",
+        "class": "高二（1）班",
+        "student_num": 62,
+        "score": 90
+    },
+    {
+        "grade": "高二年级",
+        "class": "高二（2）班",
+        "student_num": 65,
+        "score": 92
+    },
+    {
+        "grade": "高二年级",
+        "class": "高二（3）班",
+        "student_num": 66,
+        "score": 93
+    },
+    {
+        "grade": "高三年级",
+        "class": "高三（1）班",
+        "student_num": 51,
+        "score": 86
+    },
+    {
+        "grade": "高三年级",
+        "class": "高三（2）班",
+        "student_num": 50,
+        "score": 79
+    },
+    {
+        "grade": "高三年级",
+        "class": "高三（3）班",
+        "student_num": 56,
+        "score": 75
+    }
+])
+```
+
+#### （1）聚合管道查询
+
+```shell
+# 查询各年级的总人数
+db.<collection>.aggregate([
+
+    // Stage 1: 匹配 grade = "高二年级" 的所有文档，并传到下一阶段
+    // { $match: { grade: "高二年级" } },
+    
+    // Stage 2: 按 grade 进行分组，计算各年级的学生总数
+    { $group: { _id: "$grade", studentTotal: { $sum: "$student_num" } } },
+    
+    // Stage 3: 按总人数降序排列
+    { $sort: { studentTotal: -1 } }
+])
+
+{ "_id" : "高二年级", "studentTotal" : 193 }
+{ "_id" : "高一年级", "studentTotal" : 163 }
+{ "_id" : "高三年级", "studentTotal" : 157 }
+
+# 查询高二年级的最高分及平均分
+db.<collection>.aggregate([
+
+    // Stage 1: 匹配 grade = "高二年级" 的所有文档，并传到下一阶段
+    { $match: { grade: "高二年级" } },
+
+    // Stage 2: 按 grade 进行分组，计算学生总人数
+    { $group: { _id: "$grade", maxScore: { $max: "$score" }, avgScore: { $avg: "$score" } } }
+
+])
+
+{ "_id" : "高二年级", "maxScore" : 93, "avgScore" : 91.66666666666667 }
+
+```
+
+> 聚合管道阶段的注意事项：
+>
+> - 一个阶段不必为每个输入文档输出一个文档。
+> - 同一阶段可以在管道中出现多次，但 $out、$merge、$geoNear 阶段除外。
+> - 要计算平均值并在阶段中执行其他计算，请使用 指定 聚合运算符的聚合表达式。
+
+#### （2）[聚合管道优化](https://www.mongodb.com/docs/v5.0/core/aggregation-pipeline-optimization/)
+
+```
+
+```
+
+#### （3）聚合管道限制
+
+- 结果大小限制：结果集中的每个文档都受 16MB （BSON 文档大小）限制。
+- 阶段数限制：单个管道中允许的聚合管道阶段数限制为 1000。（V 5.0 更改）
+- 内存限制：每个单独的管道阶段都有 100MB 的 RAM 限制。
+
+#### （4）[聚合管道快速参考](https://www.mongodb.com/docs/v5.0/meta/aggregation-quick-reference/)
+
+
+
+
+
+## 六、数据模型
+
+
+
+## 七、事务
+
+
+
+## 八、索引
+
+1、基础索引
+
+2、文档索引
+
+3、组合索引
+
+4、唯一索引
+
+5、强制使用索引
+
+6、删除索引
+
+
+
+## 十、管理篇
+
+### 1、数据导出与导入
+
+### 2、数据备份与恢复
+
+### 3、访问控制
+
+### 4、命令行操作
+
+### 5、进程控制
+
+```
+# 查看活动的进程
+> db.currentOp()
+
+参数说明：
+    Opid: 操作进程号
+    Op: 操作类型(查询，更新等)
+    Ns: 命名空间, 指操作的是哪个对象
+    Query: 如果操作类型是查询的话，这里将显示具体的查询内容
+    lockType: 锁的类型，指明是读锁还是写锁
+    
+# 结束进程
+> db.killOp()
 ```
 
 
 
-## 四、聚合操作
+MongoDB 权威指南：
+
+- 存储过程
+- Capped Collection
+- GridFS
+- MapReduce
 
 
 
-## 五、数据模型
+性能：
+
+- explain 执行计划
+- 优化器 profile
 
 
 
-## 六、事务
+架构：
 
-
-
-## 七、索引
+- Replica Sets 复制集
+- Sharding 分片
+- Replica Sets + Sharding

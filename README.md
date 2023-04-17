@@ -6,15 +6,15 @@
 
 - [x] [Go 面试题](GoInterview.md)
 
-- [x] [MySQL](MySQL-3306.md)
+- [x] [MySQL](MySQL_3306.md)
 
-- [x] [MongoDB](MongoDB-27017.md)
+- [x] [MongoDB](MongoDB_27017.md)
 
-- [x] [Redis](Redis-6379.md)
+- [x] [Redis](Redis_6379.md)
 
-- [x] [Kafka](Kafka-9092.md)
+- [x] [Kafka](Kafka_9092.md)
 
-- [ ] [RocketMQ](RocketMQ-10911.md)
+- [ ] [RocketMQ](RocketMQ_10911.md)
 
 - [x] [Docker](Docker.md)
 

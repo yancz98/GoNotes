@@ -70,7 +70,7 @@ Kafka 是一个分布式、支持分区的、多副本的，基于 zookeeper 协
 > - Binary downloads:
 >   - Scala 2.13  - [kafka_2.13-3.2.3.tgz](https://downloads.apache.org/kafka/3.2.3/kafka_2.13-3.2.3.tgz)
 
-```
+````
 # 下载
 curl -O https://downloads.apache.org/kafka/3.2.3/kafka_2.13-3.2.3.tgz
 
@@ -82,66 +82,65 @@ mv kafka_2.13-3.2.3/ /usr/local/kafka/
 
 # 配置环境变量
 vi /etc/profile
-​```
+```
 # 配置 kafka
 export PATH=$PATH:/usr/local/kafka/bin
-​```
-source /etc/profile
 ```
+source /etc/profile
+````
 
 - 目录结构
 
 ```
 /use/local/kafka
-	bin		# 可执行脚本（命令）
-		kafka-server-start.sh		# Kafka 启动脚本
-		kafka-server-stop.sh		# Kafka 停止脚本
-		kafka-topics.sh				# Kafka 主题
-		kafka-console-producer.sh	# Kafka 生产者
-		kafka-console-consumer.sh	# Kafka 消费者
-		kafka-consumer-groups.sh	# Kafka 消费者组
-		zookeeper-server-start.sh	# Zookeeper 启动脚本
-		zookeeper-server-stop.sh	# Zookeeper 停止脚本
-		zookeeper-shell.sh			# 查看 kafka 在 zookeeper 中的配置
-		...
-	config	# 配置文件
-		server.properties		# Kafka 服务配置
-		zookeeper.properties	# Zookeeper 服务配置
-		producer.properties		# 生产者配置
-		consumer.properties		# 消费者配置
-		...
-	libs	# 第三方包
-		...
+    bin     # 可执行脚本（命令）
+        kafka-server-start.sh      # Kafka 启动脚本
+        kafka-server-stop.sh       # Kafka 停止脚本
+        kafka-topics.sh            # Kafka 主题
+        kafka-console-producer.sh  # Kafka 生产者
+        kafka-console-consumer.sh  # Kafka 消费者
+        kafka-consumer-groups.sh   # Kafka 消费者组
+        zookeeper-server-start.sh  # Zookeeper 启动脚本
+        zookeeper-server-stop.sh   # Zookeeper 停止脚本
+        zookeeper-shell.sh         # 查看 kafka 在 zookeeper 中的配置
+        ...
+    config  # 配置文件
+        server.properties		# Kafka 服务配置
+        zookeeper.properties	# Zookeeper 服务配置
+        producer.properties		# 生产者配置
+        consumer.properties		# 消费者配置
+        ...
+    libs	# 第三方包
+        ...
 ```
 
 ### 2、安装 JDK8+
 
 > Java 官网：https://www.oracle.com/java/technologies/downloads/
 
-```
+````
+# Install & Deploy
 curl -O https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz
-
 tar -zxvf jdk-17_linux-x64_bin.tar.gz
-
 mv jdk-17.0.4.1/ /usr/local/jdk17/
-
 
 # 配置环境变量
 vi /etc/profile
-​```
+
+```
 # jdk 安装目录
 export JAVA_HOME=/usr/local/jdk17
 export JRE_HOME=${JAVA_HOME}/jre
 export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib:$CLASSPATH
 export JAVA_PATH=${JAVA_HOME}/bin:${JRE_HOME}/bin
 export PATH=$PATH:${JAVA_PATH}
-​```
+```
 
 soure /etc/profile
 
 # 安装完成
 java -version
-```
+````
 
 ### 3、在 Docker 中安装
 
@@ -179,13 +178,13 @@ cd /usr/local/kafka
 bin/kafka-server-start.sh -daemon config/server.properties
 
 注：
-	-daemon	守护进程方式启动
+    -daemon	守护进程方式启动
 
 # 用 JDK 工具 jps 查看 Java 进程
 > jsp
 3322 Jps
 3292 Kafka
-2526 QuorumPeerMain		# Zookeeper 进程
+2526 QuorumPeerMain    # Zookeeper 进程
 ```
 
 
@@ -198,16 +197,16 @@ bin/kafka-server-start.sh -daemon config/server.properties
 bin/kafka-topics.sh [Options]
 
 Options：
-    --bootstrap-server		必须：要连接的 kafka 服务器
-	--topic 				主题名
-    --create				创建主题
-    --delete				删除主题
-    --alter					修改主题（如：增加分区数）
-    --list					查看所有主题
-    --describe				查看主题详情，不指定主题时，查看所有主题详情
-    --partitions			分区数
-	--replication-factor	副本数（副本数应小于等于 broker 数量）
-	--config <name=value>	指定配置
+    --bootstrap-server    必须：要连接的 kafka 服务器
+    --topic               主题名
+    --create              创建主题
+    --delete              删除主题
+    --alter               修改主题（如：增加分区数）
+    --list                查看所有主题
+    --describe            查看主题详情，不指定主题时，查看所有主题详情
+    --partitions          分区数
+    --replication-factor  副本数（副本数应小于等于 broker 数量）
+    --config <name=value> 指定配置
 ```
 
 #### （1）创建主题
@@ -215,10 +214,10 @@ Options：
 ```shell
 # 创建主题
 bin/kafka-topics.sh --bootstrap-server localhost:9092 \
-	--create \
-	--topic msg \
-	--replication-factor 2 \
-	--partitions 2 
+    --create \
+    --topic msg \
+    --replication-factor 2 \
+    --partitions 2 
 ```
 
 > 主题创建成功后，会生成 `log.dirs=/tmp/kafka-logs/msg-0` 、`log.dirs=/tmp/kafka-logs/msg-1` 目录（命名规则：主题-分区），用于存放主题数据。
@@ -238,8 +237,8 @@ partition.metadata
 ```shell
 # 查看主题详情
 bin/kafka-topics.sh --bootstrap-server localhost:9092 \
-	 --describe \
-	 --topic msg 
+    --describe \
+    --topic msg 
 	 
 Topic: msg    TopicId: *** PartitionCount: 2    ReplicationFactor: 1    Configs: ***
     Topic: msg    Partition: 0    Leader: 0    Replicas: 0    Isr: 0
@@ -266,9 +265,9 @@ Kafka 的消息交付承诺： 保证在 ISR 存活的情况下“已提交”�
 ```
 # 增加分区数
 kafka-topics.sh --bootstrap-server 192.168.56.101:9092 \
-	--alter \
-	--topic msg \
-	--partitions 2 
+    --alter \
+    --topic msg \
+    --partitions 2 
 ```
 
 
@@ -279,18 +278,18 @@ kafka-topics.sh --bootstrap-server 192.168.56.101:9092 \
 bin/kafka-console-producer.sh [Options]
 
 Options：
-	--bootstrap-server			REQUIRED：要连接的服务器。
-	--topic						REQUIRED：向主题生产消息。
-	--sync						同步发送消息，消息会一条一条的发。（默认：异步）
-	--request-required-acks 	生成者请求的 ACK 确认方式（默认：-1），
-	--message-send-max-retries	最大发送重试次数（默认：3）		
-	--retry-backoff-ms			重试时间间隔（默认：100 ms）
-	--producer.config 			指定生成者配置文件 config/producer.properties，
-								--producer-property 优先于配置文件。 			
-	--max-memory-bytes			生产者缓冲区大小（默认：33554432 B = 32 M）
-	--batch-size				异步发送时，单批发送的消息数（默认：16384），
-								max-partition-memory-bytes 会替换该选项。
-	--max-partition-memory-bytes 为分区分配的缓冲区大小，生产者会尝试拼凑到此大小（默认：16384）
+    --bootstrap-server           REQUIRED：要连接的服务器。
+    --topic                      REQUIRED：向主题生产消息。
+    --sync                       同步发送消息，消息会一条一条的发。（默认：异步）
+    --request-required-acks      生成者请求的 ACK 确认方式（默认：-1），
+    --message-send-max-retries   最大发送重试次数（默认：3）		
+    --retry-backoff-ms           重试时间间隔（默认：100 ms）
+    --producer.config            指定生成者配置文件 config/producer.properties，
+                                 --producer-property 优先于配置文件。 			
+    --max-memory-bytes           生产者缓冲区大小（默认：33554432 B = 32 M）
+    --batch-size                 异步发送时，单批发送的消息数（默认：16384），
+                                 max-partition-memory-bytes 会替换该选项。
+    --max-partition-memory-bytes 为分区分配的缓冲区大小，生产者会尝试拼凑到此大小（默认：16384）
 ```
 
 #### （1）简单生产
@@ -298,18 +297,18 @@ Options：
 ```
 # 生产无 key 的消息
 bin/kafka-console-producer.sh \
-	--bootstrap-server localhost:9092 \
-	--topic msg
+    --bootstrap-server localhost:9092 \
+    --topic msg
 	
 # 生成有 key 的消息
 bin/kafka-console-producer.sh \
-	--bootstrap-server localhost:9092 \
-	--topic msg
-	--property parse.key=true
+    --bootstrap-server localhost:9092 \
+    --topic msg
+    --property parse.key=true
 	
 注：
-	key 和 value 之间用 Tab 键分隔。
-	相同的 key 会被分配到同一分区，可以保证消息的顺序性。
+    key 和 value 之间用 Tab 键分隔。
+    相同的 key 会被分配到同一分区，可以保证消息的顺序性。
 ```
 
 #### （2）同步发送与异步发送
@@ -330,16 +329,16 @@ bin/kafka-console-producer.sh \
 ```
 # 确认机制 + 重试机制
 bin/kafka-console-producer.sh \
-	--bootstrap-server localhost:9092 \
-	--topic msg \
-	--request-required-acks -1 \
-	--message-send-max-retries 3 \
-	--retry-backoff-ms 100
+    --bootstrap-server localhost:9092 \
+    --topic msg \
+    --request-required-acks -1 \
+    --message-send-max-retries 3 \
+    --retry-backoff-ms 100
 
 ACK 参数详解：
-	acks = -1/all：需要得到 ISR 集合中全部副本的确认；
-	acks = 0：不需要等待服务器的确认，立即写入缓冲区，并返回偏移量 -1；
-	acks = 1：Leader 会将记录写入log，但不需要 follower 的确认；	
+    acks = -1/all：需要得到 ISR 集合中全部副本的确认；
+    acks = 0：不需要等待服务器的确认，立即写入缓冲区，并返回偏移量 -1；
+    acks = 1：Leader 会将记录写入log，但不需要 follower 的确认；	
 ```
 
 #### （4）消息发送缓冲区
@@ -349,10 +348,10 @@ ACK 参数详解：
 ```
 # 缓冲区机制
 bin/kafka-console-producer.sh \
-	--bootstrap-server localhost:9092 \
-	--topic msg \
-	--max-memory-bytes 33554432 \
-	--batch-size 16384
+    --bootstrap-server localhost:9092 \
+    --topic msg \
+    --max-memory-bytes 33554432 \
+    --batch-size 16384
 ```
 
 
@@ -363,15 +362,15 @@ bin/kafka-console-producer.sh \
 kafka-console-consumer.sh [Options]
 
 Options：
-	--bootstrap-server		REQUIRED：要连接的服务器。
-	--consumer-property		消费者属性，key=value 格式定义。
-	--property				用于初始化消息格式化程序的属性
-		print.timestamp=true|false	# 打印 时间戳        
-        print.key=true|false		# 打印 key
-        print.offset=true|false		# 打印 offset
-        print.partition=true|false	# 打印 partition
-        print.headers=true|false	# 打印 header
-        print.value=true|false		# 打印 value（默认：true）
+    --bootstrap-server      REQUIRED：要连接的服务器。
+    --consumer-property     消费者属性，key=value 格式定义。
+    --property              用于初始化消息格式化程序的属性
+        print.timestamp=true|false  # 打印 时间戳        
+        print.key=true|false        # 打印 key
+        print.offset=true|false	    # 打印 offset
+        print.partition=true|false  # 打印 partition
+        print.headers=true|false    # 打印 header
+        print.value=true|false      # 打印 value（默认：true）
         key.separator=<key.separator>         
         line.separator=<line.separator>       
         headers.separator=<headers.separator>    
@@ -379,34 +378,34 @@ Options：
         key.deserializer=<key.deserializer>   
         value.deserializer=<value.deserializer>                        
         header.deserializer=<header.deserializer>                
-	--consumer.config		指定消费者配置文件 config/consumer.properties，
-							consumer-property 优先于配置文件。
-	--group					消费者的消费者组ID。
-	--include				用正则指定要是用的主题。
-	--offset 				偏移量（默认：latest），非负数；
-							earliest：从开始消费，latest 从末尾消费。
-	--from-beginning		从头开始消费，否则只消费连接后生产的消息
-	--partition				分区，要消费的分区。
-	--topic					要使用的主题。
-	--skip-message-on-error 出错时跳过。
-	--partition				要消费的分区，可以指定 --offset ，否则从分区的末尾开始消费。
-	--max-messages			消费的最大数据量，若不指定，则持续消费下去。
+    --consumer.config       指定消费者配置文件 config/consumer.properties，
+                            consumer-property 优先于配置文件。
+    --group                 消费者的消费者组ID。
+    --include               用正则指定要是用的主题。
+    --offset                偏移量（默认：latest），非负数；
+                            earliest：从开始消费，latest 从末尾消费。
+    --from-beginning        从头开始消费，否则只消费连接后生产的消息
+    --partition	            分区，要消费的分区。
+    --topic                 要使用的主题。
+    --skip-message-on-error 出错时跳过。
+    --partition	            要消费的分区，可以指定 --offset ，否则从分区的末尾开始消费。
+    --max-messages          消费的最大数据量，若不指定，则持续消费下去。
 ```
 
 #### （1）低级消费
 
 ```
 kafka-console-consumer.sh --bootstrap-server localhost:9092 \
-	--topic msg \
-	--from-beginning	# 从头开始消费，否则只消费上线后生产的消息
+    --topic msg \
+    --from-beginning	# 从头开始消费，否则只消费上线后生产的消息
 ```
 
 #### （2）消费者组消费
 
 ```
 kafka-console-consumer.sh --bootstrap-server localhost:9092 \
-	--topic msg \
-	--group msgGroup1
+    --topic msg \
+    --group msgGroup1
 ```
 
 #### （3）消费 Offset 
@@ -431,20 +430,20 @@ kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
 
 # 消费者组的消费信息
 kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
-	--describe 
-	--group msgGroup1
+    --describe 
+    --group msgGroup1
 
 Options：
-	--bootstrap-server		REQUIRED：要连接的服务器。
-	--all-groups			应用到整个消费者组（如：与 --describe 显示所有成员信息）。
-	--all-topics 			为组中所有主题 --reset-offsets。				
-	--list					列出所有消费者组。
-	--describe				描述消费者组并列出与给定组相关的偏移滞后（尚未处理的消息数）。
-	--members				查看消费者组成员信息，只能与 --describe 选项一起使用。
-	--verbose				展示分配给每个成员的分区
-	--delete				删除一个或多个消费者组
-	--topic					1、应从组中删除的主题；
-							2、应重置偏移量的主题：用 `topic1:0,1,2` 格式指定重置的分区。
+    --bootstrap-server  REQUIRED：要连接的服务器。
+    --all-groups        应用到整个消费者组（如：与 --describe 显示所有成员信息）。
+    --all-topics        为组中所有主题 --reset-offsets。				
+    --list              列出所有消费者组。
+    --describe          描述消费者组并列出与给定组相关的偏移滞后（尚未处理的消息数）。
+    --members           查看消费者组成员信息，只能与 --describe 选项一起使用。
+    --verbose           展示分配给每个成员的分区
+    --delete            删除一个或多个消费者组
+    --topic             1、应从组中删除的主题；
+                        2、应重置偏移量的主题：用 `topic1:0,1,2` 格式指定重置的分区。
 ```
 
 ### 5、kafka 集群
@@ -511,45 +510,45 @@ zookeeper-shell.sh 192.168.56.101:2181
 ```
 # 创建主题
 kafka-topics.sh --bootstrap-server 192.168.56.101:9092 \
-	--create \
-	--topic ct1 \
-	--partitions 5 \
-	--replication-factor 2
+    --create \
+    --topic ct1 \
+    --partitions 5 \
+    --replication-factor 2
 
 # 往集群中生产消息（也可以只写一个 broker 节点）
 kafka-console-producer.sh \
-	--bootstrap-server 192.168.56.101:9092, 192.168.56.102:9092 \
-	--topic ct1
+    --bootstrap-server 192.168.56.101:9092, 192.168.56.102:9092 \
+    --topic ct1
 	
 # 从集群中消费消息（也可以只写一个 broker 节点）
 kafka-console-consumer.sh \
-	--bootstrap-server 192.168.56.101:9092, 192.168.56.102:9092 \
-	--topic ct1 \
+    --bootstrap-server 192.168.56.101:9092, 192.168.56.102:9092 \
+    --topic ct1 \
     --from-beginning
     
 # 集群消费者组
 kafka-console-consumer.sh \
-	--bootstrap-server 192.168.56.101:9092 \
-	--topic ct1 \
-	--group ctGroup1
+    --bootstrap-server 192.168.56.101:9092 \
+    --topic ct1 \
+    --group ctGroup1
 	
 kafka-console-consumer.sh 
-	--bootstrap-server 192.168.56.102:9092 \
-	--topic ct1 \
-	--group ctGroup1	
+    --bootstrap-server 192.168.56.102:9092 \
+    --topic ct1 \
+    --group ctGroup1	
 	
 # 查看消费者组的消费信息
 kafka-consumer-groups.sh \
-	--bootstrap-server 192.168.56.102:9092 \
-	--describe \
-	--group ctGroup1
+    --bootstrap-server 192.168.56.102:9092 \
+    --describe \
+    --group ctGroup1
 
 # 查看消费者组的成员信息
 kafka-consumer-groups.sh \
-	--bootstrap-server 192.168.56.101:9092 \
-	--describe \
-	--group ctGroup1 \
-	--members
+    --bootstrap-server 192.168.56.101:9092 \
+    --describe \
+    --group ctGroup1 \
+    --members
 ```
 
 > 消费者组的消费信息

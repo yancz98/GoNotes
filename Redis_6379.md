@@ -8,9 +8,7 @@ Redis 版本：6.2
 
 Redis 是高性能的 key/value 型内存数据库。读的速度是110000次/s，写的速度是81000次/s 。
 
-
-
-### 2、安装 / 配置
+### 2、Install & Deploy
 
 > 需要 gcc
 

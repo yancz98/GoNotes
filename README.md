@@ -58,6 +58,8 @@
 
 - [x] [Linux](Linux.md)
 
+- [ ] [Nginx](Nginx_80.md)
+
 - [x] [Docker](Docker.md)
 
 - [x] [Git](Git.md)

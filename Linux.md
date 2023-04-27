@@ -383,6 +383,10 @@ set smartindent     " 以 { 结尾的行，在新行会触发缩进
 set tabstop=4       " Tab 宽度，4 空格
 set shiftwidth=4    " 自动缩进时的宽度，4 空格
 set expandtab       " 将 Tab 转换为空格，而不是 \t（注意不能打开 Makefile 文件）
+
+" 粘贴格式不错乱，两种都可以暂不知道区别
+set clipboard=unnamed      " 系统缓冲区中的内容
+set clipboard=unnamedplus  " 系统剪切板里的内容  
 ```
 
 # 立即生效
@@ -430,6 +434,17 @@ source ~/.vimrc
 history     # 显示全部
 history 10  # 显示最近10条
 !15         # 执行历史第15条命令
+!-3         # 执行倒数第3条
+
+# 隐藏当前会话的历史，任何时间执行都会隐藏本次会话的所有历史命令
+bash +o history
+# 敏感命令，如密钥等信息
+mmm 
+# 清除本次会话的历史命令
+bash -o history
+
+# 清除历史
+history -c 
 
 # ---------------
 #  日期时间
@@ -464,7 +479,7 @@ cal [选项] [[[日] 月] 年]
 vi ~/.bashrc
 
 # 在后面添加
-PS1="\[\e[1;32;40m\][\u@\h:\w]\\$ \[\e[0m\]"
+PS1="\[\e[1;36;40m\][\u@\h:\w]\\$ \[\e[0m\]"
 
 # 指定另外一个 bashrc 文件的位置
 export BASH_ENV=/usr/local/etc/my_custom_bashrc
@@ -1149,6 +1164,8 @@ sda               8:0    0    8G  0 disk               # SCSI 硬盘 a盘
 └─sda2            8:2    0    7G  0 part               # a盘 2号分区
   ├─centos-root 253:0    0  6.2G  0 lvm  /
   └─centos-swap 253:1    0  820M  0 lvm  [SWAP]
+sdb               8:16   0   10G  0 disk               # b盘 在虚拟机中添加的
+sdc               8:32   0   10G  0 disk               # c盘 在虚拟机中添加的  
 sr0              11:0    1 1024M  0 rom
 
 # 输出文件系统信息
@@ -1159,16 +1176,21 @@ sda
 └─sda2          LVM2_mem       mqDLcn-V2Ru-po0v-J9yZ-Oe8I-LSwc-JHcC17
   ├─centos-root xfs            e8fa9679-32ed-49f2-9e0c-ccc0088164d7   /
   └─centos-swap swap           909cb6a9-2262-4f6e-b970-75cb6dc00e25   [SWAP]
+sdb
+sdc
 sr0
 ```
 
 ### 2、增加磁盘
 
-```shell
+````shell
 # ------------------
 #  添加磁盘的步骤
 # ------------------
 # 1 在虚拟机中添加一个磁盘
+sdb
+sdc
+...
 
 # 2 分区
 fdisk
@@ -1178,12 +1200,26 @@ mkfs
 
 # 4 挂载
 # 注：命令行模式下的挂载是临时的，重启后失效
-# 永久挂载：vi /etc/fstab
 mount
 
-# 5 卸载
-umount
+# 永久挂载：（重启生效）
+vi /etc/fstab
+
 ```
+# <file system>  <mount point>  <type>  <options>         <dump>  <pass>
+  LABEL=DISK1    /mnt/disk1     xfs     defaults,noatime  0       2
+  LABEL=DISK2    /mnt/disk2     xfs     defaults,noatime  0       2
+```
+
+# 不重启生效的方法：（需预先创建好挂载点）
+mkdir -p /mnt/disk1
+mkdir -p /mnt/disk2
+
+> mount -a 
+
+# 5 卸载
+umount <挂载点>
+````
 
 ### 3、查看磁盘使用情况
 
@@ -1531,21 +1567,30 @@ kill [选项] <PID>
 
 
 
-## 九、软件安装方式
+## 九、软件安装
 
-### 1、Yum
+> 查看系统版本：cat /etc/redhat-release
+>
+> 约定：
+>
+> - lnmp 软件源码存放地址：/tmp/lnmp
+> - lnmp 软件安装地址：/usr/local/软件名
 
-> yum 是 Redhat 系列发行版的软件仓库（yum 源），Debian 系列的是 apt-get。
->
-> yum 安装方式自动下载软件包所依赖的包，无需额外担心。
->
+### 1、软件安装方式
+
+#### （1）Yum 安装方式
+
+yum 是 Redhat 系列发行版的软件仓库（yum 源），Debian 系列的是 apt-get。
+
+yum 安装方式自动下载软件包所依赖的包，无需额外担心。
+
 > 国内知名的镜像源：
 >
 > - 网易：https://mirrors.163.com/.help/centos.html
 >
 > - 阿里：https://mirrors.aliyun.com/
 
-**（1）更换 yum 源**
+**① 更换 yum 源**
 
 > yum 源默认为国外镜像。
 >
@@ -1571,7 +1616,7 @@ yum clean all
 yum makecache
 ```
 
-**（2）下载命令格式**
+**② 下载命令格式**
 
 ```
 yum <操作> [选项]
@@ -1615,7 +1660,7 @@ yum list extras
 指定下载目录：--downloaddir=/dir
 ```
 
-### 2、RPM
+#### （2）RPM 安装方式
 
 > PRM（Redhat Pakage Manager） 也是 Redhat 系列发行版的软件包管理。
 >
@@ -1653,7 +1698,7 @@ rpm -ivh vim-common-7.4.629-5.el6.×86_64.rpm
 rpm -ivh vim-enhanced-7.4.629-5.el6.×86_64.rpm
 ```
 
-### 3、源码安装
+#### （3）源码安装
 
 ```
 配置：configure
@@ -1661,507 +1706,7 @@ rpm -ivh vim-enhanced-7.4.629-5.el6.×86_64.rpm
 安装：make install
 ```
 
-
-
-## 十、LNMP 环境搭建
-
-> 查看系统版本：cat /etc/redhat-release
->
-> 约定：
->
-> - lnmp 软件源码存放地址：/tmp/lnmp
-> - lnmp 软件安装地址：/usr/local/软件名
-
-准备：
-
-安装一些必要依赖
-
-```
-yum -y install libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel curl curl-devel openssl openssl-devel
-```
-
-```
-yum -y install gcc
-yum -y install gcc-c++
-yum -y install libxslt-devel*
-yum -y install mod_ssl
-yum -y install libtool-ltdl*
-yum -y install perl* 
-yum -y install autoconf
-```
-
-### 1、安装 Nginx
-
-切目录
-
-```
-mkdir /tmp/lnmp
-cd /tmp/lnmp
-```
-
-下载 Nginx 源码包 [官网下载](http://nginx.org/en/download.html) 
-
-```
-curl -O http://nginx.org/download/nginx-1.20.1.tar.gz
-```
-
-解压
-
-```
-tar -zxvf nginx-1.20.1.tar.gz
-```
-
-进去
-
-```
-cd nginx-1.20.1
-```
-
-配置
-
-> 此时会生成 `./Makefile` 文件，否则无法编译
-
-```
-./configure --with-http_stub_status_module --with-http_ssl_module
-```
-
-编译 & 安装
-
-> 此时会生成 `/usr/local/nginx` 目录，代表安装成功。
->
-> `/usr/local/nginx/sbin/nginx` 就是 nginx 服务，此时对 nginx 服务的操作很不方便，需进一步配置。
-
-```
-make && make install
-```
-
-添加 nginx 服务脚本
-
-> vi /etc/init.d/nginx
-
-```shell
-#!/bin/bash
-# nginx Startup script for the Nginx HTTP Server
-# it is v.0.0.2 version.
-# chkconfig: - 85 15
-# description: Nginx is a high-performance web and proxy server.
-#              It has a lot of features, but it's not for everyone.
-# processname: nginx
-# pidfile: /usr/local/nginx/logs/nginx.pid
-# config: /usr/local/nginx/conf/nginx.conf
-nginxd=/usr/local/nginx/sbin/nginx
-nginx_config=/usr/local/nginx/conf/nginx.conf
-nginx_pid=/usr/local/nginx/logs/nginx.pid
-RETVAL=0
-prog="nginx"
-# Source function library.
-. /etc/rc.d/init.d/functions
-# Source networking configuration.
-. /etc/sysconfig/network
-# Check that networking is up.
-[ "${NETWORKING}" = "no" ] && exit 0
-[ -x $nginxd ] || exit 0
-# Start nginx daemons functions.
-start() {
-if [ -e $nginx_pid ];then
-   echo "nginx already running...."
-   exit 1
-fi
-   echo -n $"Starting $prog: "
-   daemon $nginxd -c ${nginx_config}
-   RETVAL=$?
-   echo
-   [ $RETVAL = 0 ] && touch /var/lock/subsys/nginx
-   return $RETVAL
-}
-# Stop nginx daemons functions.
-stop() {
-        echo -n $"Stopping $prog: "
-        killproc $nginxd
-        RETVAL=$?
-        echo
-        [ $RETVAL = 0 ] && rm -f /var/lock/subsys/nginx /usr/local/nginx/logs/nginx.pid
-}
-# reload nginx service functions.
-reload() {
-    echo -n $"Reloading $prog: "
-    #kill -HUP `cat ${nginx_pid}`
-    killproc $nginxd -HUP
-    RETVAL=$?
-    echo
-}
-# See how we were called.
-case "$1" in
-start)
-        start
-        ;;
-stop)
-        stop
-        ;;
-reload)
-        reload
-        ;;
-restart)
-        stop
-        start
-        ;;
-status)
-        status $prog
-        RETVAL=$?
-        ;;
-*)
-        echo $"Usage: $prog {start|stop|restart|reload|status|help}"
-        exit 1
-esac
-exit $RETVAL
-```
-
-设置权限
-
-```
-chmod 755 /etc/init.d/nginx
-```
-
-加入开启自启 
-
-```
-vi /etc/rc.local
-
-# 在末尾增加一行
-/usr/local/nginx/sbin/nginx
-```
-
-nginx 服务开机自启
-
-```
-chkconfig nginx on
-```
-
-管理 nginx 服务
-
-```
-systemctl status nginx
-systemctl start nginx
-systemctl stop nginx
-systemctl reload nginx
-systemctl restart nginx
-```
-
-开启防火墙端口（否则无法访问）
-
-```
-firewall-cmd --zone=public --add-port=80/tcp --permanent
-```
-
-查看防火墙端口列表
-
-```
-firewall-cmd --list-ports
-```
-
-重新加载配置
-
-```
-firewall-cmd --reload
-```
-
-### 2、安装 MySQL
-
-安装 MySQL 源
-
-```
-yum localinstall -y http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
-```
-
-安装 MySQL 
-
-```
-yum install mysql-community-server
-```
-
-启动 MySQL 
-
-```
-systemctl start mysqld
-```
-
-获取初始密码
-
-```
-grep 'temporary password' /var/log/mysqld.log
-```
-
-得到这行A temporary password is generated for root@localhost: Jqqskhz1Wr （root@localhost:后面就是默认密码 只需复制 下一步输入密码的时候粘贴即可）
-
-连接 MySQL
-
-```
-mysql -uroot -p
-```
-
-修改密码
-
-```
-SET PASSWORD = PASSWORD('123456//ZZZjjj'); 
-# 密码必须复杂 需包含大小写特殊符号，否则无法修改成功
-```
-
-**Navicat 连接数据库**
-
-① SSH 通道连接
-
-② 通过主机连接
-
-- 开放远程连接
-
-```
-use mysql;
-update user set host = '%' where user = 'root';
-```
-
-- 刷新权限，使权限立即生效
-
-```
-flush privileges;
-```
-
-- 开放端口
-
-```
-firewall-cmd --zone=public --add-port=3306/tcp --permanent
-firewall-cmd --reload
-```
-
-
-
-### 3、安装 PHP
-
-切目录
-
-```
-cd /tmp/lnmp
-```
-
-下载
-
-```
-curl -O https://www.php.net/distributions/php-7.3.30.tar.gz
-```
-
-解压
-
-```
-tar -zxvf php-7.3.30
-```
-
-进去
-
-```
-cd php-7.3.30
-```
-
-配置
-
-> --prefix=安装目录
-
-```
-./configure --prefix=/usr/local/php-7.3.30 --with-curl --with-freetype-dir --with-gd --with-gettext --with-iconv-dir --with-kerberos --with-libdir=lib64 --with-libxml-dir --with-mysqli --with-openssl --with-pcre-regex --with-jpeg-dir --with-freetype-dir --with-pdo-mysql --with-pdo-sqlite --with-pear --with-png-dir --with-xmlrpc --with-xsl --with-zlib --enable-fpm --enable-bcmath -enable-inline-optimization --enable-mbregex --enable-mbstring --enable-opcache --enable-pcntl --enable-shmop --enable-soap --enable-sockets --enable-sysvsem --enable-xml --enable-zip --enable-pcntl --with-curl --with-fpm-user=nginx --enable-ftp --enable-session --enable-xml --without-pear --disable-phar
-```
-
-编译 & 安装
-
-```
-make && make install
-```
-
-> 安装完成，会生成 `/usr/local/php-7.3.30` 目录。此时还不能使用 php 命令，继续配置。
-
-添加环境变量
-
-```
-vi /etc/profile
-
-# 在文件最后加入
-PATH=$PATH:/usr/local/php-7.3.30/bin
-export PATH
-```
-
-立即生效
-
-```
-source /etc/profile
-```
-
-查看PHP版本
-
-```
-php -v 
-```
-
-生成必要配置文件
-
-```
-cp php.ini-production /usr/local/php-7.3.30/etc/php.ini
-cp sapi/fpm/php-fpm /usr/local/php-7.3.30/etc/php-fpm
-cp /usr/local/php-7.3.30/etc/php-fpm.conf.default /usr/local/php-7.3.30/etc/php-fpm.conf
-cp /usr/local/php-7.3.30/etc/php-fpm.d/www.conf.default /usr/local/php-7.3.30/etc/php-fpm.d/www.conf
-```
-
-### 4、配置 PHP 与 Nginx 协同工作
-
-配置 nginx.conf
-
-```
-vi /usr/local/nginx/conf/nginx.conf
-```
-
-这一段都是包在 server{} 之中，如要配置多个域名，则复制粘贴多个server{}代码块。
-
-① 重写url，隐藏 index.php 
-
-② 解除 location ~ \.php$ {} 块的注释，并将其中的 /scripts 修改为 $document_root。
-
-```
-server {
-    listen       80;
-    server_name  www.abc.com abc.com;
-    root /var/www/abc;
-    location / {
-            if (!-e $request_filename) {
-                 rewrite ^/index.php(.*)$ /index.php?s=$1 last;
-                 rewrite ^(.*)$ /index.php?s=$1 last;
-             }
-        index  index.html index.htm index.php;
-    }
-    location ~ \.php$ {
-        root           /var/www/abc;
-        fastcgi_pass   127.0.0.1:9000;
-        fastcgi_index  index.php;
-        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-        include        fastcgi_params;
-    }
-}
-```
-
-配置 php-fpm
-
-```
-vi /usr/local/php-7.3.30/etc/php-fpm.d/www.conf
-```
-
-把里面的 user、group 两行，改为 nobody 或者是系统中存在的用户
-
-```
-user = nobody
-group = nobody
-```
-
-启动php-fpm，载入php.ini
-
-```
-/usr/local/php-7.3.30/sbin/php-fpm -c /usr/local/php-7.3.30/etc/php.ini
-```
-
- 
-
-注意：如果修改了 php.ini 则每次需要杀掉 php-fpm 进程再重新启动 php-fpm，PHP 的解析执行靠的是这家伙，不靠nginx。
-
-```
-ps -ef | grep php-fpm
-kill -9 # 9：上一条命令查到的PID
-```
-
-### 5、负载均衡服务器
-
-> vi /usr/local/nginx/conf/nginx.conf
-
-```
-http {
-	upstream name {				# 连接池，存放提供 web 服务的服务器地址
-		server 192.168.56.102 weight=5;	# 一台web服务器地址，权重 5/6
-		server 192.168.56.103 weight=1;	# 一台web服务器地址，权重 1/6
-	}
-	
-	server {
-		localtion / {
-			proxy_pass http://name;							# 指定代理连接池
-			proxy_set_header Host $host;					# 转发请求头信息
-			proxy_set_header X-Forward-For $remote_addr;	# 转发请求IP地址
-		}
-	}
-}
-```
-
-> service nginx restart
-
-
-
-### 6、主从服务器
-
-① 主从服务器的配置
-
-```
-vi /etc/my.cnf
-
-# 主从数据库的唯一标识
-server-id = 1
-# 主从服务的核心 log-bin 日志
-log-bin = mysql-bin
-```
-
-重启服务器
-
-```
-service mysqld 
-```
-
-② 主从服务器中的表结构要保持一致。
-
-③ 主服务器配置
-
-创建一个专门用来同步数据的账号
-
-```
-grant replication slave on *.* to 'sync'@'%' identified by 'Pwd-123456';
-```
-
-查看状态
-
-```
-show master status;
-```
-
-| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
-| :--------------- | -------- | ------------ | ---------------- | ----------------- |
-| mysql-bin.000001 | 433      |              |                  |                   |
-
-④ 从服务器配置	
-
-> 要与 show master status; 的结果一致		
-
-```sql
-change master to master_host='192.168.56.103', master_user='sync', master_password='Pwd-123456', master_log_file='mysql-bin.000001', master_log_pos=433;
-```
-
-开启从服务
-
-```
-start slave;
-```
-
-查看从服务状态
-
-```
-show slave status;
-
-# 以下值为 YES 则配置成功
-Slave_IO_Running: Yes
-Slave_SQL_Running: Yes
-```
-
-⑤ 测试在主服务器上插入数据，OK。
-
-### 7、Smaba 服务
+### 2、Smaba 服务
 
 > Windows 与 Linux 共享文件服务
 
@@ -2199,7 +1744,7 @@ pdbedit -a readonly
 		public = no			#是否公开
 ```
 
-### 8、FTP 服务
+### 3、FTP 服务
 
 > 利用 SFTP 协议利用 SSH 可以直接连接，无需搭建 FTP 服务。
 

@@ -8,6 +8,18 @@
 >
 > [MySQL 安装教程](https://dev.mysql.com/doc/refman/5.7/en/linux-installation-yum-repo.html)
 
+- 安装 MySQL 源
+
+```
+yum localinstall -y http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
+```
+
+- 安装 MySQL 
+
+```
+yum install mysql-community-server
+```
+
 ### 2、使用 APT 存储库安装 MySQL
 
 > APT 是 Debian 和 Ubuntu 版本的软件存储库。
@@ -16,17 +28,57 @@
 
 ### 3、配置
 
-（1）启动服务
+- 启动 MySQL  服务
 
 ```
 systemctl start mysqld
 ```
 
-（2）连接 MySQL 服务器
+- 获取初始密码
+
+```
+> grep 'temporary password' /var/log/mysqld.log
+A temporary password is generated for root@localhost: Jqqskhz1Wr
+```
+
+- 连接 MySQL 服务器
 
 ```
 > mysql -h127.0.0.1 -P3306 -uroot -p
 Enter password:
+```
+
+- 修改密码
+
+```
+> SET PASSWORD = PASSWORD('123456//ZZZjjj'); 
+# 密码必须复杂 需包含大小写特殊符号，否则无法修改成功
+```
+
+**Navicat 连接数据库**
+
+① SSH 通道连接
+
+② 通过主机连接
+
+- 开放远程连接
+
+```
+use mysql;
+update user set host = '%' where user = 'root';
+```
+
+- 刷新权限，使权限立即生效
+
+```
+flush privileges;
+```
+
+- 开放端口
+
+```
+firewall-cmd --zone=public --add-port=3306/tcp --permanent
+firewall-cmd --reload
 ```
 
 

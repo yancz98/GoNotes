@@ -1,4 +1,110 @@
-## 一、分布式缓存
+## 一、分布式理论
+
+### 1、CAP 理论
+
+CAP 理论来自学术界，CAP 本身基于状态，基于瞬态，是一个描述性的理论，并不解决工程问题。
+
+CAP 定理表达了一个分布式系统里（出现分区的情况下）不可能同时满足以下三个特性：
+
+#### （1）C：数据一致性（Consistency）
+
+一致性是指写操作后的读操作可以读取到最新的数据状态，当数据分布在多个节点上，从任意结点读取到的数据都是最新的状态。当节点故障时，节点之间无法保证一致性变化，为了保证分布式系统对外的数据一致性，选择不返回任何数据。即对调用者而言，数据具有强一致性。
+
+#### （2）A：服务可用性（Availability）
+
+所有请求在一定时间内得到响应，可终止，不会一直等待；可用性是对结果的要求。
+
+可用性是指任何事务操作都可以得到响应结果，且不会出现响应超时或响应错误。
+
+分布式系统可用性的特点：所有请求都有响应，且不会出现响应超时或响应错误。
+
+可用性在 CAP 里是对结果的要求，它要求系统内的节点接收到的无论是写请求还是读请求，都要能处理并返回响应结果。它有两点必须满足的条件：
+
+① 返回结果必须在合理的时间内。
+
+② 需要系统内能正常接收请求的所有节点都返回结果。
+
+#### （3）P：分区容忍性（Partition-tolerance）
+
+在网络分区的情况下，被分隔的节点仍能正常对外服务。
+
+通常分布式系统的各个结点部署在不同的子网，这就是网络分区，不可避免的会出现由于网络问题或机器故障而导致结点之间通信失败，此时仍可对外提供服务，这叫分区容忍性。
+
+在分布式系统中，只要节点通信出现了问题，那么就出现了分区。
+
+#### （4）CAP 系统的选择
+
+![CAP 选择](Images/Distributed_CAP_Choose.png)
+
+一个分布式系统（发生分区错误时）理论上最多只能同时满足：CAP 三项中的两项。P 是必须的，在分布式系统内，P 是必然发生的（网络不可靠），一旦发生分区，整个分布式系统就完全不可用，这是不符合实际需要的。所以，对于分布式系统，我们只需考虑 C 和 A 如何选择。
+
+- CP 系统：放弃可用性，追求一致性和分区容忍性。当发生分区故障后，客户端的任何请求都被卡死或者超时，但每个节点总是会返回一致的数据。（如：zookeeper，跨行转账）
+- AP 系统：放弃一致性，追求分区容忍性和可用性。当发生分区故障后，客户端依然可以访问系统，但是获取的数据可能会不一致。（如：Eureka，这是很多分布式系统设计时的选择，最终一致性）
+- CA：放弃分区容忍性，即不进行分区，不需考虑网络和节点挂掉的问题，则可以实现一致性和可用性。那么系统将不是一个标准的分布式系统。（关系型数据库就满足 CA 架构）
+
+
+
+> CAP 选择总结，当分布式系统出现内部问题时，该怎么选：
+
+- 迁就外部服务：如外包公司，不能因自身问题让外部服务受影响，优先高可用。
+- 让外部服务迁就你：如银行，要优先一致性。
+
+#### （5）CAP 的理解误区：
+
+- 分布式系统因为 CAP 理论，放弃了 C 或 A 的其中一个？
+
+  理解有误，只有当 P 发生时，才会出现 C 和 A 选择，而 P 发生的概率非常低，所以，当没有出现分区问题时，系统拥有完美的数据一致性和可用性。
+
+- ...
+
+
+
+### 2、Base 理论
+
+CAP 理论说明，在分布式系统中需要妥协。而 Base 理论 是 CAP 理论的一种妥协，Base 理论降低了发生分区错误时，对可用性和一致性的要求。
+
+- 基本可用（Basically Availble）：分布式系统在出现故障时，允许损失部分可用功能，保证核心功能可用。（可能响应延长、可能服务降级）；
+- 软状态/柔性事务（Soft State）：允许系统中的数据存在中间状态，并认为该中间状态不会影响系统整体可用性。
+- 最终一致性（Eventual Consistency）：节点数据同步可以存在延时，但在一定的期限后必须达成数据一致，状态为最终状态。
+
+> ACID vs BASE
+
+| ACID                   | BASE                   |
+| ---------------------- | ---------------------- |
+| 强一致性               | 弱一致性（容忍旧数据） |
+| 隔离性                 | 可用性优先             |
+| 专注于提交             | 尽最大努力             |
+| 嵌套事务               | 大概的答复             |
+| 可用性                 | 侵略性的（乐观的）     |
+| 保守（悲观的）         | 更简单的               |
+| 进化困难（例如：模式） | 更快                   |
+|                        | 更容易进化             |
+
+![BASE vs ACID](Images/Distributed_Base_vsACID.png)
+
+
+
+### 3、数据一致性模型
+
+- 强一致性
+- 弱一致性
+- 最终一致性
+- 因果一致性：因果关系的操作顺序得到保证。
+- 会话一致性
+
+
+
+## 二、分布式 ID 
+
+### 1、雪花算法
+
+### 2、UUID
+
+### 3、Redis
+
+
+
+## 三、分布式缓存
 
 ### 1、哈希取余算法
 
@@ -102,7 +208,7 @@ Redis-Cluster 采用的分区方式：哈希槽算法。
 
 
 
-## 二、分布式事务
+## 四、分布式事务
 
 ### 1、本地事务
 
@@ -113,72 +219,9 @@ Redis-Cluster 采用的分区方式：哈希槽算法。
 - 隔离性（Isolation）：多个事务并发执行时，互不干扰。
 - 持久性（Durability）：事务完成后结果永久保存。
 
-### 2、分布式事务基础理论
-
-#### （1）CAP 理论
-
-> CAP 定理主要描述的是状态
-
-CAP 定理表达了一个分布式系统里不可能同时满足以下三个特性：
-
-- 数据一致性（Consistency）：对调用者而言，数据具有强一致性；
-
-一致性是指写操作后的读操作可以读取到最新的数据状态，当数据分布在多个节点上，从任意结点读取到的数据都是最新的状态。
-
-- 服务可用性（Availability）：所有请求在一定时间内得到响应，可终止，不会一直等待；可用性是对结果的要求。
-
-可用性是指任何事务操作都可以得到响应结果，且不会出现响应超时或响应错误。
-
-分布式系统可用性的特点：所有请求都有响应，且不会出现响应超时或响应错误。
-
-- 分区容忍性（Partition-tolerance）：在网络分区的情况下，被分隔的节点仍能正常对外服务。
-
-通常分布式系统的各个结点部署在不同的子网，这就是网络分区，不可避免的会出现由于网络问题而导致结点之间通信失败，此时仍可对外提供服务，这叫分区容忍性。
-
-> CAP 的组合方式
-
-![分布式理论_CAP](Images/647994-20180103141324799-1732674804.png)
-
-一个分布式系统理论上最多只能同时满足：C、A、P 三项中的两项。
-
-- AP：放弃一致性，追求分区容忍性和可用性。（这是很多分布式系统设计时的选择）
-- CP：放弃可用性，追求一致性和分区容忍性。（如：zookeeper，跨行转账）
-- CA：放弃分区容忍性，即不进行分区，不需考虑网络和节点挂掉的问题，则可以实现一致性和可用性。那么系统将不是一个标准的分布式系统。（关系型数据库就满足 CA 架构）
-
-#### （2）Base 理论
-
-是 CAP 理论的一种妥协，由于 CAP 只能二选一，Base 理论降低了发生分区容错时，对可用性和一致性的要求。
-
-- 基本可用（Basically Availble）：分布式系统在出现故障时，允许损失部分可用功能，保证核心功能可用。（可能响应延长、可能服务降级）；
-- 软状态/柔性事务（Soft State）：允许系统中的数据存在中间状态，并认为该中间状态不会影响系统整体可用性。
-- 最终一致性（Eventual Consistency）：节点数据同步可以存在延时，但在一定的期限后必须达成数据一致，状态为最终状态。
-
-> ACID vs BASE
-
-| ACID                   | BASE                   |
-| ---------------------- | ---------------------- |
-| 强一致性               | 弱一致性（容忍旧数据） |
-| 隔离性                 | 可用性优先             |
-| 专注于提交             | 尽最大努力             |
-| 嵌套事务               | 大概的答复             |
-| 可用性                 | 侵略性的（乐观的）     |
-| 保守（悲观的）         | 更简单的               |
-| 进化困难（例如：模式） | 更快                   |
-|                        | 更容易进化             |
-
-![分布式理论_BASE vs ACID](Images/647994-20180103141201643-1782568971.png)
-
-#### （3）数据一致性模型
-
-- 强一致性
-- 弱一致性
-- 最终一致性
-- 因果一致性：因果关系的操作顺序得到保证。
-- 会话一致性
 
 
-
-### 3、分布式事务解决方案
+### 2、分布式事务解决方案
 
 > 分布式事务用于在分布式系统中保证不同节点之间的数据一致性。
 
@@ -299,3 +342,299 @@ Seata 定义了 3 个组件来协议分布式事务的处理过程：
 架构层次方面：传统 2PC 方案的 RM 实际上是在数据库层，RM 本质上就是数据库自身，通过 XA 协议实现，而 Seata 的 RM 是以 jar 包的形式作为中间件层部署在应用程序这一侧的。
 
 两阶段提交方面：传统 2PC无论第二阶段的决议是 commit 还是 rollback ，事务性资源的锁都要保持到 Phase2 完成才释放。而 Seata 的做法是在 Phase1 就将本地事务提交，这样就可以省去 Phase2 持锁的时间，整体提高效率。
+
+
+
+## 五、分布式共识算法（Raft Consensus Algorithm）
+
+- [Raft Website](https://raft.github.io/)
+- [Raft Paper](https://raft.github.io/raft.pdf)
+- [可理解的 Raft 可视化](http://thesecretlivesofdata.com/raft/)
+
+### 1、概述
+
+#### （1）什么是 Raft？
+
+Raft 是一种用于管理复制日志的一致性算法。Raft 比 Paxos 更容易理解，也为构建实用系统提供了更好的基础。为了增强可理解性，Raft 分离了共识的关键要素，如领导人选举、日志复制和安全性，并加强了一致性，以减少状态数量。
+
+Raft 的新颖功能：
+
+- 强大的 Leader：Raft 使用了比其它共识算法更强的 Leader 形式。例如，日志条目仅从 Leader 服务器流向其它服务器。这简化了对复制日志的管理，并使 Raft 更易于理解。
+- Leader 选举：Raft 使用随机定时器来选举 Leader。这只增加了少量的机制到任何共识算法已经需要的心跳，同时简单快速地解决冲突。
+- 成员身份更改：Raft 更改集群中服务器集的机制使用了一个新的 *联合共识* 方法，其中两种不同配置的大多数在过渡期间重叠。这允许集群在配置更改期间继续正常运行。
+
+#### （2）什么是分布式共识？
+
+共识是容错分布式系统中的一个基本问题。共识涉及多个服务器就值达成一致，一旦他们就某个值做出决定，该决定就是最终决定。当大多数服务器可用时，典型的共识算法会取得进展（提交条目）。如果更多的服务器出现故障，他们将停止取得进展（但永远不会返回错误的结果）。
+
+
+
+### 2、复制状态机（Replicated state machines）
+
+共识算法通常出现在复制状态机的上下文中。在这种方法中，服务器集合上的状态机计算相同状态的相同副本，并且即使某些服务器出现故障也可以继续运行。复制状态机用于解决分布式系统中的各种容错问题。例如，具有单集群 Leader 的大型系统（GFS、HDFS、RAMCloud），通常使用单独的复制状态机来管理 Leader 选举并存储必须在 Leader 崩溃后才能生存的配置信息。复制状态机的例子包括 Chubby 和 Zookeeper（例：管理 Kafka 集群）。
+
+复制状态机通常使用复制日志来实现，每个服务器都有一个状态机并存储一份日志，其日志包含一系列命令，其状态机按顺序执行这些命令。每个日志以相同的顺序包含相同的命令，因此每个状态机处理相同命令序列。由于状态机是确定性的，每个状态机都计算相同的状态和相同的输出序列。
+
+状态机的结果：相同的初始状态 + 相同的输入 = 相同的结束状态。
+
+保持复制日志的一致性是共识算法的工作。
+
+<img src="Images\Distributed_Raft_ReplicatedStateMachine.png" alt="复制状态机的体系结构"  />
+
+> 复制状态机执行流程：
+
+① Leader 服务器上的共识模块接收来自 Client 的命令。
+
+② 将命令添加到日志中，并与其它服务器（Follower）上的共识模块进行通信，以确保每个日志最终都以相同的顺序包含相同的请求，即使某些服务器出现故障。
+
+③ 一旦命令被正确复制（收到大多数节点的回复），每个服务器的状态机就会按日志顺序处理它们。
+
+④ 响应客户端。
+
+> 实际系统的一致性算法通常具有一下特征：
+
+- 它们确保在所有非拜占庭（non-Byzantine）条件下的安全性（永远不会返回错误的结果），包括网络延迟、分区，数据包丢失、重复，重新排序。
+- 只要大多数（大于 N/2）服务器可以运行，并且可以相互通信和与客户端通信，它们就可以完全发挥作用（可用）。
+- 它们不依赖于时间来确保日志的一致性：错误的时钟和极端的消息延迟在最坏的情况下会导致可用性问题。
+- 在常见情况下，只要集群的大多数成员对单轮远程过程调用做出响应，命令就可以完成；少数慢速服务器不需要影响整体系统性能。
+
+### 3、Raft 算法基础
+
+#### （1）服务器状态
+
+![服务器状态](Images/Distributed_Raft_ServerStates.png)
+
+在任何给定的时间，每个服务器都处于三种状态之一：
+
+- 追随者（Follower）：追随者是被动的，它不会自己提出要求，只是简单地回应领导者和候选人的要求。
+
+- 候选者（Candidate）：
+
+- 领导者（Leader）：领导者处理所有客户端请求（如果客户端联系追随者，追随者会将其重定向到领导者）。
+
+在正常操作中，只有一个领导者，而所有其它服务器都是追随者。
+
+#### （2）任期
+
+![时间任期](Images/Distributed_Raft_TimeTerms.png)
+
+Raft 将时间划分为任意长度的任期，每届任期以选举开始，一名或多名候选人试图成为 Leader。如果一位候选人赢得了选举，那么它将在余下的任期内担任 Leader。在某些情况下，选举会导致投票分裂，在这种情况下，任期将在没有 Leader 的情况下结束；新的任期（包括新的选举）将很快开始。Raft 确保在一个任期内最多有一位了 Leader。
+
+不同的服务器在不同时期可能会观察到任期之间的转换，并且在某些情况下，服务器可能不会观察到一个选举甚至整个任期。
+
+任期在 Raft 中充当逻辑时钟，它们允许服务器检测过时的信息，如过期的 Leader。每个服务器存储一个当前任期编号，该编号随时间单调递增。当服务器通信时，都会交换当前任期，如果一台服务器的当前任期小于另一台服务器，则会将其当前任期更新为更大的值。如果 Candidate 或 Leader 发现自己的任期已经过时，就会立即恢复到 Follower 状态。如果服务器接收到一个具有过时任期编号的请求，它将拒绝该请求。
+
+#### （3）通信
+
+Raft 服务器使用 RPC 进行通信，并且基本的一致性算法只需要两种类型的 RPC。
+
+- State：服务器状态
+
+```go
+type ServerState struct {
+    // 所有服务器上的持久状态（在响应 RPC 前已更新到稳定存储上）
+	currentTerm int      // 服务器已看到的最新任期（第一次启动时初始化为 0，单调增加）
+    votedFor    *int     // 当前任期内收到选票的 CandidateID（如果没有则为 null）
+    log         []string // 日志条目（索引从 1 开始）
+    
+    // 所有服务器上的不稳定状态
+    commitIndex int // 已知要提交的最高日志条目索引（初始化为 0，单调增加）
+    lastApplied int // 应用于状态机的最高日志条目索引（初始化为 0，单调增加）
+    
+    // Leader 的不稳定状态（选举后重新初始化）
+    nextIndex  []int // 对于每台服务器，发送到该服务器的下一个日志条目的索引（初始化为 LeaderLastLogIndex + 1）
+    matchIndex []int // 对于每台服务器，已知要在服务器上复制的最高日志条目索引（初始化为 0，单调递增）
+}
+```
+
+- Request Vote RPC：由 Candidate 在选举期间发起。
+
+```go
+// 请求投票参数
+type RequestVoteRpc struct {
+    term         int // Candidate 任期
+    candidateId  int // Candidate ID
+    lastLogIndex int // Candidate 最后一条日志条目的索引
+    lastLogTerm  int // Candidate 最后一条日志条目的任期
+}
+
+// 请求投票响应
+type RequestVoteResponse struct {
+    term int         // 当前任期，用于 Candidate 更新自身
+    voteGranted bool // TRUE 表示 Candidate 获得选票
+}
+
+// 接收器实现
+func (s *ServerState) VoteReplay (req RequestVoteRpc) RequestVoteResponse {
+    // 1. Reply false if term < currentTerm
+    if req.term < s.currentTerm {
+        return RequestVoteResponse{
+            term: currentTerm,
+            voteGranted: false,
+        }
+    }
+    
+    // If votedFor is null or candidateId, and candidate’s log is at least as up-to-date as receiver’s log, grant vote
+    if (s.votedFor == nil || s.votedFor == req.candidateId) && 
+      req.lastLogIndex >= s.lastApplied && req.lastLogTerm >= s.currentTerm {
+        return RequestVoteResponse{
+            term: currentTerm,
+            voteGranted: true,
+        }
+    }
+}
+```
+
+- Append Entries RPC：由 Leader 发起，以复制日志条目并提供一种心跳形式
+
+```go
+// 附加日志条目请求参数
+type AppendEntriesRpc struct {
+    term         int      // Leader 任期
+    leaderId     int      // LeaderID，以便 Follower 可以重定向 Client
+    prevLogIndex int      // 前一个日志条目索引
+    prevLogTerm  int      // 前一个日志条目任期
+    entries      []string // 要存储的的日志条目（为空时用于心跳，可以批量发送条目）
+    leaderCommit int      // Leader 的 CommitIndex
+}
+
+// 附加日志条目响应
+type AppendEntriesRpc struct {
+ 	term    int  // 当前任期，用于 Leader 自我更新
+    success bool // 如果 Follower 包含匹配的条目 prevLogIndex 和 prevLogTerm，则返回 TRUE
+}
+
+// 接收器实现
+func (s *ServerState) AppendEntriesApply (req AppendEntriesRpc) AppendEntriesRpc {
+    // 1. Reply false if term < currentTerm
+    if req.term < s.currentTerm {
+        return AppendEntriesRpc{
+            term: s.currentTerm,
+            sucess: false,
+        }
+    }
+    
+    // 2. Reply false if log doesn’t contain an entry at prevLogIndex whose term matches prevLogTerm
+    
+    // 3. If an existing entry conflicts with a new one (same index but different terms), delete the existing entry and all that follow it
+    
+    // 4. Append any new entries not already in the log
+    
+    // 5. If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index of last new entry)
+
+}
+```
+
+#### （4）关键属性
+
+- **Election Safety**（选举安全）：在一个任期内最多可以选出一位 Leader。
+- **Leader Append-Only**（仅追加）：Leader 从不覆盖或删除其日志中的条目，它只追加新的条目。
+- **Log Matching**（日志匹配）：如果两个日志包含一个具有相同索引和任期的条目，那么在给定索引的所有条目中，日志是相同的。
+- **Leader Completeness**（Leader 完整性）：如果一个日志条目在给定的任期中被提交，那么该条目将出现在所有编号更高的任期的 Leader 日志中。
+- **State Machine Safety**（状态机安全）：如果服务器已将给定索引处的日志条目应用到其状态机，则其它服务器将不会为同一索引应用不同的日志条目。
+
+Raft 保证这些属性中的每一个在任何时候都是正确的。
+
+### 3、领导者选举（Leader Election）
+
+Raft  使用心跳机制来触发 Leader 选举。
+
+> 在 Raft 中有两个超时设置来控制选举：
+
+- 选举超时：选举超时是 Follower 等待成为 Candidate 的时间，选举超时 *随机* 在 150 ms 到 300 ms 之间。
+- 心跳超时：Leader 定期向所有 Follower 发送心跳（不携带日志条目的 AppendEntries RPC），以维护 Leader 的地位。
+
+> Leader Election 流程：
+
+- 所有节点都以 Follower 状态开始，如果 Follower 在选举超时后，没有收到任何通信，那么它就会认为没有可用行的 Leader，Follower 增加当前任期任期，并切换为 Candidate，以开始新一轮的选举。
+- Candidate 为自己投一票，并向其它节点发送 RequestVoteRPC。Candidate 最终会因以下三件事而切换状态：
+  - 赢得选举：切换为 Leader。
+  - 另一个服务器成为 Leader：切换为 Follower。
+  - 选票分裂：进入新一轮选举。
+
+- 如果 Candidate 在同一任期内获得大多数节点的选票（确保每个任期只能选出一位 Leader），则该 Candidate 赢得选举成为 Leader。每个节点将在给定任期内以先到先得的方式投票给最多一名 Candidate（每个任期只能投一票），且该节点重置其选举超时。多数规则确保每个任期内最多选出一名 Leader（选举安全）。Leader 向所有其它服务器发送心跳消息，以维护其权威。
+- 在等待投票时，Candidate 可能会收到来自另一台声称 Leader 的 AppendEntries RPC。如果 Leader 的任期大于等于 Candidate 的当前任期，那么 Candidate 承认 Leader 是合法的，并返回 Follower 状态。否则，Candidate 拒绝 RPC 并继续处理 Candidate 状态。
+- 如果多个 Follower 同时成为 Candidate，选票可能会被分割，因此没有 Candidate 获得多数票。这时，每个 Candidate 都会超时，并进入下一轮选举，如果不采取额外措施，分裂投票可能会无限重复。Raft 使用随机的选举超时来确保分裂选票很少发生，并且能够迅速解决。
+
+
+
+> **Extend**
+
+排名系统：每个候选人都被分配一个唯一的排名，用于在竞争的候选人之间选择。如果一位候选人发现了另一位排名更高的候选人，它将返回追随者状态，这样排名更高的候选人就可以更容易地赢得下一次选举。
+
+排名系统的问题：如果排名较高的服务器出现故障，排名较低的服务器可能需要暂停并再次成为候选服务器，但如果它这样做得太早，它可能会重新设置选举领导者的进度。
+
+
+
+### 4、日志复制（Log Replication）
+
+一旦选出 Leader，它就开始为 Client 的请求提供服务。Leader 将命令作为新条目附加到其日志中，然后向其它每个服务器 *并行* 发出 AppendEntries RPC 以复制该条目。当条目被安全复制后，Leader 将该条目应用于其状态机，并将执行结果返回给 Client。如果 Follower 奔溃、网络延时、数据丢失，则 Leader 会无限期地重试 AppendEntries RPC（即使它对客户端做出响应后），直到所有 Follower 最终存储所有日志条目。
+
+#### （1）日志复制流程
+
+- 系统的所有更改都经过 Leader，其将系统的所有更改复制到所有节点。
+- Client 向 Leader 发送更改。
+- 更改附加到 Leader 的日志中（未提交）。
+- 然后在下一次心跳时将更改发送给 Follower。
+- Leader 等待大多数 Follower 都写入了该条目，该条目才会在 Leader 上提交（应用到状态机）。
+- Leader 通知 Follower 该条目已提交。
+- 并向 Client 发送响应。
+- 集群现在已经就系统状态达成共识。
+
+#### （2）日志的组织形式
+
+![日志的组织形式](Images/Distributed_Raft_LogEntries.png)
+
+- 日志由条目组成，条目按顺序编号。
+- 每个条目都包含创建它的任期（框中的数字）和状态机命令。
+- 如果将条目应用于状态机是安全的（被大多数节点认可），则该条目被视为已提交。
+
+#### （3）一致性保证
+
+Raft 保证提交的条目是持久的，并且最终将由所有可用的状态机执行，以保持不同服务器上的日志之间的高度一致性。Raft 维护以下属性，这些属性共同构成 **Log Matching** 属性：
+
+- 如果不同日志中的两个条目具有相同的索引和任期，则它们存储相同的命令。
+
+  第一个属性来自这样的事实，Leader 在给定任期的给定日志索引位置上最多创建一个条目。并且日志条目永远不会改变其在日志中的位置。
+
+- 如果不同日志中的两个条目具有相同的索引和任期，那么前面所有条目中的日志都是相同的。
+
+  第二个属性由 AppendEntries 执行的简单一致性检查来保证。当发送 AppendEntries RPC 时，Leader 将条目的索引和任期包括在新条目之前的日志中。如果 Follower 在其日志中找不到具有相同索引和任期的条目，则拒绝新条目。
+
+  一致性检查充当归纳步骤：日志的初始空状态满足日志匹配属性，并且当扩展日志时，一致性检查都会保留日志匹配属性。因此，每当 AppendEntries 成功返回时，Leader 都知道 Follower 的日志与其通过新条目进行的日志相同。
+
+#### （4）分区后的一致性保持
+
+在正常操作期间，Leader 和 Follower 的日志保持一致，因此 AppendEntries 一致性检查永远不会失败。但是 Leader 崩溃可能会导致日志不一致。这些不一致可能会因一系列 Leader 和 Follower 崩溃而加剧，日志中丢失的和额外的条目可能跨越多个任期。
+
+> Follower 的日志可能与新 Leader 的日志不同的方式。
+
+![](Images/Distributed_Raft_LogMissing.png)
+
+- Follower 可能缺少 Leader 上的条目（a, b）。
+- Follower 可能有 Leader 上没有的额外条目（c, d）。
+- 或者两者兼而有之（e, f）。
+
+> Leader Append Only
+
+在 Raft 中，Leader 通过强制 Follower 复制自己的日志来处理不一致。这意味着 Follower 日志中的冲突条目将被 Leader 日志中的条目覆盖。
+
+为了使 Follower 的日志与 Follower 的日志保持一致，Leader 必须找到两个日志一致的最新日志条目，删除该点之后 Follower 日志中的任何条目，并将该点之后 Leader 的所有条目发送给 Follower。
+
+所有这些操作都是响应 AppendEntries RPC 执行的一致性检查而执行的。Leader 为每个 Follower 维护一个 nextIndex，这是 Leader 将发送给该 Follower 的下一个日志条目的索引。当 Leader 第一个掌权时，它会将所有 nextIndex 值初始化到其日志中最后一个值之后的索引。如果 Follower 的日志与 Leader 的日志不一致，则 AppendEntries 一致性检查将在下一个 AppendEntries RPC 中失败。拒绝后，Leader 递减 nextIndex 并重试 AppendEntries RPC。最终 nextIndex 将达到 Leader 和 Follower 日志匹配的点。当这种情况发生时，AppendEntries 将成功，它将删除 Follower 日志中任何冲突的条目，并从 Leader 日志中附加条目。一旦 AppendEntries 成功，Follower 的日志与 Leader 的日志保持一致，并且在本任期的剩余时间内保持不变。
+
+如果需要，可以优化协议以减少被拒绝的 AppendEntries RPC 的数量。例如，当拒绝 AppendEntries 请求时，Follower 可以包含冲突条目的任期以及它为该任期存储的第一个索引。这样 Leader 就可以减少 nextIndex 以绕过该任期中所有冲突的条目。对于具有冲突条目的每个任期，将需要一个 AppendEntries RPC，而不是每个条目一个 RPC。
+
+
+
+### 5、安全性
+
+#### （1）选举限制
+
+该限制确保任何给定任期的 Leader 包含以前任期中提交的所有条目（Leader 完整性属性）。
+
+#### （2）提交以前任期中的条目
+
+
+
+### 6、集群成员身份更改

@@ -534,6 +534,12 @@ local.domain
 ```
 ~~~
 
+#### （3）ssh 免密
+
+```
+将 .101 的 SSH 公钥 ~/.ssh/id_rsa.pub 写入 .102 的 ~/.ssh/authorized_keys 则可实现 101 到 102 的免密登录和 scp 操作
+```
+
 
 
 ### 5、运行级别

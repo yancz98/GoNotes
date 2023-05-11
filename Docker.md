@@ -305,8 +305,10 @@ OPTIONS:
 	-v, --volume			绑定数据卷
 	--volumes-from			从指定容器加载卷
 	--mount					将文件系统挂载到容器
-	-w, --workdir 			指定容器内的工作目录		
-	
+	-w, --workdir 			指定容器内的工作目录
+    --privileged=true       授予此容器扩展权限（特权）
+	-u                      -u 0 用root用户登录容器，而不是镜像的默认用户
+    
 COMMAND:
 	env		查看镜像支持的环境变量
 ```

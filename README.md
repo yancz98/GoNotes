@@ -24,21 +24,31 @@
 
 - [x] [Redis](Redis_6379.md)
 
-- [x] [ElasticSearch](ElasticSearch.md)
+- [x] [ElasticSearch](ElasticSearch_9200.md)
 
-- [ ] [MinIO](MinIO_9000.md)
+- [x] [MinIO](MinIO_9000.md)
+
+- [x] [ETCD](ETCD_2379.md)
+
+- [ ] [ZooKeeper](zookeeper_2181.md)
+
+- [ ] [Consul](Consul.md)
+
+
+
+> Key-Value Stores Comparison Chart
+
+|      | ETCD | Zookeeper | Consul | NewSQL |
+| ---- | ---- | --------- | ------ | ------ |
+|      |      |           |        |        |
 
 
 
 ## Messages
 
 - [x] [Kafka](Kafka_9092.md)
-
-- [ ] [ZooKeeper](zookeeper_2181.md)
-
 - [ ] [RocketMQ](RocketMQ_9876.md)
-
-- [ ] [RabbitMQ](rabbitmq_4369.md)
+- [ ] [RabbitMQ](RabbitMQ_4369.md)
 
 
 

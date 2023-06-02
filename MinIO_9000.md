@@ -71,13 +71,13 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 # 4 磁盘挂载（保证重启自动挂载）
 > vi /etc/fstab
 
-```
+​~~~
 # <file system>  <mount point>  <type>  <options>         <dump>  <pass>
   LABEL=DISK1    /mnt/disk1     xfs     defaults,noatime  0       2
   LABEL=DISK2    /mnt/disk2     xfs     defaults,noatime  0       2
   LABEL=DISK3    /mnt/disk3     xfs     defaults,noatime  0       2
   LABEL=DISK4    /mnt/disk4     xfs     defaults,noatime  0       2
-```
+​~~~
 
 # 不需重启生效的方法（需预先创建好挂载点）
 mkdir -p /mnt/disk1
@@ -155,6 +155,7 @@ RootPass: minioadmin
     ~~~
 
 - 具有顺序挂载的本地 JBOD 存储：
+  
   - 每个节点都按 SNMD 配置好磁盘挂载。
 
 ##### 部署分布式 MinIO
@@ -354,7 +355,7 @@ journalctl -f -u minio.service
 
 ### 3、纠删码奇偶校验（Erasure Code Parity (EC:N)）
 
-
+### 4、多副本与纠删码对比
 
 ## 三、访问管理（策略管理）
 

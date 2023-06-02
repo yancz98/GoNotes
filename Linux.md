@@ -372,7 +372,6 @@ shift + zz  保存编辑（:x）
 ````shell 
 # 编辑配置文件
 vi ~/.vimrc
-
 ```
 set nu
 set ...
@@ -1211,11 +1210,11 @@ mount
 # 永久挂载：（重启生效）
 vi /etc/fstab
 
-```
+~~~
 # <file system>  <mount point>  <type>  <options>         <dump>  <pass>
   LABEL=DISK1    /mnt/disk1     xfs     defaults,noatime  0       2
   LABEL=DISK2    /mnt/disk2     xfs     defaults,noatime  0       2
-```
+~~~
 
 # 不重启生效的方法：（需预先创建好挂载点）
 mkdir -p /mnt/disk1
@@ -1308,9 +1307,9 @@ hostname
 vi /etc/hostname
 
 # 添加本地域名解析服务：`/etc/hosts`
-```
+​~~~
 127.0.0.1    www.test.com
-```
+​~~~
 
 # 通过 <hostname> 通信
 ping <hostname>

@@ -5435,49 +5435,74 @@ Use "go help <topic>" for more information about that topic.
 
 
 
-### 3、目录结构
+### 3、Go 项目布局
+
+> [Standard Go Project Layout](https://github.com/golang-standards/project-layout)
 
 ```
-/cmd		本项目的主干
-	myapp
-		interface
-		service
-		job
-		admin
-		main.go
-	myapp1
-		main.go
-	...
-/internel	不可以在其他项目中导入的代码（私有），不限于顶级目录，可以在任何目录下定义 internal
-	/model
-	/dao
-	/service
-	/server
-/pkg		可以在其他项目中导入的代码（公有）
-/vendor		应用程序依赖项
-
-/api		服务应用程序目录
-/web		Web 应用程序目录
-/config
-/init
-/script
-/build
-/deployments
-/test
-/docs
-
-project  	应用部署目录
-├─cmd				本项目的主干
-│  ├─demo1          项目1
-│  │  ├─demo1
-│  │  └─main.go  
-│  ├─demo2
-│  │  ├─demo2
-│  │  └─main.go 
-│  ├─Exceptions         自定义异常处理
-│  │  ├─Handler.php			异常处理基类
-│  │  └─ ...
-
+project/
+├─api/                       API 层
+│  ├─admin/                  后台应用
+│  │  ├─v1/                  版本号 v1
+│  │  │  ├─example.go        ...
+│  │  │  └─...
+│  │  ├─v2/                  版本号 v2
+│  │  │  └─...               ...
+│  │  └─...
+│  ├─app/                    前台应用
+│  │  ├─v1/                  版本号 v1
+│  │  │  ├─example.go        ...
+│  │  │  └─...
+│  │  ├─v2/                  版本号 v2
+│  │  │  └─...               ...
+│  │  └─...
+│  ├─router                  路由层
+│  │  └─...
+│  └─...
+├─cmd/                       本项目的主干
+│  ├─admin/                  后台应用
+│  │  ├─base.service         服务启动脚本
+│  │  ├─build.sh             构建脚本
+│  │  ├─config.yaml          配置文件
+│  │  ├─Dockfile             docker 配置文件
+│  │  ├─docker-compose.yaml  docker-composer 配置文件
+│  │  └─main.go              入口文件
+│  ├─app/                    前台应用
+│  │  └─...                  ...
+│  └─...
+├─config/                    配置文件模板或默认配置
+│  └─...                     ...
+├─initialize/                初始化层
+│  └─...                     ...
+├─internal/                  私有应用程序和库代码（不局限于顶级 internal 目录）
+│  ├─admin/                  ...
+│  │  └─...
+│  ├─app/
+│  │  └─...
+│  └─...
+├─model/                     模型层
+│  ├─config/                 配置模型
+│  │  └─...                  ...
+│  ├─db/                     DB 模型（ORM）
+│  │  └─...                  ...
+│  ├─enum/                   系统枚举类型
+│  │  └─...                  ...
+│  └─...
+├─pkg/                       外部应用程序可以使用的库代码
+│  └─...                     ...
+├─service/                   服务层
+│  ├─job/                    定时任务
+│  │  └─...                  ...
+│  ├─middleware/             中间件服务
+│  │  └─...                  ...
+│  ├─bussiness/              业务服务
+│  │  └─...                  ...
+│  └─...
+├─vendor/                    应用程序依赖项（用 `go mod vendor` 创建 /vendor 目录）
+│  └─...                     ...
+├─.gitignore
+├─go.mod
+└─README.md                  README
 ```
 
 ### 4、文档管理

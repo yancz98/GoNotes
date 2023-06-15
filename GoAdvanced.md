@@ -1,12 +1,14 @@
 ## 一、Go 谚语
 
+> Go 语言之父 Rob Pike 在 2015 年分享的主题《Go Proverbs》中讲的 10+ 条 Go 谚语。
+
 - Don't communicate by sharing memory, share memory by communicating.
   - 不要通过共享内存来通信，通过通信来共享内存。
 
 - Concurrency is not parallelism.
   - 并发不是并行。
 - Channels orchestrate; mutexes serialize.
-  - 通道是协调的，互斥是串行的。
+  - channel 是协调的，锁是串行的。
 - The bigger the interface, the weaker the abstraction.
   - 接口越大，抽象性越弱。
 

@@ -528,16 +528,15 @@ export BASH_ENV=/usr/local/etc/my_custom_bashrc
 # 修改主机名（reboot 生效）
 vi /etc/hostname
 
-```
+...
 local.domain
-```
+...
 ~~~
 
 #### （3）ssh 免密
 
-```
-将 .101 的 SSH 公钥 ~/.ssh/id_rsa.pub 写入 .102 的 ~/.ssh/authorized_keys 则可实现 101 到 102 的免密登录和 scp 操作
-```
+- 将 .101 的 SSH 公钥 `~/.ssh/id_rsa.pub` 写入 .102 的 `~/.ssh/authorized_keys` 则可实现 101 到 102 的免密登录和 scp 操作。
+- 注意：如果 `~/.ssh/authorized_keys` 文件及其目录让本用户之外的用户拥有写权限，那么 sshd 都会拒绝使用 `~/.ssh/authorized_keys` 文件中的 key 来进行认证。
 
 
 

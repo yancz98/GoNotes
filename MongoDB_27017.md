@@ -73,7 +73,7 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 
   ```shell
   # 将 MongoDB 作为 Windows 服务随机启动
-  > mongod --dapath=D:\MongoDB-5.0\data --logpath=D:\MongoDB-5.0\log\mongod.log --install
+  > mongod --dbpath=D:\MongoDB-5.0\data --logpath=D:\MongoDB-5.0\log\mongod.log --install
   
   > net start mongodb
   ```
@@ -1321,17 +1321,151 @@ db.<collection>.aggregate([
 
 ## 八、索引
 
-1、基础索引
+MongoDB 索引使用 B-Tree 数据结构。
 
-2、文档索引
+### 1、操作索引
 
-3、组合索引
+```shell
+# 创建索引
+db.collection.createIndex( <key and index type specification>, <options> )
 
-4、唯一索引
+# 例：在字段 created_at 上创建一个键降序索引 
+db.collection.createIndex( { created_at: -1 } )
+
+# 索引排序顺序
+# 对于单字段索引，排序顺序（升序或降序）对索引键无关紧要，因为 MongoDB 可以遍历索引在任一方向。
+
+# 指定索引名称
+db.<collection>.createIndex(
+   { <field>: <value> },
+   { name: "<indexName>" }
+)
+
+# 在指定索引名称之前，请考虑以下事项：
+#  索引名称必须唯一，创建同名索引时返回错误
+#  不能重命名索引，须先删除后创建
+
+# 获取索引
+db.collection.getIndexes()
+
+# 删除索引
+# 删除单个索引
+db.<collection>.dropIndex("<indexName>")
+# 删除多个索引
+db.<collection>.dropIndexes("<index1>", "<index2>", "<index3>")
+# 删除除 _id 索引之外的所有索引
+db.<collection>.dropIndexes()
+
+```
+
+### 2、索引类型
+
+#### （1）单字段索引
+
+默认情况下，所有集合中都有一个单字段索引：_id。您可以在文档中的任何字段上创建单字段索引，包括：
+
+- 顶级文档字段
+- 嵌入式文档
+- 嵌入文档中的字段
+
+创建索引时，指定：
+
+- 要在其上创建索引的字段。
+- 索引值的排序顺序（升序、降序）。
+
+```
+db.<collection>.createIndex( { <field>: <sortOrder> } )
+```
+
+#### （2）复合索引
+
+限制：单个复合索引最多可以包含 32 个字段。
+
+```
+db.<collection>.createIndex( {
+   <field1>: <sortOrder>,
+   <field2>: <sortOrder>,
+   ...
+   <fieldN>: <sortOrder>
+} )
+```
+
+> 最左前缀特性
+
+```shell
+# 以下复合索引
+{ "item": 1, "location": 1, "stock": 1 }
+
+# 具有以下索引前缀
+{ item: 1 }
+{ item: 1, location: 1 }
+
+# 支持这些字段的组合查询
+item
+item + location
+item + location + stock
+```
+
+> 复合索引的排序顺序
+
+复合索引支持与索引的排序顺序或索引的反向排序顺序匹配的排序操作。
+
+```shell
+# 创建复合索引
+db.collection.createIndex( { score: -1, username: 1 } )
+
+# 有效的索引查询
+# 正向排序
+db.collection.find().sort({ score: -1, username: 1 })
+# 反向排序
+db.collection.find().sort({ score: 1, username: -1 })
+```
+
+#### （3）多键索引（数组字段）
+
+[多键索引](https://www.mongodb.com/docs/manual/core/indexes/index-types/index-multikey/)
+
+#### （4）文本索引
+
+文本索引支持对包含字符串内容的字段进行文本搜索查询。
+
+一个集合只能有一个文本索引，但该索引可以涵盖多个字段。
+
+```
+db.<collection>.createIndex(
+   {
+      <field1>: "text",
+      <field2>: "text",
+      ...
+   }
+)
+```
+
+> 文本搜索支持
+
+文本索引支持本地部署上的 $text 查询操作。若要执行文本搜索，必须创建文本索引并使用查询运算符 $text。
+
+```
+db.collection.find(
+   {
+      $text: { $search: "coffee" }
+   }
+)
+```
+
+文本索引可能会占用大量 RAM。
+
+> 创建通配符文本索引
+
+您可以创建一个包含每个文档字段的文本索引
+
+（5）通配符索引
+
+（6）地理空间索引
+
+（7）哈希索引
 
 5、强制使用索引
-
-6、删除索引
 
 
 

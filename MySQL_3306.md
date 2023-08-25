@@ -540,7 +540,7 @@ SLEEP()		休眠数秒
 MATCH (col1,col2,...) AGAINST (expr [search_modifier])
 ```
 
-### 
+ 
 
 ## 五、数据操作语句（DML）
 
@@ -604,7 +604,7 @@ TRUNCATE 表名;
 
 > SQL 执行顺序
 
-![SQL执行顺序.png](Image\SQL执行顺序.png)
+![SQL执行顺序.png](Images\MySQL_SQL执行顺序.png)
 
 > 查询语法
 
@@ -1409,17 +1409,17 @@ max_length_for_sort_data
 
 非叶子节点能存储的元素个数：16KB /（bigint 8B + 指针 6B）= 1170 个；
 
-![B+Tree_structure](Image\B+Tree_数据结构.png)
+![B+Tree_structure](Images\MySQL_B+Tree_数据结构.png)
 
 - B-Tree
 
-![B-Tree_structure](Image\B-Tree_数据结构.png)
+![B-Tree_structure](Images\MySQL_B-Tree_数据结构.png)
 
 #### 最左前缀原则
 
 联合索引排序规则：优先按第一个字段排序，相等时，按第二个字段排序。以此类推。
 
-![1632902404562](Image\联合索引_数据结构.png)
+![1632902404562](Images\MySQL_Join-Index_数据结构.png)
 
 最左前缀：若未使用第一个字段，第二个字段无法顺序获取，走全表扫描；
 
@@ -1982,4 +1982,3 @@ innodb_lock_wait_timeout
 
 ```
 
-### 

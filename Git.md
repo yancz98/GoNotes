@@ -185,7 +185,11 @@ git reflog
 - 修正上次提交的信息
 
 ```
-git commit --amend
+# 修改上次的提交 msg
+git commit --amend -m
+
+# 修改上次提交的作者信息
+git commit --amend --reset-author
 ```
 
 - 取消暂存的文件

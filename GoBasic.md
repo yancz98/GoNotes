@@ -12,7 +12,7 @@
 
 > BUG：直接下载 go**.tar.gz 到 Linux 后，无法解压。
 
-```
+````
 # 将 Windows 下载好的 go1.17.linux-amd64.tar.gz 复制到 Linux
 scp ./go1.17.linux-amd64.tar.gz root@192.168.56.101:/tmp
 
@@ -25,7 +25,7 @@ mv go /usr/local
 # 配置环境变量
 vi /etc/profile
 
-​```
+```
 # 配置 GOROOT 和 GOPATH
 export GOROOT=/usr/local/go
 export PATH=$PATH:$GOROOT/bin
@@ -33,7 +33,7 @@ export PATH=$PATH:$GOROOT/bin
 # go1.13 之后的版本都是用 gomod
 # GOPATH 随便指定个地方就可以了，第三方依赖会下载到那里
 export GOPATH=/GoPath
-​```
+```
 
 # 立即生效
 source /etc/profile 
@@ -44,7 +44,7 @@ go version go1.17 linux/amd64
 
 # 开启 GOMODULE 模式
 go env -w GO111MODULE=on
-```
+````
 
 > GO 必要配置说明
 
@@ -606,6 +606,11 @@ type 自定义类型名称 数据类型
 
 ### 5、数据类型 - 引用类型
 
+> 注意：
+>
+> - 引用类型用 `=` 赋值时，实质是指向同一内存地址（浅拷贝）。
+> - 引用类型作为函数参数时，注意函数内的修改会改变原始对象（引用传递）。
+
 #### （1）指针（Pointer）
 
 > 默认值：nil
@@ -691,7 +696,7 @@ s := copy(slice)
 - 字符串底层是 []byte 切片，所以字符串支持slice操作。
 
 
-#### （2）映射（map）
+#### （3）映射（map）
 
 > map 声明后不会分配内存，需要用 make() 初始化分配内存后才能赋值和使用。
 >
@@ -739,7 +744,7 @@ mapslice := []map[string]string
 // 使用 append() 动态添加 map
 ```
 
-#### （3）管道（channel）
+#### （4）管道（channel）
 
 > 管道是线程安全的；
 >
@@ -852,15 +857,21 @@ func consumer() {
 - 向一个已关闭的 channel 接收数据，管道为空时，会返回一个零值和FALSE；
 - 无缓冲的 channel 是同步的，有缓冲的 channel 是异步的。
 
-#### （4）接口（interface）
+### 6、数据类型 - 万能类型
+
+#### （1）`interface{}`
+
+```go
+// 空接口，可以接受任何类型
+var itf interface{}
+```
+
+#### （2）`type Name interface{}`
 
 ```go
 type 接口名称 interface {
     函数声明
 }
-
-// 空接口，可以接受任何类型
-interface{}
 
 // 1 定义接口
 type USB interface {
@@ -945,7 +956,7 @@ type error interface {
 - 只要是自定义类型，都可以实现接口。
 - 接口类型变量可以接收实现了该接口类型的变量，但是只能调用该变量中的方法，不能访问该变量的属性。想要访问变量中的属性，必须将接口类型还原为原始类型（类型断言）。
 
-### 6、类型断言
+#### （3）类型断言
 
 > 利用空接口 `interface{}` 是万能类型的特点，系统提供了类型断言功能。
 >
@@ -5441,68 +5452,89 @@ Use "go help <topic>" for more information about that topic.
 
 ```
 project/
-├─api/                       API 层
-│  ├─admin/                  后台应用
-│  │  ├─v1/                  版本号 v1
-│  │  │  ├─example.go        ...
-│  │  │  └─...
-│  │  ├─v2/                  版本号 v2
-│  │  │  └─...               ...
-│  │  └─...
-│  ├─app/                    前台应用
-│  │  ├─v1/                  版本号 v1
-│  │  │  ├─example.go        ...
-│  │  │  └─...
-│  │  ├─v2/                  版本号 v2
-│  │  │  └─...               ...
-│  │  └─...
-│  ├─router                  路由层
-│  │  └─...
-│  └─...
-├─cmd/                       本项目的主干
-│  ├─admin/                  后台应用
-│  │  ├─base.service         服务启动脚本
-│  │  ├─build.sh             构建脚本
-│  │  ├─config.yaml          配置文件
-│  │  ├─Dockfile             docker 配置文件
-│  │  ├─docker-compose.yaml  docker-composer 配置文件
-│  │  └─main.go              入口文件
-│  ├─app/                    前台应用
-│  │  └─...                  ...
-│  └─...
-├─config/                    配置文件模板或默认配置
-│  └─...                     ...
-├─initialize/                初始化层
-│  └─...                     ...
-├─internal/                  私有应用程序和库代码（不局限于顶级 internal 目录）
-│  ├─admin/                  ...
-│  │  └─...
-│  ├─app/
-│  │  └─...
-│  └─...
-├─model/                     模型层
-│  ├─config/                 配置模型
-│  │  └─...                  ...
-│  ├─db/                     DB 模型（ORM）
-│  │  └─...                  ...
-│  ├─enum/                   系统枚举类型
-│  │  └─...                  ...
-│  └─...
-├─pkg/                       外部应用程序可以使用的库代码
-│  └─...                     ...
-├─service/                   服务层
-│  ├─job/                    定时任务
-│  │  └─...                  ...
-│  ├─middleware/             中间件服务
-│  │  └─...                  ...
-│  ├─bussiness/              业务服务
-│  │  └─...                  ...
-│  └─...
-├─vendor/                    应用程序依赖项（用 `go mod vendor` 创建 /vendor 目录）
-│  └─...                     ...
-├─.gitignore
-├─go.mod
-└─README.md                  README
+├─ api/                       API 层
+│  ├─ admin/                  后台应用
+│  │  ├─ v1/                  版本号 v1
+│  │  │  ├─ example.go        ...
+│  │  │  └─ ...
+│  │  ├─ v2/                  版本号 v2
+│  │  │  └─ ...               ...
+│  │  └─ ...
+│  ├─ app/                    前台应用
+│  │  ├─ v1/                  版本号 v1
+│  │  │  ├─ example.go        ...
+│  │  │  └─ ...
+│  │  ├─ v2/                  版本号 v2
+│  │  │  └─ ...               ...
+│  │  └─ ...
+│  ├─ router                  路由层
+│  │  └─ ...
+│  └─ ...
+├─ cmd/                       本项目的主干
+│  ├─ admin/                  后台应用
+│  │  ├─ base.service         服务启动脚本
+│  │  ├─ build.sh             构建脚本
+│  │  ├─ config.yaml          配置文件
+│  │  ├─ Dockfile             docker 配置文件
+│  │  ├─ docker-compose.yaml  docker-composer 配置文件
+│  │  └─ main.go              入口文件
+│  ├─ app/                    前台应用
+│  │  └─ ...                  ...
+│  └─ ...
+├─ config/                    配置文件模板或默认配置
+│  └─ ...                     ...
+├─ initialize/                初始化层
+│  └─ ...                     ...
+├─ internal/                  私有应用程序和库代码（不局限于顶级 internal 目录）
+│  ├─ admin/                  ...
+│  │  └─ ...
+│  ├─ app/
+│  │  └─ ...
+│  └─ ...
+├─ model/                     模型层
+│  ├─ config/                 配置模型
+│  │  └─ ...                  ...
+│  ├─ enum/                   系统枚举类型
+│  │  ├─ timee/               时间枚举（命名规范：...e 枚举类型的后缀）
+│  │  └─ ...                  ...
+│  ├─ orm/                    DB 模型（ORM）
+│  │  └─ ...                  ...
+│  ├─ request/                请求结构
+│  │  └─ ...                  ...
+│  ├─ response/               响应结构
+│  │  └─ ...                  ...
+│  └─ ...
+├─ pkg/                       外部应用程序可以使用的包（封包规范：尽可能简单、不依赖官方包外的其它包、在任意地方都可以直接运行、不包含业务逻辑）
+│  ├─ cron/                   定时任务包
+│  │  └─ ...                  ...
+│  ├─ filex/                  文件操作包（命名规范：...x 与官方包重名时的封装）
+│  │  └─ ...                  ...
+│  ├─ httpx/                  http 请求封装包
+│  │  └─ ...                  ...
+│  ├─ logx/                   简单日志打印包
+│  │  └─ ...                  ...
+│  ├─ mq/                     mq 操作包
+│  │  └─ ...                  ...
+│  ├─ mysql/                  mysql 操作包
+│  │  └─ ...                  ...
+│  ├─ redis/                  redis 操作包
+│  │  └─ ...                  ...
+│  └─ ...                     
+├─ service/                   服务层
+│  ├─ basic/                  基础服务（文件上传、下载等）
+│  │  └─ ...                  ...
+│  ├─ bussiness/              业务服务
+│  │  └─ ...                  ...
+│  ├─ job/                    定时任务
+│  │  └─ ...                  ...
+│  ├─ middleware/             中间件服务
+│  │  └─ ...                  ...
+│  └─ ...
+├─ vendor/                    应用程序依赖项（用 `go mod vendor` 创建 /vendor 目录）
+│  └─ ...                     ...
+├─ .gitignore
+├─ go.mod
+└─ README.md
 ```
 
 ### 4、文档管理

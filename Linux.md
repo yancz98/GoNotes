@@ -852,6 +852,9 @@ tar [选项...] [FILE]...
     -C	指定解压后存放文件的目录
     
 例：
+  压缩：
+    tar -zcvf gitlab.tar gitlab
+  解压：
     tar -zxvf php-7.3.30.tar.gz
 ```
 

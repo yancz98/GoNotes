@@ -3430,7 +3430,7 @@ Exit status: 0
 
 ### 2、内存使用情况
 
-#### （1）内存占用情况查看
+> 内存占用情况查看
 
 ```go
 package main
@@ -3490,40 +3490,155 @@ MiB Swap:   4096.0 total,   4087.9 free,      8.1 used.   5371.6 avail Mem
 
 
 
-#### （2）pprof 工具（未实现）
+### 3、性能分析（pprof）
 
-> pprof 工具支持网页上查看内存的使用情况，需要在代码中添加一个协程即可。
+#### （1）可视化 pprof
+
+> 监听独立端口
 
 ```go
+package main
+
 import (
+    "log"
     "net/http"
     _ "net/http/pprof"
 )
 
-go func() {
-    log.Println(http.ListenAndServe("localhost:6060", nil))
-}()
-
-/*
-# 查看堆剖面
-go tool pprof http://localhost:6060/debug/pprof/heap
-
-# 查看周期30秒的CPU剖面
-go tool pprof http://localhost:6060/debug/pprof/profile
-
-# 查看go程阻塞剖面
-go tool pprof http://localhost:6060/debug/pprof/block
-
-# 查看所有可用的剖面
-http://localhost:6060/debug/pprof/
-*/
+func main() {
+    go func() {
+        log.Println(http.ListenAndServe(":6060", nil))
+    }()
+    
+    // ...
+}
 ```
 
+> 注册到 Gin 中
+
+```go
+package main
+
+import (
+    "log"
+    "net/http"
+    _ "net/http/pprof"
+
+    "github.com/gin-gonic/gin"
+)
+
+func main() {
+    r := gin.Default()
+
+    // 注册 pprof 相关路由
+	r.GET("/debug/pprof/*any", gin.WrapH(http.DefaultServeMux))
+
+    
+    // 定义服务接口
+    r.GET("/hello", func(c *gin.Context) {
+        c.JSON(200, gin.H{
+            "message": "Hello World!",
+        })
+    })
+    
+    // ...
+
+    // 启动服务
+    r.Run(":6060")
+}
+```
+
+> 访问：http://127.0.0.1:6060/debug/pprof/
+
+#### （2）[Profile 描述](https://go.dev/blog/pprof)
+
+- [allocs]()：过去所有内存分配的采样。
+- [block]()：导致同步原语阻塞的堆栈跟踪。
+- [cmdline]()：当前程序的命令行调用。
+- [goroutine]()：所有当前 goroutine 的堆栈跟踪。
+- [heap]()：活动对象的内存分配的采样。您可以指定 GC GET 参数以在获取堆样本之前运行 GC。
+- [mutex]()：争用 mutex 持有者的堆栈跟踪。
+- [profile]()：CPU配置文件。您可以在 seconds GET 参数中指定持续时间。获取配置文件后，使用 go tool pprof 命令来调查该配置文件。
+- [threadcreate]()：导致创建新操作系统线程的堆栈跟踪。
+- [trace]()：当前程序执行情况的跟踪。您可以在 seconds GET 参数中指定持续时间。获取跟踪文件后，使用 go tool trace 命令来调查跟踪。
+
+#### （3）go tool pprof
+
+> 终端交互方式
+
+```shell
+# 1 top 查看进程运行情况（CPU、内存）
+> top
+...
+
+# 2 pprof 分析
+> go tool pprof http://127.0.0.1:6060/debug/pprof/profile
+...
+(pprof) help
+...
+(pprof) top
+...
+(pprof) list Func
+
+# go tool pprof 常用命令
+Commands:
+    callgrind        Outputs a graph in callgrind format
+    comments         Output all profile comments
+    disasm           Output assembly listings annotated with samples
+    dot              Outputs a graph in DOT format
+    eog              Visualize graph through eog
+    evince           Visualize graph through evince
+    gif              Outputs a graph image in GIF format
+    gv               Visualize graph through gv
+    kcachegrind      Visualize report in KCachegrind
+    list             输出与 regexp 匹配的函数的注释源
+    pdf              Outputs a graph in PDF format
+    peek             Output callers/callees of functions matching regexp
+    png              Outputs a graph image in PNG format
+    proto            Outputs the profile in compressed protobuf format
+    ps               Outputs a graph in PS format
+    raw              Outputs a text representation of the raw profile
+    svg              Outputs a graph in SVG format
+    tags             Outputs all tags in the profile
+    text             Outputs top entries in text form
+    top              以文本形式输出顶部条目
+    topproto         Outputs top entries in compressed protobuf format
+    traces           Outputs all profile samples in text form
+    tree             Outputs a text rendering of call graph
+    web              通过 web 浏览器可视化图形
+    weblist          Display annotated source in a web browser
+    o/options        List options and their current values
+    q/quit/exit/^D   Exit pprof
+
+```
+
+可用于排查以下问题：
+
+- 排查 CPU 负载过高
+
+- 排查内存占用过高
+- 排查 Goroutine 数量过多
+- 排查锁问题
+- 排查阻塞问题
+- 排查 GC 过于频繁
 
 
-### 3、CPU 性能分析
 
+> 描绘 profile 图形化（Web）界面，需要：[Graphviz](https://www.graphviz.org/)
 
+```
+# 指定 port 提供 WEB 界面
+go tool pprof -http [host]:[port] [options] [binary] <source> ...
+
+# 查看 heap 剖面
+go tool pprof -http :6061 http://localhost:6060/debug/pprof/heap
+
+# 查看周期 30s 的 CPU 剖面
+go tool pprof -http :6062 http://localhost:6060/debug/pprof/profile
+
+# 查看 Goroutine 阻塞剖面
+go tool pprof -http :6063 http://localhost:6060/debug/pprof/block
+```
 
 
 

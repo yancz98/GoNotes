@@ -1482,22 +1482,136 @@ service iptables status			查看防火墙状态
     其它行：用户|终端|来源|登录时间|空闲时间|使用时间|当前进程时间|正在做
 ```
 
-### 3、top：详情
+### 3、top：显示 Linux 进程
 
-> w 的详细显示，每3秒刷新一次，shift+m 按所占内存排序，q退出检测
+> w 的详细显示，每3秒刷新一次，shift+m 按所占内存排序，q 退出检测。
 
 ```
-结果： 
-    PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND
+Usage：
+    top -hv | -bcHiOSs -d secs -n max -u|U user -p pid(s) -o field -w [cols]
 
-说明：
+Options:
+    -hv          版本信息及帮助信息
+    -b           以非交互非全屏模式运行，以批次的方式执行 top，一般配合 -n 指定输出几次统计信息，
+                 如：将输出重定向到指定文件 `top -b -n 3 > top.log`
+    -c           显示产生进程的完整命令（默认进程名）
+    -i           不显示任何闲置（idle）或无用（zombie）的进程
+    -d secs      设置刷新时间（默认：3s）
+    -n max       指定最大刷新次数（刷新 max 次后退出）
+    -u|U user    按用户查找
+    -p pid(s)    指定显示进程，-p 1,2,3,...
+    -o field     指定排序字段，例：-o PID 按 PID 降序，-o -PID 按 PID 升序
+
+top 交互命令:
+    按 h 键：显示帮助信息
+    按 c 键：显示生产进程的完整命令（等同 -c 选项）
+    按 f 键：选择需要展示的字段（
+        ↑ ↓ 键         选择字段
+        → ← 键         → 键选中字段，↑↓ 移动， ← 键提交
+        d or <Space>  切换显示
+        s             设置排序字段
+        q or <Esc>    结束
+    ）
+    按 e 键：切换进程内存显示单位
+    按 E 键：切换顶部内存显示单位
+    按 l 键：切换显示平均负载和启动时间信息
+    按 t 键：切换显示 CPU 状态信息
+    按 m 键：切换显示内存信息
+    按 M 键：根据驻留内存大小（RES 排序）
+    按 P 键：根据 CPU 时间百分比大小进行排序
+    按 T 键：根据时间/累计时间进行排序
+    按 q 键：退出监测
 ```
+
+> 结果分析
+
+```
+top - 16:42:23 up 23 days, 11:03,  2 users,  load average: 0.00, 0.01, 0.05
+Tasks: 143 total,   1 running, 142 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :  5016176 total,  3414840 free,   666628 used,   934708 buff/cache
+KiB Swap:  2097148 total,  2041340 free,    55808 used.  4224972 avail Mem
+
+  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND
+    1 root      20   0  193564   4072   2492 S  0.0  0.1   0:08.75 systemd
+    2 root      20   0       0      0      0 S  0.0  0.0   0:00.21 kthreadd
+    3 root      20   0       0      0      0 S  0.0  0.0   0:12.90 ksoftirqd/0
+    5 root       0 -20       0      0      0 S  0.0  0.0   0:00.00 kworker/0:0H
+    7 root      rt   0       0      0      0 S  0.0  0.0   0:00.00 migration/0
+    8 root      20   0       0      0      0 S  0.0  0.0   0:00.00 rcu_bh
+    9 root      20   0       0      0      0 S  0.0  0.0   3:36.07 rcu_sched
+```
+
+- 第一行：top - uptime 命令结果
+  - top
+  - 16:42:23：系统当前时间
+  - up 23 days, 11:03：系统运行天数及启动时间
+  - 2 users：2 个用户在线
+  - load average: 0.00, 0.01, 0.05：系统在1分钟、5分钟、15分钟内的平均负载，系统负载：**在一段时间内 CPU 正在处理以及等待 CPU 处理的进程数之和。**系统在同一时间运行的进程数和系统CPU核数相关一般来说Load Average的数值别超过这台机器的总核数就没什么问题。
+
+- 第二行：Tasks 进程
+  - 143 total：总共有 143 个进程
+  - 1 running：1 个正在运行
+  - 142 sleeping：142 个正在休眠
+  - 0 stopped：0 个停止
+  - 0 zombie：0 个僵尸
+- 第三行：%Cpu(s) CPU 使用率
+  - 0.0 us：用户空间占用 CPU 时间（大部分进程运行在用户态，通常希望用户空间 CPU 高）
+  - 0.0 sy：内核空间占用 CPU 时间（Linux 内核态占用的 CPU 时间，系统 CPU 占用越高表明系统某部分存在瓶颈）
+  - 0.0 ni：占用 CPU 时间的百分比（nice 的缩写，进程用户态的优先级如果调整过，那么展示的就是调整过 nice 值的进程消耗掉的 CPU 时间，如果系统中没有进程被调整过 nice 值，那么 ni 就显示为 0）
+  - 100.0 id：空闲 CPU 的占比
+  - 0.0 wa：等待输入输出的 CPU 占比（IO 阻塞时间）
+  - 0.0 hi：CPU 硬中断时间百分比（硬中断是硬盘、网卡等硬件设备发送给 CPU 的中断消息）
+  - 0.0 si：CPU 软中断时间百分比（软中断是由程序发出的中断）
+  - 0.0 st：被强制等待时间占比
+- 第四行：KiB Mem 内存使用情况（单位 KB，按 E 键：切换显示单位）
+  - 5016176 total：物理内存总量
+  - 3414840 free：空闲内存量
+  - 666628 used：已使用的内存量
+  - 934708 buff/cache：用作内核缓存的内存量
+- 第五行：KiB Swap 内存交换空间（单位 KB，按 E 键：切换显示单位）
+  - 2097148 total：交换区总量
+  - 2041340 free：空闲交换区总量
+  - 55808 used：使用的交换区总量
+  - 4224972 avail Mem：可用于启动一个新应用的内存（物理内存和 free 不同它计算的是可回收的page cache 和 memory slab）第四行和第五行输出信息等同于使用 free -m 命令。
+
+| Field   | Description                                                  |
+| ------- | ------------------------------------------------------------ |
+| PID     | 进程 ID                                                      |
+| USER    | 进程所有者                                                   |
+| PR      | 进程的优先级（值越小优先级越高）                             |
+| NI      | nice：负值表示高优先级，正值表示低优先级                     |
+| VIRT    | 进程使用的虚拟内存（KB）                                     |
+| RES     | 进程使用的物理内存（KB）                                     |
+| SHR     | 进程使用的共享内存（KB）                                     |
+| S       | 进程状态（S：休眠，R：正在运行， Z：僵尸，N：该进程优先值为负数，I：空闲 |
+| %CPU    | 进程占用的 CPU 使用率                                        |
+| %MEM    | 进程使用的物理内存和总内存的百分比                           |
+| TIME+   | 进程使用 CPU 的时间总计（单位 1/100 s）                      |
+| COMMAND | 进程启动的命令行                                             |
+
+
 
 ### 4、free：查看内存使用
 
 ```
-选项：
-    -h 单位人性化
+Usage:
+ free [options]
+
+Options:
+ -b, --bytes         show output in bytes
+ -k, --kilo          show output in kilobytes
+ -m, --mega          show output in megabytes
+ -g, --giga          show output in gigabytes
+     --tera          show output in terabytes
+ -h, --human         show human-readable output
+     --si            use powers of 1000 not 1024
+ -l, --lohi          show detailed low and high memory statistics
+ -t, --total         show total for RAM + swap
+ -s N, --seconds N   repeat printing every N seconds
+ -c N, --count N     repeat printing N times, then exit
+ -w, --wide          wide output
+    
 ```
 
 ### 5、ps：查看进程	

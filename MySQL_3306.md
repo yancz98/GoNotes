@@ -1308,13 +1308,13 @@ EXPLAIN 可以模拟执行 SQL 查询语句，从而知道 MySQL 是如何处理
 
   ⑤UNION 联合查询
 
-  ⑥UNION RESULT 
+  ⑥UNION RESULT：使用 UNION 对结果去重时使用，使用 UNION ALL 时，不会出现该查询类型。
 
 - table：查询的表
 
 - type：显示查询使用了何种索引类型，从好到差：system>const>eq_ref>ref>range>index>ALL
 
-  system：表只有一行记录（等于系统表），这是const类型的特里，平时不会出现。
+  system：表只有一行记录（等于系统表），这是const类型的特例，平时不会出现。
 
   const：常量
 

@@ -5,19 +5,31 @@
 ## Language
 
 - [x] [Go 基础](GoBasic.md)
-
 - [x] [Go 高级](GoAdvanced.md)
 
-- [x] [Go 面试题](GoInterview.md)
 
 
+## Cloud Native
 
-## Go 云原生
-
-- [x] [Linux](Linux.md)
 - [x] [Docker](Docker.md)
 - [ ] [Kubernetes](https://kubernetes.io/)
 - [ ] [DevOps]()
+  - [ ] 项目管理（PM）
+  - [ ] 代码管理（GitLab）
+  - [ ] API 文档（YApi）
+  - [x] [CICD (GitLab)](GitLab.md)
+  - [ ] 容器编排（Docker / K8S）
+  - [ ] 服务治理
+    - [ ] 服务注册发现（Consul）
+    - [ ] 配置中心（Apollo、Etcd）
+    - [ ] 负载均衡（Nginx）
+    - [ ] 服务网关（Envoy）
+  - [ ] 日志中心（ELK）
+  - [ ] 链路追踪（OpenTelemetry、Zipkin）
+  - [ ] [监控系统（Prometheus + Grafana）](Promethues.md)
+  - [ ] 报警管理
+- [x] [微服务](MicroService.md)
+
 
 
 
@@ -56,7 +68,7 @@
 ## Messages
 
 - [x] [Kafka](Kafka_9092.md)
-- [ ] [RocketMQ](RocketMQ_9876.md)
+- [x] [RocketMQ](RocketMQ_9876.md)
 - [ ] [ActiveMQ]()
 - [ ] [RabbitMQ](RabbitMQ_4369.md)
 
@@ -84,20 +96,18 @@
 ## Internal Skill
 
 - [x] [数据结构与算法](Algorithm.md)
-
 - [x] [设计模式](DesignPattern.md)
-
 - [x] [分布式](Distributed.md)
-
-- [x] [微服务](MicroService.md)
 
 
 
 ## Tools
 
-- [ ] [Nginx](Nginx_80.md)
+- [x] [Linux](Linux.md)
 
 - [x] [Git](Git.md)
+
+- [ ] [Nginx](Nginx_80.md)
 
   
 

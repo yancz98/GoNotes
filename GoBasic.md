@@ -88,10 +88,10 @@ GO111MODULE="auto"
 
 # 设置 Go 模块代理
 # 默认为：https://proxy.golang.org,direct （国外）
-# 推荐：https://mirrors.aliyun.com/goproxy/ （阿里）
+# 推荐：https://mirrors.aliyun.com/goproxy （阿里）
 # https://goproxy.cn （七牛）
 # direct：当设置的代理中找不到包时，尝试从指定源中获取
-GOPROXY="https://goproxy.cn,direct"
+GOPROXY="https://goproxy.cn,https://mirrors.aliyun.com/goproxy,direct"
 
 # 校验下载包是否完整
 # 设置 GOPROXY 后不用设置该项
@@ -1095,7 +1095,7 @@ import (
 )
 
 func main() {
-	channel := make(chan int)
+	channel := make(chan int, 10)
 	exitChan := make(chan bool)
 
 	// 生产者闭包

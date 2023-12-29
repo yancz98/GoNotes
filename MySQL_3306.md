@@ -298,7 +298,7 @@ timestemp	时间戳类型，不能为空，有默认值CURRENT_TIMESTEMP，数�
 ### 3、字符串类型
 
 ```mysql
-char(n)		定长字符，n的长度：0-255
+	char(n)		定长字符，n的长度：0-255
 	varchar(n)	变长字符，n的长度：0-65535
 	tinytext	1字节，实际存储字符数为：2^8+1
 	text		2字节，实际存储字符数为：2^16+1

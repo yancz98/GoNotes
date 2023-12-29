@@ -244,26 +244,26 @@ DBCollection methods:
 # 创建集合
 #  1 手动创建
 > db.createCollection("collection")
-#  2 插入数据时，若 <collection> 不存在，则会自动创建
-> db.<collection>.insertOne( {"data": "test"} )
+#  2 插入数据时，若 collection 不存在，则会自动创建
+> db.collection.insertOne( {"data": "test"} )
 
 # 新增字段 
 #  更新数据时，若字段不存在，则自动新增
-> db.<collection>.updateMany(
+> db.collection.updateMany(
 	{ },
 	{ $set: { create_at: new Date() } }
 )
 { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
 
 # 删除字段
-> db.<collection>.updateMany(
+> db.collection.updateMany(
 	{ },
 	{ $unset: { create_at: "" } }
 )
 { "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 1 }
 
 # 删除集合
-> db.<collection>.drop()
+> db.collection.drop()
 true
 ```
 
@@ -277,14 +277,14 @@ true
 # ============
 #  插入单个文档
 # ============
-db.<collection>.insertOne( obj, <optional params> )
+db.collection.insertOne( obj, <optional params> )
 
  - 可选参数：w, wtimeout, j
 
 # ============
 #  插入多个文档
 # ============
-db.<collection>.insertMany( [objects], <optional params> )
+db.collection.insertMany( [objects], <optional params> )
 
  - 可选参数：w, wtimeout, j
 ```
@@ -301,7 +301,7 @@ db.<collection>.insertMany( [objects], <optional params> )
 > 填充数据
 
 ```json
-db.<collection>.insertMany([
+db.collection.insertMany([
     {
         "item": "circular",
         "status": 0,
@@ -363,7 +363,7 @@ db.<collection>.insertMany([
 
 ```shell
 # find 语法
-db.<collection>.find([query],[fields])
+db.collection.find([query],[fields])
 
  - query   是一个可选的查询过滤器。
  - fields  是要返回的可选字段集。
@@ -371,28 +371,28 @@ db.<collection>.find([query],[fields])
 # ===========================
 #  SELECT * FROM collection
 # ===========================
-db.<collection>.find( {} )
+db.collection.find( {} )
 
 # ============
 #  相等条件查询
 # ============
 
 # ... WHERE item = "oblong"
-db.<collection>.find( { item: "oblong" } )
+db.collection.find( { item: "oblong" } )
 
 # ==========
 #  AND 查询
 # ==========
 
 # ... WHERE item = "oblong" AND status = 2
-db.<collection>.find( { item: "oblong", status: 2 } )
+db.collection.find( { item: "oblong", status: 2 } )
 
 # ==============
 #  $or  OR 查询
 # ==============
 
 # ... WHERE item = "oblong" OR status = 0
-db.<collection>.find( { $or: [ { item: "oblong" }, { status: 0 } ] } } )
+db.collection.find( { $or: [ { item: "oblong" }, { status: 0 } ] } } )
 
 # ===========================
 #  $eq $ne $gt $lt $gte $lte
@@ -400,17 +400,17 @@ db.<collection>.find( { $or: [ { item: "oblong" }, { status: 0 } ] } } )
 # ===========================
 
 # ... WHERE status = 1
-db.<collection>.find( { status: { $eq: 1 } } )
+db.collection.find( { status: { $eq: 1 } } )
 # ... WHERE status <> 1
-db.<collection>.find( { status: { $ne: 1 } } )
+db.collection.find( { status: { $ne: 1 } } )
 # ... WHERE status > 1
-db.<collection>.find( { status: { $gt: 1 } } )
+db.collection.find( { status: { $gt: 1 } } )
 # ... WHERE status < 1
-db.<collection>.find( { status: { $lt: 1 } } )
+db.collection.find( { status: { $lt: 1 } } )
 # ... WHERE status >= 1
-db.<collection>.find( { status: { $gte: 1 } } )
+db.collection.find( { status: { $gte: 1 } } )
 # ... WHERE status <= 1
-db.<collection>.find( { status: { $lte: 1 } } )
+db.collection.find( { status: { $lte: 1 } } )
 
 # ==================
 #  $in   IN 查询
@@ -419,13 +419,13 @@ db.<collection>.find( { status: { $lte: 1 } } )
 
 # 注：对同一字段进行相等性检查时，使用 $in 运算而不是 $or 运算
 # ... WHERE status IN (1, 2, 3)
-db.<collection>.find( { status: { $in: [ 1, 2, 3 ] } } )
+db.collection.find( { status: { $in: [ 1, 2, 3 ] } } )
 
 # ===============
 #  $mod  取模运算
 # ===============
 # 查询 status % 3 == 1 的数据
-db.<collection>.find( { status: { $mod: [ 3, 1 ] } } )
+db.collection.find( { status: { $mod: [ 3, 1 ] } } )
 
 
 # ===================
@@ -433,27 +433,27 @@ db.<collection>.find( { status: { $mod: [ 3, 1 ] } } )
 # ===================
 
 # ... WHERE item LIKE "%cir%"
-db.<collection>.find( { item: /cir/ } )
+db.collection.find( { item: /cir/ } )
 # ... WHERE item LIKE "cir%"
-db.<collection>.find( { item: /^cir/ } )
+db.collection.find( { item: /^cir/ } )
 # ... WHERE item LIKE "%cir"
-db.<collection>.find( { item: /cir$/ } )
+db.collection.find( { item: /cir$/ } )
 # or
-db.<collection>.find( { item: { $regex: "cir" } } )
-db.<collection>.find( { item: { $regex: "^cir" } } )
-db.<collection>.find( { item: { $regex: "cir$" } } )
+db.collection.find( { item: { $regex: "cir" } } )
+db.collection.find( { item: { $regex: "^cir" } } )
+db.collection.find( { item: { $regex: "cir$" } } )
 
 # ==================
 #  AND + OR 混合查询
 # ==================
 # ... WHERE status > 0 AND ( item LIKE "c%" OR item LIKE "s%" ) 
-db.<collection>.find( {
+db.collection.find( {
     status: { $gt: 0 },
     $or: [ { item: /^c/ }, { item: /^s/ } ]
 } )
 
 # ======================================================================== #
-# ===================== db.<collection>.find().修饰语 ===================== #
+# ===================== db.collection.find().修饰语 ===================== #
 # ======================================================================== #
 
 # 查看帮助
@@ -467,13 +467,13 @@ db.mycoll.find().help()
 # ==================================================
 
 # SELECT COUNT(*) FROM <colletion>
-db.<collection>.count()
+db.collection.count()
 
-# SELECT COUNT(name) FROM <collection>
-db.<collection>.count( { name: { $exists: true } } )
+# SELECT COUNT(name) FROM collection
+db.collection.count( { name: { $exists: true } } )
 
 # SELECT COUNT(*) FROM <colletion> WHERE status > 0
-db.<collection>.count( { status: { $gt: 0 } } )
+db.collection.count( { status: { $gt: 0 } } )
 
 # ----- UNCLEAR -----
 # db.mycoll.countDocuments( query = {}, <optional params> ) 
@@ -486,13 +486,13 @@ db.<collection>.count( { status: { $gt: 0 } } )
 # ==============================
 
 # 限制条数
-# SELECT * FROM <collection> LIMIT 1 
-db.<collection>.find().limit(1)
+# SELECT * FROM collection LIMIT 1 
+db.collection.find().limit(1)
 # or
-db.<collection>.findOne()
+db.collection.findOne()
 
 # 分页（page=2 & size=5）
-# SELECT * FROM <collection> OFFSET 5 LIMIT 1 
+# SELECT * FROM collection OFFSET 5 LIMIT 1 
 db.collection.find().skip(5).limit(1)
 
 # ===============================
@@ -501,28 +501,28 @@ db.collection.find().skip(5).limit(1)
 # ===============================
 
 # 升序
-# SELECT * FROM <collection> ORDER BY id ASC
-db.<collection>.find().sort( { _id: 1 } )
+# SELECT * FROM collection ORDER BY id ASC
+db.collection.find().sort( { _id: 1 } )
 
 # 降序
-# SELECT * FROM <collection> ORDER BY id DESC
-db.<collection>.find().sort( { _id: -1 } )
+# SELECT * FROM collection ORDER BY id DESC
+db.collection.find().sort( { _id: -1 } )
 
 # 多个排序条件
-# SELECT * FROM <collection> ORDER BY status ASC, id DESC
-db.<collection>.find().sort( { status: 1, _id: -1 } )
+# SELECT * FROM collection ORDER BY status ASC, id DESC
+db.collection.find().sort( { status: 1, _id: -1 } )
 
 # ==========
 #  DISTINCT
 # ==========
 db.mycoll.distinct( key, query, <optional params> )
 
-# SELECT DISTINCT(status) FROM <collection>
-> db.<collection>.distinct("status")
+# SELECT DISTINCT(status) FROM collection
+> db.collection.distinct("status")
 [ 0, 1, 2, 3 ]
 
-# SELECT DISTINCT(status) FROM <collection>
-> db.<collection>.aggregate( [ { $group : { _id : "$status" } } ] )
+# SELECT DISTINCT(status) FROM collection
+> db.collection.aggregate( [ { $group : { _id : "$status" } } ] )
 { "_id" : 2 }
 { "_id" : 1 }
 { "_id" : 3 }
@@ -532,8 +532,8 @@ db.mycoll.distinct( key, query, <optional params> )
 #  EXPLAIN 
 # =========
 
-# EXPLAIN SELECT * FROM <collection>
-> db.<collection>.find().explain()
+# EXPLAIN SELECT * FROM collection
+> db.collection.find().explain()
 {
     "explainVersion" : "1",
     "queryPlanner" : {
@@ -587,7 +587,7 @@ db.mycoll.distinct( key, query, <optional params> )
 #  匹配嵌套文档（相等匹配）
 # =====================
 # 注：整个嵌套文档的相等匹配包括字段顺序
-db.<collection>.find({
+db.collection.find({
 	"position": {
 		"x": 0.0,
 		"y": 0.0,
@@ -597,7 +597,7 @@ db.<collection>.find({
 })
 
 # 顺序不同或缺少字段都无法匹配
-db.<collection>.find({
+db.collection.find({
 	"position": {
 		"y": 0.0,
 		"x": 0.0,
@@ -610,7 +610,7 @@ db.<collection>.find({
 #  查询嵌套字段（点符号）
 # ====================
 # 在嵌套字段上指定相等匹配（使用点号查询时，字段和嵌套字段必须在引号内。）
-db.<collection>.find( { "positoin.h": { $gte: 10 } } )
+db.collection.find( { "positoin.h": { $gte: 10 } } )
 ```
 
 #### （3）[查询数组](https://www.mongodb.com/docs/v5.0/tutorial/query-arrays/)
@@ -620,19 +620,19 @@ db.<collection>.find( { "positoin.h": { $gte: 10 } } )
 #  匹配整个数组（相等匹配）
 # =====================
 # 强制匹配所有元素和顺序
-db.<collection>.find( { "colors": ["red", "green", "blue"] } )
+db.collection.find( { "colors": ["red", "green", "blue"] } )
 
 # ===============
 #  $all  包含匹配
 # ===============
 # 不考虑数组中的顺序或其他元素
-db.<collection>.find( { "colors": { $all: ["green", "blue"] } } )
+db.collection.find( { "colors": { $all: ["green", "blue"] } } )
 
 # ==============
 #  查询元素的数组
 # ==============
 # 查询的数组字段中至少包含一个指定值
-db.<collection>.find( { "colors": "red" } )
+db.collection.find( { "colors": "red" } )
 
 # 在数组元素上查询具有复合过滤条件的数组
 #  一个元素 > 15 & 另一个元素 < 20
@@ -646,12 +646,12 @@ db.inventory.find( { dim_cm: { $elemMatch: { $gt: 22, $lt: 30 } } } )
 # ====================
 #  按数组索引位置查询元素
 # ====================
-db.<collection>.find( { "colors.0": "red" } )
+db.collection.find( { "colors.0": "red" } )
 
 # ========================
 #  $size  按数组长度查询数组
 # ========================
-db.<collection>.find( { "colors": { $size: 3 } } )
+db.collection.find( { "colors": { $size: 3 } } )
 ```
 
 > [查询嵌套文档数组](https://www.mongodb.com/docs/v5.0/tutorial/query-array-of-documents/)
@@ -665,27 +665,27 @@ db.<collection>.find( { "colors": { $size: 3 } } )
 #  默认情况下 `_id` 字段会在匹配文档中返回
 
 # SELECT _id, item, status FROM collection
-db.<collection>.find( { }, { item: 1, status: 1 } )
+db.collection.find( { }, { item: 1, status: 1 } )
 
 # 排除 `_id` 字段
-db.<collection>.find( { }, { item: 1, status: 1, _id: 0 } )
+db.collection.find( { }, { item: 1, status: 1, _id: 0 } )
 
 # 返回嵌套文档中的特定字段
-db.<collection>.find( { }, { item: 1, "position.x": 1, "position.y": 1 } )
+db.collection.find( { }, { item: 1, "position.x": 1, "position.y": 1 } )
 
 # ==========================
 #  $slice  返回数组中的特定元素
 # ==========================
 # 0：不返回元素，1：第一个元素，...，-1：最后一个元素
-db.<collection>.find( { }, { "colors": { $slice: 0 } } )
+db.collection.find( { }, { "colors": { $slice: 0 } } )
 
 # =======================
 #  exclusion 排除指定字段
 # =======================
-db.<collection>.find( { }, { position: 0 } )
+db.collection.find( { }, { position: 0 } )
 
 # 排除嵌套文档中的特定字段
-db.<collection>.find( { }, { "positoin.x": 0, "positoin.y": 0 } )
+db.collection.find( { }, { "positoin.x": 0, "positoin.y": 0 } )
 
 
 # ==================================================
@@ -712,33 +712,33 @@ Error: error: {
 
 ```shell
 # 插入数据
-db.<collection>.insertOne( { "data": null } )
+db.collection.insertOne( { "data": null } )
 
 # ===========
 #  相等过滤器
 # ===========
 # 匹配字段值为 null 或者不包含该字段的文档
-db.<collection>.find( { "data": null } )
+db.collection.find( { "data": null } )
 
 # ================
 #  $type  类型检查
 # ================
 # 仅匹配字段值为 null 的文档（BSON 类型中的 Null 类型编号为 10）
-db.<collection>.find( { "data": { $type: 10 } } )
+db.collection.find( { "data": { $type: 10 } } )
 
 # ==================
 #  $exists  存在检查
 # ==================
 # true  返回包含指定字段的文档
 # false 返回不包含指定字段的文档
-db.<collection>.find( { "data": { $exists: true } } )
+db.collection.find( { "data": { $exists: true } } )
 ```
 
 #### （6）[迭代游标](https://www.mongodb.com/docs/v5.0/tutorial/iterate-a-cursor/#manually-iterate-the-cursor)
 
 ```shell
 # 将查询结果存入 cursor
-> var cursor = db.<collection>.find()
+> var cursor = db.collection.find()
 
 # 迭代游标
 > cursor
@@ -758,13 +758,13 @@ db.<collection>.find( { "data": { $exists: true } } )
 # ===================
 #  更新第一个匹配的文档
 # ===================
-db.<collection>.updateOne( filter, <update object or pipeline>, <optional params> )
+db.collection.updateOne( filter, <update object or pipeline>, <optional params> )
 
  - 可选参数：upsert, w, wtimeout, j, hint, let
 
 # $set          更新字段值
 # $currentDate  将 `lastModified` 字段的值更新为当前日期（字段不存在则自动创建）
-db.<collection>.updateOne( 
+db.collection.updateOne( 
     { item: "oblong" },
     {
         $set: { "positoin.x": 11, status: "M" },
@@ -775,11 +775,11 @@ db.<collection>.updateOne(
 # =================
 #  更新所有匹配的文档
 # =================
-db.<collection>.updateMany( filter, <update object or pipeline>, <optional params> )
+db.collection.updateMany( filter, <update object or pipeline>, <optional params> )
 
  - 可选参数：upsert, w, wtimeout, j, hint, let
  
-db.<collection>.updateMany( 
+db.collection.updateMany( 
     { status: { $gte: 0 } },
     {
         $set: { status: "M" },
@@ -787,9 +787,14 @@ db.<collection>.updateMany(
     } 
 )
 
+# 删除指定字段
+db.collection.updateMany({}, {
+    $unset: {<field1>: 1, <field2>: 1, ...}
+})
+
 
 #  替换第一个匹配的文档（旧版）
-db.<collection>.replaceOne( filter, replacement, <optional params> )
+db.collection.replaceOne( filter, replacement, <optional params> )
 
  - 可选参数：upsert, w, wtimeout, j
 ```
@@ -821,7 +826,7 @@ db.mycoll.deleteOne( filter, <optional params> )
 
  - 可选参数：w, wtimeout, j
 
-db.<collection>.deleteOne( { status: "M" } )
+db.collection.deleteOne( { status: "M" } )
 
 # =================
 #  删除所有匹配的文档
@@ -830,15 +835,15 @@ db.mycoll.deleteMany( filter, <optional params> )
 
  - 可选参数：w, wtimeout, j
  
-db.<collection>.deleteMany( { status: "M" } ) 
+db.collection.deleteMany( { status: "M" } ) 
 
 
 # 删除所有文档
-db.<collection>.deleteMany( { } ) 
+db.collection.deleteMany( { } ) 
 
 
 # 删除匹配的单个文档或所有文档（旧版）
-db.<collection>.remove(query)
+db.collection.remove(query)
 ```
 
 删除行为：
@@ -860,7 +865,7 @@ db.mycoll.bulkWrite( operations, <optional params> )
 > 填充数据
 
 ```shell
-db.<collection>.insertMany([
+db.collection.insertMany([
     {
         "rank": 1,
         "title": "Python",
@@ -918,7 +923,7 @@ db.<collection>.insertMany([
 
 ```shell
 # 执行文本搜索查询的集合中必须有一个文本索引
-> db.<collection>.find( { $text: { $search: "\"script language\""} } )
+> db.collection.find( { $text: { $search: "\"script language\""} } )
 Error: error: {
         "ok" : 0,
         "errmsg" : "text index required for $text query",
@@ -928,7 +933,7 @@ Error: error: {
 
 # 创建文本索引
 # 允许在 title 和 content 字段上进行文本搜索
-> db.<collection>.createIndex( { title: "text", content: "text" } )
+> db.collection.createIndex( { title: "text", content: "text" } )
 {
     "numIndexesBefore" : 1,
     "numIndexesAfter" : 2,
@@ -937,7 +942,7 @@ Error: error: {
 }
 
 # 查看集合中的所有索引
-> db.<collection>.getIndexes()
+> db.collection.getIndexes()
 [
     {
         "v": 2,
@@ -970,29 +975,29 @@ Error: error: {
 
 # 执行文本搜索
 #  搜索包含 SQL 或 script 或 language 短语的文档
-db.<collection>.find( { $text: { $search: "SQL script language" } } )
+db.collection.find( { $text: { $search: "SQL script language" } } )
 
 # 搜索确切的短语 ""
 #  通过用双引号将它们括起来来搜索确切的短语
-db.<collection>.find( { $text: { $search: "\"SQL script language\"" } } )
+db.collection.find( { $text: { $search: "\"SQL script language\"" } } )
 
 # 排除术语 -
 #  通过 `-` 排除一个词
-db.<collection>.find( { $text: { $search: "Go C -C#" } } )      # Go
-db.<collection>.find( { $text: { $search: "Go C -\"C#\"" } } )  # Go C C++
+db.collection.find( { $text: { $search: "Go C -C#" } } )      # Go
+db.collection.find( { $text: { $search: "Go C -\"C#\"" } } )  # Go C C++
 
 # =======================================
 #  $meta 查询运算符获取每个匹配文档的相关性得分
 # =======================================
 
 # 获取相关性得分
-db.<collection>.find(
+db.collection.find(
     { $text: { $search: "Go C" } },
     { score: { $meta: "textScore" } }
 )
 
 # 按相关顺序排列
-db.<collection>.find(
+db.collection.find(
     { $text: { $search: "Go C" } },
     { score: { $meta: "textScore" } }
 ).sort( { score: { $meta: "textScore" } } )
@@ -1194,7 +1199,7 @@ db.collection.distinct()
 
 ```shell
 # 填充数据
-db.<collection>.insertMany([
+db.collection.insertMany([
     {
         "grade": "高一年级",
         "class": "高一（1）班",
@@ -1256,7 +1261,7 @@ db.<collection>.insertMany([
 
 ```shell
 # 查询各年级的总人数
-db.<collection>.aggregate([
+db.collection.aggregate([
 
     // Stage 1: 匹配 grade = "高二年级" 的所有文档，并传到下一阶段
     // { $match: { grade: "高二年级" } },
@@ -1273,7 +1278,7 @@ db.<collection>.aggregate([
 { "_id" : "高三年级", "studentTotal" : 157 }
 
 # 查询高二年级的最高分及平均分
-db.<collection>.aggregate([
+db.collection.aggregate([
 
     // Stage 1: 匹配 grade = "高二年级" 的所有文档，并传到下一阶段
     { $match: { grade: "高二年级" } },
@@ -1336,7 +1341,7 @@ db.collection.createIndex( { created_at: -1 } )
 # 对于单字段索引，排序顺序（升序或降序）对索引键无关紧要，因为 MongoDB 可以遍历索引在任一方向。
 
 # 指定索引名称
-db.<collection>.createIndex(
+db.collection.createIndex(
    { <field>: <value> },
    { name: "<indexName>" }
 )
@@ -1350,17 +1355,19 @@ db.collection.getIndexes()
 
 # 删除索引
 # 删除单个索引
-db.<collection>.dropIndex("<indexName>")
+db.collection.dropIndex("<indexName>")
 # 删除多个索引
-db.<collection>.dropIndexes("<index1>", "<index2>", "<index3>")
+db.collection.dropIndexes("<index1>", "<index2>", "<index3>")
 # 删除除 _id 索引之外的所有索引
-db.<collection>.dropIndexes()
+db.collection.dropIndexes()
 
 ```
 
 ### 2、索引类型
 
-#### （1）单字段索引
+#### （1）单字段索引（Single Field）
+
+单字段索引是 B-Tree 索引，又叫排序索引。
 
 默认情况下，所有集合中都有一个单字段索引：_id。您可以在文档中的任何字段上创建单字段索引，包括：
 
@@ -1368,35 +1375,35 @@ db.<collection>.dropIndexes()
 - 嵌入式文档
 - 嵌入文档中的字段
 
-创建索引时，指定：
+```sh
+# 语法
+# field：要在其上创建索引的字段
+# type：索引值的排序顺序（1 升序，-1 降序）
+db.collection.createIndex( { <field>: <type>} ）
 
-- 要在其上创建索引的字段。
-- 索引值的排序顺序（升序、降序）。
-
-```
-db.<collection>.createIndex( { <field>: <sortOrder> } )
-```
-
-#### （2）复合索引
-
-限制：单个复合索引最多可以包含 32 个字段。
-
-```
-db.<collection>.createIndex( {
-   <field1>: <sortOrder>,
-   <field2>: <sortOrder>,
-   ...
-   <fieldN>: <sortOrder>
-} )
+# 例
+db.collection.createIndex({created_at: -1})
 ```
 
-> 最左前缀特性
+优点：适用于在单个字段上快速查询和排序，支持高效的范围查询。
 
-```shell
-# 以下复合索引
-{ "item": 1, "location": 1, "stock": 1 }
+缺点：不能处理多个字段之间的查询关系，索引占用空间较大，维护开销大
 
-# 具有以下索引前缀
+使用场景：适用于对单个字段进行频繁查询和排序的场景，如按创建时间倒序。
+
+#### （2）复合索引（Compound）
+
+> 限制：单个复合索引最多可以包含 32 个字段。
+>
+
+```sh
+# 语法
+db.collection.createIndex( { <field1>: <type>, <field2>: <type2>, ... } )
+
+# 例
+db.collection.createIndex({"item": 1, "location": 1, "stock": 1})
+
+# 最左前缀特性，具有以下索引前缀
 { item: 1 }
 { item: 1, location: 1 }
 
@@ -1421,22 +1428,51 @@ db.collection.find().sort({ score: -1, username: 1 })
 db.collection.find().sort({ score: 1, username: -1 })
 ```
 
-#### （3）多键索引（数组字段）
+优点：可以同时对多个文本字段进行搜索和排序。
+
+缺点：索引占用空间较大，维护开销大。
+
+使用场景：适用于需要对多个文本字段进行搜索和排序的场景。
+
+#### （3）多键（数组）索引（Multikey）
 
 [多键索引](https://www.mongodb.com/docs/manual/core/indexes/index-types/index-multikey/)
 
-#### （4）文本索引
+```
+db.collection.createIndex({ "field.$": 1 })
+```
+
+优点：可以提高查询数组元素的速度。
+
+缺点：索引占用空间较大，更新数组字段会导致写操作性能下降。
+
+使用场景：对数组字段进行频繁的查询和排序操作；需要使用数组操作符（$elemMatch, $all）进行数组元素的匹配查询；数组中的元素数量过多时。
+
+#### （4）文本索引（Text）
 
 文本索引支持对包含字符串内容的字段进行文本搜索查询。
 
 一个集合只能有一个文本索引，但该索引可以涵盖多个字段。
 
-```
-db.<collection>.createIndex(
+```sh
+db.collection.createIndex(
    {
       <field1>: "text",
       <field2>: "text",
       ...
+   },
+   # 指定文本索引的语言
+   {
+       default_language: "spanish"
+   },
+   # 指定索引的名称
+   {
+       name: "MyTextIndex",
+       # 指定字段权重（默认 1），可以使用权重控制搜索结果：$meta
+       weights: {
+           <field1>: 10,
+           <field2>: 5
+       },
    }
 )
 ```
@@ -1459,13 +1495,556 @@ db.collection.find(
 
 您可以创建一个包含每个文档字段的文本索引
 
-（5）通配符索引
+> 限制扫描的条目数
 
-（6）地理空间索引
+```sh
+# 要将文本搜索限制为仅扫描特定 dept 中的那些文档，需创建一个复合索引
+# dept 的升序/降序索引，description 的文本索引
+db.inventory.createIndex(
+   {
+     dept: 1,
+     description: "text"
+   }
+)
 
-（7）哈希索引
+# 特定部门内的文本搜索将限制对索引文档的扫描。
+# 例如，以下查询只扫描 dept=kitchen 的那些文档：
+db.inventory.find( { dept: "kitchen", $text: { $search: "green" } } )
+```
 
-5、强制使用索引
+#### （5）通配符索引（Wildcard）
+
+通配符索引：对子字段未知的文档创建的索引。
+
+```sh
+# 例如，以下用户数据需要支持查询
+{ "userMetadata" : { "likes" : [ "dogs", "cats" ] } }
+{ "userMetadata" : { "dislikes" : "pickles" } }
+{ "userMetadata" : { "age" : 45 } }
+{ "userMetadata" : "inactive" }
+
+# 在所有字段上创建通配符索引
+db.collection.createIndex( { "userMetadata.$**" : 1 } )
+
+# 以上通配符索引支持的单字段查询
+userMetadata
+userMetadata.likes
+userMetadata.dislikes
+userMetadata.age
+
+# 在指定字段上创建
+db.collection.createIndex(
+  { "$**" : 1 },
+  { "wildcardProjection" :
+    { "fieldA" : 1, "fieldB.fieldC" : 1 }
+  }
+)
+
+# 排除指定字段创建
+db.collection.createIndex(
+  { "$**" : 1 },
+  { "wildcardProjection" :
+    { "fieldA" : 0, "fieldB.fieldC" : 0 }
+  }
+)
+```
+
+#### （6）二维球体索引（2dsphere）
+
+#### （7）地理空间索引（geoHaystack）
+
+#### （8）哈希索引（Hashed）
+
+MongoDB 不支持在哈希索引上指定唯一约束。
+
+```sh
+# 创建
+db.collection.createIndex( { <field>: "hashed" } )
+```
+
+优点：可以快速查找索引键值。
+
+缺点：无法按照索引键的顺序进行排序和范围查询。
+
+使用场景：适用于均匀分布的键值和快速查找索引键值的场景。
+
+> 复合哈希索引
+>
+> 从 MongoDB 4.4 开始，支持创建包含单个散列字段的复合索引。
+
+```
+db.collection.createIndex( { "fieldA" : 1, "fieldB" : "hashed", "fieldC" : -1 } )
+```
+
+### 3、索引属性
+
+#### （1）TTL 索引
+
+TTL 索引是一种特殊的单字段索引，MongoDB 可以使用它在一定时间后或特定的时钟时间自动从集合中删除文档。数据过期对于某些类型的信息很有用，如机器生成的事件数据、日志和会话信息。
+
+> 注意：
+
+- TTL 索引支持查询的方式与非 TTL 索引相同。
+- TTL 索引是单字段索引。复合索引不支持 TTL 并忽略 `expireAfterSeconds` 选项。
+- `_id` 字段不支持 TTL 索引。
+- 不能在 capped 集合上创建 TTL 索引。
+- 不能在时间序列集合上创建 TTL 索引。
+- 不能将非 TTL 索引字段直接更改为 TTL 索引；不能更改现有 TTL 索引的 `expireAfterSeconds` 选项值，先删除。
+
+```sh
+# 创建 TTL 索引
+db.collection.createIndex( { <field>: 1 }, { expireAfterSeconds: <second> } )
+
+# 例：已删除数据 7天后自动过期
+db.request_log.createIndex( { "deleted_at": 1 }, { expireAfterSeconds: 7 * 24 * 3600 } )
+```
+
+> 数据过期
+
+- TTL 索引使文档在从索引字段值起经过指定秒数后过期，即过期阈值是索引字段值加上指定的秒数。
+- 如果字段时一个数组，并且索引中有多个日期值，MongoDB 会使用数组中最低（最早）的日期值来计算过期阈值。
+- 如果文档中的索引字段不是日期或包含一个或多个日期值的数组，则文档不会过期。
+
+#### （2）唯一索引
+
+唯一索引可确保索引字段不会存储重复的值；即强制索引字段的唯一性。默认情况下，MongoDB在创建集合的过程中会在_id字段上创建一个唯一的索引。
+
+```sh
+# 创建唯一索引
+db.collection.createIndex( <key and index type specification>, { unique: true } )
+
+# 单字段索引和复合索引都可以创建唯一索引
+```
+
+- 如果集合中已经包含违反索引唯一约束的数据，MongoDB就无法在指定的索引字段上创建唯一索引。
+
+- 不能在哈希索引上指定唯一约束。
+
+#### （3）部分索引
+
+部分索引应优先于稀疏索引
+
+#### （4）不区分大小写的索引
+
+#### （5）稀疏索引
+
+稀疏索引只包含具有索引字段的文档的条目，即使索引字段包含 null 也是如此。索引跳过任何缺少索引字段的文档。索引是“稀疏”的，因为它不包括集合的所有文档。相比之下，非稀疏索引包含集合中的所有文档，为不包含索引字段的文档存储null 值。
+
+```sh
+db.collection.createIndex({ field: 1 }, { sparse: true })
+```
+
+优点：只为存在索引字段的文档创建索引，减少了索引的大小。
+缺点：查询性能可能会受到影响。
+使用场景：适用于索引字段不是所有文档都存在的场景，例如文档的某个可选字段。
+
+### 4、索引策略
+
+（1）ESR（相等、排序、范围）
+
+### 5、强制使用索引
+
+### 6、查询执行计划
+
+```sh
+db.collection.find().explain([verbosity])
+
+verbosity:
+    queryPlanner  默认模式
+    executionStats
+    allPlansExecution
+```
+
+> 已创建索引
+
+```sh
+> db.getCollection("request_log").createIndex({
+    created_at: - 1,
+    server: 1
+})
+```
+
+#### （1）queryPlanner
+
+> MongoDB 运行查询优化器来为正在评估的操作选择获胜计划。
+
+```sh
+> db.getCollection("request_log").find({
+    server: "ucs"
+}).sort({
+    created_at: - 1
+}).explain("queryPlanner")
+
+# output
+{
+    "queryPlanner": {
+        "plannerVersion": 1,
+        "namespace": "readline_mns.request_log",
+        "indexFilterSet": false,
+        "parsedQuery": {
+            "server": {
+                "$eq": "ucs"
+            }
+        },
+        "queryHash": "FEB85418",
+        "planCacheKey": "F84E21BA",
+        "winningPlan": {
+            "stage": "FETCH",
+            "filter": {
+                "server": {
+                    "$eq": "ucs"
+                }
+            },
+            "inputStage": {
+                "stage": "IXSCAN",
+                "keyPattern": {
+                    "created_at": -1
+                },
+                "indexName": "created_at_-1",
+                "isMultiKey": false,
+                "multiKeyPaths": {
+                    "created_at": [ ]
+                },
+                "isUnique": false,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                    "created_at": [
+                        "[MaxKey, MinKey]"
+                    ]
+                }
+            }
+        },
+        "rejectedPlans": [
+            {
+                "stage": "SORT",
+                "sortPattern": {
+                    "created_at": -1
+                },
+                "memLimit": 104857600,
+                "type": "simple",
+                "inputStage": {
+                    "stage": "FETCH",
+                    "inputStage": {
+                        "stage": "IXSCAN",
+                        "keyPattern": {
+                            "server": 1
+                        },
+                        "indexName": "server_1",
+                        "isMultiKey": false,
+                        "multiKeyPaths": {
+                            "server": [ ]
+                        },
+                        "isUnique": false,
+                        "isSparse": false,
+                        "isPartial": false,
+                        "indexVersion": 2,
+                        "direction": "forward",
+                        "indexBounds": {
+                            "server": [
+                                "[\"ucs\", \"ucs\"]"
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "serverInfo": {
+        "host": "centos-248",
+        "port": 27017,
+        "version": "4.4.14",
+        "gitVersion": "0b0843af97c3ec9d2c0995152d96d2aad725aab7"
+    },
+    "ok": 1
+}
+```
+
+> 参数说明
+
+| 参数                      | 说明                                                         |
+| ------------------------- | ------------------------------------------------------------ |
+| plannerVersion            | 查询计划输出格式版本                                         |
+| namespace                 | 查询的集合                                                   |
+| indexFilterSet            |                                                              |
+| parsedQuery               | 查询条件                                                     |
+| queryHash                 |                                                              |
+| planCacheKey              |                                                              |
+| winningPlan{}             | 最佳执行计划                                                 |
+| winningPlan.stage         | **查询方式（阶段）**<br />FETCH：检索文档<br />COLLSCAN：全表扫描<br />IXSCAN：索引扫描<br />SHARD_MERGE：合并分片结果<br />IDHACK：使用 _id 查询 |
+| winningPlan.filter        | 过滤条件                                                     |
+| winningPlan.inputStage{}  | 输入阶段                                                     |
+| winningPlan.direction     | 查询方向                                                     |
+| winningPlan.indexBounds   | 索引边界                                                     |
+| ...                       |                                                              |
+| rejectedPlans{}           | 拒绝的执行计划                                               |
+| rejectedPlans.stage       | SORT 排序阶段                                                |
+| rejectedPlans.sortPattern | 排序模式                                                     |
+| rejectedPlans.memLimit    | 内存限制                                                     |
+| ...                       |                                                              |
+| serverInfo{}              | MongoDB 服务器信息                                           |
+
+#### （2）executionStats
+
+> MongoDB 运行查询优化器来选择获胜计划，执行获胜计划直到完成，并返回描述获胜计划执行情况的统计信息，不提供被拒绝计划的查询执行信息。
+
+```sh
+> db.getCollection("request_log").find({
+    server: "ucs"
+}).sort({
+    created_at: - 1
+}).explain("executionStats")
+
+# output
+{
+    "queryPlanner": {},
+    "executionStats": {
+        "executionSuccess": true,
+        "nReturned": 105894,
+        "executionTimeMillis": 1436,
+        "totalKeysExamined": 128746,
+        "totalDocsExamined": 128746,
+        "executionStages": {
+            "stage": "FETCH",
+            "filter": {
+                "server": {
+                    "$eq": "ucs"
+                }
+            },
+            "nReturned": 105894,
+            "executionTimeMillisEstimate": 1075,
+            "works": 128747,
+            "advanced": 105894,
+            "needTime": 22852,
+            "needYield": 0,
+            "saveState": 169,
+            "restoreState": 169,
+            "isEOF": 1,
+            "docsExamined": 128746,
+            "alreadyHasObj": 0,
+            "inputStage": {
+                "stage": "IXSCAN",
+                "nReturned": 128746,
+                "executionTimeMillisEstimate": 8,
+                "works": 128747,
+                "advanced": 128746,
+                "needTime": 0,
+                "needYield": 0,
+                "saveState": 169,
+                "restoreState": 169,
+                "isEOF": 1,
+                "keyPattern": {
+                    "created_at": -1
+                },
+                "indexName": "created_at_-1",
+                "isMultiKey": false,
+                "multiKeyPaths": {
+                    "created_at": [ ]
+                },
+                "isUnique": false,
+                "isSparse": false,
+                "isPartial": false,
+                "indexVersion": 2,
+                "direction": "forward",
+                "indexBounds": {
+                    "created_at": [
+                        "[MaxKey, MinKey]"
+                    ]
+                },
+                "keysExamined": 128746,
+                "seeks": 1,
+                "dupsTested": 0,
+                "dupsDropped": 0
+            }
+        }
+    },
+    "serverInfo": {},
+    "ok": 1
+}
+```
+
+> 参数说明
+
+| 参数                                        | 说明                                     |
+| ------------------------------------------- | ---------------------------------------- |
+| executionSuccess                            | 是否执行成功                             |
+| nReturned                                   | 返回结果数                               |
+| executionTimeMillis                         | 查询计划的选择和执行所耗费的时间         |
+| totalKeysExamined                           | 索引扫描次数                             |
+| totalDocsExamined                           | 文档扫描次数                             |
+| executionStages{}                           | 这个分类下描述执行的状态                 |
+| executionStages.stage                       | 查询方式                                 |
+| executionStages.filter                      | 过滤条件                                 |
+| executionStages.nReturned                   | 返回结果数                               |
+| executionStages.executionTimeMillisEstimate | 预估耗时                                 |
+| executionStages.works                       | 工作单元数，一个查询会分解成小的工作单元 |
+| executionStages.advanced                    |                                          |
+| executionStages.needTime                    |                                          |
+| executionStages.needYield                   |                                          |
+| saveState                                   |                                          |
+| restoreState                                |                                          |
+| isEOF                                       | 是否到达 Steam 结尾                      |
+| docsExamined                                | 文档检查数                               |
+| alreadyHasObj                               |                                          |
+| inputStage{}                                | 输入阶段                                 |
+
+#### （3）allPlansExecution
+
+> MongoDB 运行查询优化器来选择获胜计划，并执行获胜计划直至完成。在该模式中，MongoDB 返回描述获胜计划执行情况的统计信息，以及在 allPlansExecution 计划选择过程中捕获的其他候选计划的统计信息。
+
+```sh
+> db.getCollection("request_log").find({
+    server: "ucs"
+}).sort({
+    created_at: - 1
+}).explain("allPlansExecution")
+
+# output
+{
+    "queryPlanner": {},
+    "executionStats": {},
+    	...,
+        "allPlansExecution": [
+            {
+                "nReturned": 101,
+                "executionTimeMillisEstimate": 0,
+                "totalKeysExamined": 168,
+                "totalDocsExamined": 168,
+                "executionStages": {
+                    "stage": "FETCH",
+                    "filter": {
+                        "server": {
+                            "$eq": "ucs"
+                        }
+                    },
+                    "nReturned": 101,
+                    "executionTimeMillisEstimate": 0,
+                    "works": 168,
+                    "advanced": 101,
+                    "needTime": 67,
+                    "needYield": 0,
+                    "saveState": 0,
+                    "restoreState": 0,
+                    "isEOF": 0,
+                    "docsExamined": 168,
+                    "alreadyHasObj": 0,
+                    "inputStage": {
+                        "stage": "IXSCAN",
+                        "nReturned": 168,
+                        "executionTimeMillisEstimate": 0,
+                        "works": 168,
+                        "advanced": 168,
+                        "needTime": 0,
+                        "needYield": 0,
+                        "saveState": 0,
+                        "restoreState": 0,
+                        "isEOF": 0,
+                        "keyPattern": {
+                            "created_at": -1
+                        },
+                        "indexName": "created_at_-1",
+                        "isMultiKey": false,
+                        "multiKeyPaths": {
+                            "created_at": [ ]
+                        },
+                        "isUnique": false,
+                        "isSparse": false,
+                        "isPartial": false,
+                        "indexVersion": 2,
+                        "direction": "forward",
+                        "indexBounds": {
+                            "created_at": [
+                                "[MaxKey, MinKey]"
+                            ]
+                        },
+                        "keysExamined": 168,
+                        "seeks": 1,
+                        "dupsTested": 0,
+                        "dupsDropped": 0
+                    }
+                }
+            },
+            {
+                "nReturned": 0,
+                "executionTimeMillisEstimate": 0,
+                "totalKeysExamined": 168,
+                "totalDocsExamined": 168,
+                "executionStages": {
+                    "stage": "SORT",
+                    "nReturned": 0,
+                    "executionTimeMillisEstimate": 0,
+                    "works": 168,
+                    "advanced": 0,
+                    "needTime": 168,
+                    "needYield": 0,
+                    "saveState": 131,
+                    "restoreState": 131,
+                    "isEOF": 0,
+                    "sortPattern": {
+                        "created_at": -1
+                    },
+                    "memLimit": 104857600,
+                    "type": "simple",
+                    "totalDataSizeSorted": 26441633,
+                    "usedDisk": false,
+                    "inputStage": {
+                        "stage": "FETCH",
+                        "nReturned": 168,
+                        "executionTimeMillisEstimate": 0,
+                        "works": 168,
+                        "advanced": 168,
+                        "needTime": 0,
+                        "needYield": 0,
+                        "saveState": 131,
+                        "restoreState": 131,
+                        "isEOF": 0,
+                        "docsExamined": 168,
+                        "alreadyHasObj": 0,
+                        "inputStage": {
+                            "stage": "IXSCAN",
+                            "nReturned": 168,
+                            "executionTimeMillisEstimate": 0,
+                            "works": 168,
+                            "advanced": 168,
+                            "needTime": 0,
+                            "needYield": 0,
+                            "saveState": 131,
+                            "restoreState": 131,
+                            "isEOF": 0,
+                            "keyPattern": {
+                                "server": 1
+                            },
+                            "indexName": "server_1",
+                            "isMultiKey": false,
+                            "multiKeyPaths": {
+                                "server": [ ]
+                            },
+                            "isUnique": false,
+                            "isSparse": false,
+                            "isPartial": false,
+                            "indexVersion": 2,
+                            "direction": "forward",
+                            "indexBounds": {
+                                "server": [
+                                    "[\"ucs\", \"ucs\"]"
+                                ]
+                            },
+                            "keysExamined": 168,
+                            "seeks": 1,
+                            "dupsTested": 0,
+                            "dupsDropped": 0
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "serverInfo": {},
+    "ok": 1
+}
+```
 
 
 

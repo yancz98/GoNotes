@@ -1687,7 +1687,7 @@ struct clusterNode {
     mstime_t repl_offset_time;
 
     // 这个节点的复制偏移量
-    long long repl_offset;
+    long repl_offset;
 
     // 节点的 IP 地址
     char ip[REDIS_IP_STR_LEN];

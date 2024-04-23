@@ -222,8 +222,6 @@ ls [选项] [目录]
     l    链接
     s    套接字
     p    管道	
-		
-
 ```
 
 ### 3、vi-vim 编辑器
@@ -983,7 +981,8 @@ Options:
 whoami
 
 # 新增用户
-useradd [Options] <username>
+# useradd [Options] <username> # 有点问题
+adduser 
 
 Options：
     -d, --home-dir 新账户的home目录，不指定则在/home下创建一个与用户名相同的目录
@@ -1046,7 +1045,7 @@ groupadd [Options] <Group>
 # 删除用户组
 groupdel [Options] <Group>
 
-# 向用户组中添加或删除用户
+# 向用户组中添加或删除用户（重新登录生效）
 gpasswd [Options] <Group>
 
 Options:

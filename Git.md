@@ -537,7 +537,7 @@ git push -u origin master
 
 ### （5）为仓库添加自述文件
 
-> 只需在项目根目录中添加配置文件：`readme.md`
+> 只需在项目根目录中添加配置文件：`README.md`
 
 ### （6）JetBrains 中配置 Git
 
@@ -554,6 +554,133 @@ git push -u origin master
 > 启用提交窗口
 >
 > - [x] use non-modal commit interface
+
+
+
+## 七、仓库清理
+
+> 查看本地仓库大小
+
+```
+> git count-objects -vH
+count: 0     
+size: 0 bytes
+in-pack: 3191
+packs: 1     
+size-pack: 459.50 MiB
+prune-packable: 0
+garbage: 0
+size-garbage: 0 bytes
+```
+
+> 找出大文件
+
+```
+# 使用 git verify-pack 指令打印文件信息
+# 按第 3 列（文件大小）升序排序
+# 取最后 10 条
+> git verify-pack -v .git/objects/pack/*.idx | sort -k 3 -n | tail -10 
+
+# 查看对应的文件
+> git rev-list --objects --all | grep <FILE HASH>
+
+# 按文件大小从大到小列出排名前 10 的文件
+> git rev-list --objects --all | grep "$(git verify-pack -v .git/objects/pack/*.idx | sort -k 3 -n | tail -10 | awk '{print $1}')"
+5526c0b058103060038b57072a73f4d135bc1d30 release/readline_pm
+121eaffe1611db0e3aba77acaa97a9f19bd26e17 release/readline_pm
+ab74a403cfe4e507522645b296020625f8c928c7 release/readline_pm
+f020e2c3b556259e90a4ef93585c22086d7aff0b release/readline_pm
+6744f40ce7c529a4794096c9c2a106583da663d9 release/readline_pm
+9767b1998422e0d3ba50a336ed3d7d1652b4b13e release/readline_pm
+f558e4af0da8e282dcd7a64d11eca278d5fdf192 release/readline_pm
+b74943d91ec2f2b2ae88d9287b3764b7604b916e release/readline_pm
+d47b82538f6508ba0dc53f8f52ecf6f479671145 release/readline_pm
+fb991b6b5aad5d33ec0b0625781bf7c936d6b1ec release/readline_pms
+
+# 找到文件所在的历史记录
+> git log --pretty=oneline --branches -- release/readline_pm
+
+# 查看 commit 所属分支
+> git branch -a --contains <COMMIT HASH>
+```
+
+> 删除大文件
+
+```
+# 移除对该文件的引用
+> git filter-branch -f --prune-empty --index-filter 'git rm -rf --cached --ignore-unmatch release/readline_pm' --tag-name-filter cat -- --all
+
+# 回收空间，清理本地仓库中不可到达的对象
+git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
+rm -rf .git/refs/original/
+git reflog expire --expire=now --all
+git gc --prune=now
+git gc --aggressive --prune=now
+```
+
+> 再次查看仓库大小
+
+```
+> git count-objects -vH
+count: 0
+size: 0 bytes
+in-pack: 3009
+packs: 1
+size-pack: 4.39 MiB
+prune-packable: 0
+garbage: 0
+size-garbage: 0 bytes
+```
+
+
+
+> 推送到远程
+
+```
+git push -f --all
+```
+
+
+
+## 八、Git Flow
+
+![](Images/Git_Flow.png)
+
+### 1、两个长期分支
+
+#### （1）master
+
+用于保持和生产环境一致或者半步先于生产环境，主要目的用于保护生产环境的实时可用状态。
+
+master 分支时常保持着软件可以正常运行的状态，不允许开发者直接对 master 分支的代码进行修改和合并，受保护分支。
+
+master 分支的使用场景：
+
+- 生产环境 bug 再现与调查：基于 master 分支创建 hotfix 分支，用于bug 定位与修复。
+- 新功能发布：特性分支开发完毕，完成测试，确认此分支内容可以进行发布之后，便可合并至 master 分支，并打标签。
+
+#### （2）develop
+
+develop 分支的使用场景：
+
+- 特性开发合并：根据项目的模块（特性）进行拆分，不同的模块（特性）由不同的团队负责，这些分支开发完毕时需要合并到 develop 分支上，以保证 develop 分支具有最新的功能。
+- 紧急 bug 修正发布：紧急 bug 修正后，需要立即体现在 master 分支上，同时也需要在 develop 分支上进行更新，避免 develop 分支 bug 复现。
+
+### 2、三个临时分支
+
+#### （1）feature
+
+特性分支有时也被称为 topic 分支，一般是用来开发新的特性，而其关联的发布可能近在眼前，也可能需要很长一段时间，特性分支最终会被合并到 develop 分支或者最终被丢弃。丢弃特性分支开发的内容在敏捷开发中并不罕见，尤其是当项目需要不断地试验的阶段。
+
+特性分支在 gitflow 中仍是临时分支，在使用完成后请删除此分支，同时删除远程仓库上的该分支。
+
+#### （2）release
+
+release 分支基于 develop 分支创建，主要用于版本的发布，用于保证最后一步的安全和顺畅，为发布所需要的各种准备以及手工操作，甚至小规模的 bug 对应都可以在此分支上完成。而当 release 分支上的一切做完之后，标志着最新 develop 分支的功能已经发布到 master，同时为下一次发布的功能特性的接收已经开始。
+
+#### （3）hotfix
+
+hotfix 分支与 release 分支非常相像，都牵扯到向生产环境 ready 的 master 进行版本的更新。但是不同的是 hotfix 往往是因为生产环境上出现了非常紧急的问题，需要立即解决。而项目的特性开发等又不想受到影响而中断，这时就可以依据 master 生成一个 hotfix 的分支，在此分支上进行 bug 修复，既不影响 develop 分支，又能保证到生成环境紧急问题的及时修正，修正完毕之后必须同时合并到 develop 分支和 master 分支，不然就会给下次发版留下隐患。
 
 
 
@@ -648,7 +775,7 @@ $ git cat-file -t 83baae61804e65cc73a7201a7252750c76066a30
 blob
 
 # --------------------------------------
-# 底层命令：git cat-file -t    查看对象大小
+# 底层命令：git cat-file -s    查看对象大小
 # --------------------------------------
 $ git cat-file -s 83baae61804e65cc73a7201a7252750c76066a30
 10

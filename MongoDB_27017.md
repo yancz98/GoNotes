@@ -98,7 +98,6 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 > 配置参数说明
 
 ```
-
  dbpath:
 数据文件存放路径，每个数据库会在其中创建一个子目录，用于防止同一个实例多次运行的 mongod.lock 也保存在此目录中。
  logpath
@@ -148,8 +147,6 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 
 # 查看实例运行状态
 db.serverStatus()
-
-
 ```
 
 
@@ -182,6 +179,23 @@ db.serverStatus()
 | Database Client | `mongosh` | `mysql`  | `sqlplus` | `DB-Access` | `DB2 Client` |
 
 注：`mongos`：分片路由，如果使用了 sharding 功能，则应用程序连接的是 mongos 而不是 mongod。
+
+#### （3）聚合管道
+
+| SQL Term, Functions, Concepts | MongoDB Aggregate Operators |
+| ----------------------------- | --------------------------- |
+| WHERE                         | $match                      |
+| GROUP BY                      | $group                      |
+| HAVING                        | $match                      |
+| SELECT                        | $project                    |
+| ORDER BY                      | $sort                       |
+| LIMIT                         | $limit                      |
+| SUM()                         | $sum                        |
+| COUNT()                       | $sum <br>$sortrByCount      |
+| JOIN                          | $lookup                     |
+| SELECT INTO NEW_TABLE         | $out                        |
+| MEREG INTO TABLE              | $merge                      |
+| UNION ALL                     | $unionWith                  |
 
 
 
@@ -810,10 +824,6 @@ db.collection.replaceOne( filter, replacement, <optional params> )
 
 #### （2）[使用聚合管道进行更新](https://www.mongodb.com/docs/v5.0/tutorial/update-documents-with-aggregation-pipeline/)
 
-```
-unclear
-```
-
 
 
 ### 4、Delete
@@ -1143,13 +1153,23 @@ db.adminCommand(
 
 ### 1、原子性和事务
 
-原子性：在 MongoDB 中，写操作在单个文档级别上是原子的，即使该操作修改了单个文档中的多个嵌套文档。
+#### （1）原子性
 
-多文档事务：当单个写操作（如：db.collection.updateMany()）修改多个文档时，每个文档的修改时原子的，但整个操作不是原子的。
+在 MongoDB 中，写操作在**单个文档**级别上是原子的，即使该操作修改了单个文档中的多个嵌套文档。
 
-因此，在需要对多个文档进行读写原子性的情况时，应使用 多文档事务。
+#### （2）多文档事务
 
-并发控制：findAndModify 对文档的操作是原子的。
+当单个写操作（如：db.collection.updateMany()）修改多个文档时，每个文档的修改时原子的，但整个操作不是原子的。
+
+当执行多文档写入操作时，无论是通过单个写入操作还是通过多个写入操作，其他操作都可能交错。
+
+对于需要对多个文档（在单个或多个集合中）进行原子化读写的情况，MongoDB支持分布式事务，包括副本集和分片集群上的事务。
+
+#### （3）并发控制
+
+并发控制允许多个应用程序同时运行不会导致数据不一致或冲突。
+
+findAndModify 对文档的操作是原子的，如果查找条件与文档匹配，则对该文档执行更新。在当前更新完成之前，对该文档的并发查询和其他更新不会受到影响。
 
 ### 2、读取隔离、一致性和新近度
 
@@ -1175,7 +1195,7 @@ db.adminCommand(
 > - 对分组数据执行操作以返回单个结果；
 > - 分析数据随时间的变化。
 
-### 1、单一目的聚合方法
+### 1、聚合方法
 
 ```shell
 # 返回集合或视图中文档的近似计数
@@ -1187,15 +1207,203 @@ db.collection.count()
 # 返回指定字段具有不同值的文档数组
 db.collection.distinct()
 
+# 对大型数据集执行映射缩减聚合（MongoDB 5.0 起弃用）
+db.collection.mapReduce()
+
+# 提供对聚合管道的访问权限
+db.collection.aggregate()
 ```
 
-### 2、集合管道
 
-> 聚合管道由一个或多个处理文档的阶段组成：
->
-> - 每个阶段对输入文档执行操作。
-> - 从一个阶段输出的文档被传递到下一个阶段。
-> - 聚合管道可以返回文档组的结果。
+
+### 2、聚合管道
+
+#### （1）阶段
+
+聚合管道由一个或多个处理文档的阶段组成：
+
+- 每个阶段对输入文档执行操作。
+- 从一个阶段输出的文档被传递到下一个阶段。
+- 聚合管道可以返回文档组的结果。
+
+| 阶段             | 描述                                                         | 语法                                                         |
+| ---------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| $addField        | 向文档中添加新字段。与$project类似，$addFields对流中的每个文档进行重新整形；具体地说，通过向包含输入文档中的现有字段和新添加的字段的输出文档添加新字段。<br/>$set是$addFields的别名。 | { $addFields: { <newField>: <expression>, ... } }            |
+| $bucket          | 根据指定的表达式和bucket边界，将传入的文档分类到称为bucket的组中。 |                                                              |
+| $bucketAuto      | 根据指定的表达式，将传入文档分类为特定数量的组，称为bucket。Bucket边界是自动确定的，目的是将文档平均分配到指定数量的Bucket中。 |                                                              |
+| $changeStream    | 返回集合的“更改流”光标。此阶段在聚合管道中只能出现一次，并且必须作为第一个阶段出现。 |                                                              |
+| $collStats       | 返回有关集合或视图的统计信息。                               |                                                              |
+| $count           | 返回聚合管道的此阶段的文档数的计数。<br/>与$count聚合累加器不同。 | { $count: <string> }                                         |
+| $facet           | 在同一组输入文档的单个阶段内处理多个聚合管道。允许创建多方面聚合，这些聚合能够在单个阶段中跨多个维度或方面表征数据。 |                                                              |
+| $geoNear         | 根据与地理空间点的接近程度返回有序的文档流。结合了地理空间数据的$match、$sort和$limit功能。输出文档包括附加的距离字段，并且可以包括位置标识符字段。 |                                                              |
+| $graphLookup     | 对集合执行递归搜索。向每个输出文档添加一个新的数组字段，该字段包含该文档的递归搜索的遍历结果。 |                                                              |
+| $group           | 根据指定的标识符表达式对输入文档进行分组，并将累加器表达式（如果指定）应用于每个组。使用所有输入文档，并为每个不同的组输出一个文档。输出文档仅包含标识符字段，如果指定，还包含累积字段。 | {<br/> $group:<br/>   {<br/>     _id: <expression>, // Group key<br/>     <field1>: { <accumulator1> : <expression1> },<br/>     ...<br/>   }<br/> } |
+| $indexStats      | 返回有关集合中每个索引的使用情况的统计信息。                 |                                                              |
+| $limit           | 将未修改的前n个文档传递到管道，其中n是指定的限制。对于每个输入文档，输出一个文档（前n个文档）或零个文档（在前n个文件之后）。 | { $limit: <positive 64-bit integer> }                        |
+| $listSessions    | 列出活动时间足以传播到system.sessions集合的所有会话。        |                                                              |
+| $lookup          | 对同一数据库中的另一个集合执行左外部联接，以筛选“联接”集合中的文档进行处理。 |                                                              |
+| $match           | 过滤文档流，只允许匹配的文档未经修改地传递到下一个管道阶段$match使用标准的MongoDB查询。对于每个输入文档，输出一个文档（匹配）或零个文档（不匹配）。 | { $match: { <query> } }                                      |
+| $merge           | 将聚合管道的结果文档写入集合。该阶段可以将结果合并（插入新文档、合并文档、替换文档、保留现有文档、操作失败、使用自定义更新管道处理文档）到输出集合中。若要使用$merge阶段，它必须是管道中的最后一个阶段。 |                                                              |
+| $out             | 将聚合管道的结果文档写入集合。要使用$out阶段，它必须是管道中的最后一个阶段。 |                                                              |
+| $planCacheStats  | 返回集合的计划缓存信息。                                     |                                                              |
+| $project         | 重塑流中的每个文档，例如通过添加新字段或删除现有字段。对于每个输入文档，输出一个文档。 |                                                              |
+| $redact          | 通过基于存储在文档本身中的信息限制每个文档的内容来重塑流中的每个文档。包含$project和$match的功能。可用于实现字段级编校。对于每个输入文档，输出一个或零个文档。 |                                                              |
+| $replaceRoot     | 用指定的嵌入文档替换文档。该操作将替换输入文档中的所有现有字段，包括_id字段。指定嵌入在输入文档中的文档，以将嵌入的文档提升到顶级。 |                                                              |
+| $replaceWith     | $replaceWith是$replaceRoot阶段的别名。                       |                                                              |
+| $sample          | 从其输入中随机选择指定数量的文档。                           |                                                              |
+| $search          | 对Atlas集合中的一个或多个字段执行全文搜索。                  |                                                              |
+| $set             | 向文档中添加新字段。与$project类似，$set对流中的每个文档进行整形；具体地说，通过向包含输入文档中的现有字段和新添加的字段的输出文档添加新字段。<br/>$set是$addFields阶段的别名。 |                                                              |
+| $setWindowFields | 将文档分组到窗口中，并将一个或多个运算符应用于每个窗口中的文档。 |                                                              |
+| $skip            | 跳过前n个文档，其中n是指定的跳过编号，并将未修改的其余文档传递到管道。对于每个输入文档，输出零个文档（对于前n个文档）或一个文档（如果在前n个文件之后）。 |                                                              |
+| $sort            | 按指定的排序键重新排序文档流。只有订单发生变化；这些文档保持不变。对于每个输入文档，输出一个文档。 |                                                              |
+| $sortByCount     | 根据指定表达式的值对传入文档进行分组，然后计算每个不同组中的文档数。 |                                                              |
+| $unionWith       | 执行两个集合的并集；即将来自两个集合的流水线结果组合成单个结果集。 |                                                              |
+| $unset           | 从文档中删除/排除字段。                                      |                                                              |
+| $unwind          | 从输入文档中解构一个数组字段，为每个元素输出一个文档。每个输出文档都用一个元素值替换数组。对于每个输入文档，输出n个文档，其中n是数组元素的数量，对于空数组可以为零。 |                                                              |
+
+
+
+#### （2）变量
+
+聚合表达式既可以使用用户定义的变量，也可以使用系统变量。
+
+变量可以保存任何 BSON 类型的数据，若要访问变量值，请在变量名称前加上前缀双美元符号（`$$<variable>.<field>`）。
+
+**用户变量：**
+
+用户变量名称可以包含 ASCII 字符和任何非 ASCII 字符，必须以小写 ASCII 字母或非 ASCII 字符开头。
+
+**系统变量：**
+
+| 变量           | 描述                                                         |
+| -------------- | ------------------------------------------------------------ |
+| $$NOW          | 返回当前日期时间值的变量。<br/>NOW为部署的所有成员返回相同的值，并在聚合管道的所有阶段保持不变。 |
+| $$CLUSTER_TIME | 返回当前时间戳值的变量。<br/>CLUSTER_TIME 仅在副本集和分片集群上可用 。<br/>CLUSTER_TIME 为部署的所有成员返回相同的值，并在管道的所有阶段保持不变。 |
+| $$ROOT         | 引用当前正在聚合管道阶段处理的根文档，即顶级文档。           |
+| $$CURRENT      | 引用聚合管道阶段中正在处理的字段路径的开头。除非另有说明，否则所有阶段都以 CURRENT 开头，与 ROOT 相同。<br/>CURRENT 是可修改的。但是，由于`$<field>` 相当于 `$$CURRENT<field>`，重新绑定 CURRENT 将更改 `$access` 的含义。 |
+| $$REMOVE       | 计算结果为缺失值的变量。允许有条件地排除字段。在 $project 中，设置为变量 REMOVE 的字段将从输出中排除。 |
+| $$DESCEND      | $redact 表达式允许的结果之一。                               |
+| $$PRUNE        | $redact 表达式允许的结果之一。                               |
+| $$KEEP         | $redact 表达式允许的结果之一。                               |
+
+
+
+
+
+#### （3）运算符
+
+运算符表达式类似于接受参数的函数。
+
+```
+# 运算符接受单个参数
+{ <operator>: <argument> }
+
+# 运算符接受一组参数
+{ <operator>: [ <argument1>, <argument2>, ...] }
+```
+
+##### 算术运算符
+
+| 名称      | 描述                                                         |
+| --------- | ------------------------------------------------------------ |
+| $abs      | 返回一个数字的绝对值。                                       |
+| $add      | 添加数字以返回总和，或添加数字和日期以返回新日期。如果将数字和日期相加，则将数字视为毫秒。接受任意数量的参数表达式，但最多只能有一个表达式解析为一个日期。 |
+| $ceil     | 返回大于或等于指定数字的最小整数。                           |
+| $divide   | 返回第一个数字除以第二个数字的结果。接受两个参数表达式。     |
+| $exp      | 将e提升到指定的指数。                                        |
+| $floor    | 返回小于或等于指定数字的最大整数。                           |
+| $ln       | 计算一个数字的自然对数。                                     |
+| $log      | 计算以指定基数表示的数字的对数。                             |
+| $log10    | 计算一个数字的对数基数10。                                   |
+| $mod      | 返回第一个数字除以第二个数字的余数。接受两个参数表达式。     |
+| $multiply | 将数字相乘以返回乘积。接受任意数量的参数表达式。             |
+| $pow      | 将数字提升到指定的指数。                                     |
+| $round    | 将数字舍入为整整数或指定的小数位数。                         |
+| $sqrt     | 计算平方根。                                                 |
+| $subtract | 返回第一个值减去第二个值的结果。如果这两个值是数字，则返回差值。如果这两个值是日期，则返回以毫秒为单位的差值。如果这两个值是一个日期和一个以毫秒为单位的数字，则返回结果日期。接受两个参数表达式。如果这两个值是日期和数字，请先指定日期参数，因为从数字中减去日期没有意义。 |
+| $trunc    | 将数字截断为整整数或指定的小数位数。                         |
+
+##### 数组运算符
+
+| 名称           | 描述                                                         |
+| -------------- | ------------------------------------------------------------ |
+| $arrayElemAt   | 返回指定数组索引处的元素。                                   |
+| $arrayToObject | 将键值对数组转换为文档。                                     |
+| $concatArrays  | 串联数组以返回串联的数组。                                   |
+| $filter        | 选择数组的子集以返回仅包含与筛选条件匹配的元素的数组。       |
+| $first         | 返回第一个数组元素。与$first累加器不同。                     |
+| $in            | 返回一个布尔值，指示指定值是否在数组中。                     |
+| $indexOfArray  | 在数组中搜索指定值的引用，并返回第一个引用的数组索引。如果未找到子字符串，则返回-1。 |
+| $isArray       | 确定操作数是否为数组。返回布尔值。                           |
+| $last          | 返回最后一个数组元素。与$last累加器不同。                    |
+| $map           | 将子表达式应用于数组的每个元素，并按顺序返回结果值的数组。接受命名参数。 |
+| $objectToArray | 将文档转换为表示键值对的文档数组。                           |
+| $range         | 根据用户定义的输入输出一个包含整数序列的数组。               |
+| $reduce        | 将表达式应用于数组中的每个元素，并将它们组合为一个值。       |
+| $reverseArray  | 返回元素顺序相反的数组。                                     |
+| $size          | 返回数组中的元素数。接受单个表达式作为参数。                 |
+| $slice         | 返回数组的子集。                                             |
+| $zip           | 将两个数组合并在一起。                                       |
+
+##### 布尔运算符
+
+| 名称 | 描述 |
+| ---- | ---- |
+|      |      |
+|      |      |
+|      |      |
+
+
+
+##### 比较运算符
+
+
+
+##### 条件运算符
+
+
+
+##### 自定义运算符
+
+
+
+##### 数据大小运算符
+
+
+
+##### 日期运算符
+
+
+
+##### 文本运算符
+
+
+
+##### 其他运算符
+
+
+
+##### 对象表达式运算符
+
+
+
+##### 设置运算符
+
+
+
+##### 字符串运算符
+
+
+
+##### 三角运算符
+
+
+
+##### 类型运算符
+
+
+
+
 
 ```shell
 # 填充数据
@@ -1257,7 +1465,7 @@ db.collection.insertMany([
 ])
 ```
 
-#### （1）聚合管道查询
+#### （4）聚合管道查询示例
 
 ```shell
 # 查询各年级的总人数
@@ -1298,21 +1506,21 @@ db.collection.aggregate([
 > - 同一阶段可以在管道中出现多次，但 $out、$merge、$geoNear 阶段除外。
 > - 要计算平均值并在阶段中执行其他计算，请使用 指定 聚合运算符的聚合表达式。
 
-#### （2）[聚合管道优化](https://www.mongodb.com/docs/v5.0/core/aggregation-pipeline-optimization/)
+#### （5）[聚合管道优化](https://www.mongodb.com/docs/v5.0/core/aggregation-pipeline-optimization/)
 
 ```
 
 ```
 
-#### （3）聚合管道限制
+#### （6）聚合管道限制
 
 - 结果大小限制：结果集中的每个文档都受 16MB （BSON 文档大小）限制。
 - 阶段数限制：单个管道中允许的聚合管道阶段数限制为 1000。（V 5.0 更改）
 - 内存限制：每个单独的管道阶段都有 100MB 的 RAM 限制。
 
-#### （4）[聚合管道快速参考](https://www.mongodb.com/docs/v5.0/meta/aggregation-quick-reference/)
+#### 
 
-
+#### 
 
 
 
@@ -1646,6 +1854,8 @@ db.collection.createIndex({ field: 1 }, { sparse: true })
 
 ### 6、查询执行计划
 
+> [Explain 结果]([Explain Results — MongoDB Manual](https://www.mongodb.com/docs/v5.0/reference/explain-results/))
+
 ```sh
 db.collection.find().explain([verbosity])
 
@@ -1764,27 +1974,29 @@ verbosity:
 
 > 参数说明
 
-| 参数                      | 说明                                                         |
-| ------------------------- | ------------------------------------------------------------ |
-| plannerVersion            | 查询计划输出格式版本                                         |
-| namespace                 | 查询的集合                                                   |
-| indexFilterSet            |                                                              |
-| parsedQuery               | 查询条件                                                     |
-| queryHash                 |                                                              |
-| planCacheKey              |                                                              |
-| winningPlan{}             | 最佳执行计划                                                 |
-| winningPlan.stage         | **查询方式（阶段）**<br />FETCH：检索文档<br />COLLSCAN：全表扫描<br />IXSCAN：索引扫描<br />SHARD_MERGE：合并分片结果<br />IDHACK：使用 _id 查询 |
-| winningPlan.filter        | 过滤条件                                                     |
-| winningPlan.inputStage{}  | 输入阶段                                                     |
-| winningPlan.direction     | 查询方向                                                     |
-| winningPlan.indexBounds   | 索引边界                                                     |
-| ...                       |                                                              |
-| rejectedPlans{}           | 拒绝的执行计划                                               |
-| rejectedPlans.stage       | SORT 排序阶段                                                |
-| rejectedPlans.sortPattern | 排序模式                                                     |
-| rejectedPlans.memLimit    | 内存限制                                                     |
-| ...                       |                                                              |
-| serverInfo{}              | MongoDB 服务器信息                                           |
+| 参数                                   | 说明                                                         |
+| -------------------------------------- | ------------------------------------------------------------ |
+| queryPlanner{}                         | 查询优化器                                                   |
+| queryPlanner.plannerVersion            | 查询计划输出格式版本                                         |
+| queryPlanner.namespace                 | 命名空间，格式为：`<database>.<collection>`                  |
+| queryPlanner.indexFilterSet            | MongoDB 是否为查询形状应用了索引过滤器                       |
+| queryPlanner.parsedQuery               | 查询条件                                                     |
+| queryPlanner.queryHash                 | 查询形状的哈希（缓存）                                       |
+| queryPlanner.planCacheKey              | 与查询关联的计划缓存项的密钥的哈希                           |
+| queryPlanner.winningPlan{}             | 详细说明查询优化器选择的计划                                 |
+| queryPlanner.winningPlan.stage         | **阶段名称：**<br />COLLSCAN：集合扫描（全表扫描）<br />FETCH：检索文档<br />IXSCAN：索引扫描<br />SHARD_MERGE：合并分片结果<br />IDHACK：使用 _id 查询<br />SHARDING_FILTER：从分片中过滤掉孤立文档 |
+| queryPlanner.winningPlan.filter        | 过滤条件                                                     |
+| queryPlanner.winningPlan.inputStage{}  | 子阶段（父阶段只有一个子阶段），为其父阶段提供文档或索引键   |
+| queryPlanner.winningPlan.inputStages[] | 子阶段（父阶段具有多个子阶段），为其父阶段提供文档或索引键   |
+| queryPlanner.winningPlan.direction     | 查询方向                                                     |
+| queryPlanner.winningPlan.indexBounds   | 索引边界                                                     |
+| ...                                    |                                                              |
+| queryPlanner.rejectedPlans[]           | 查询优化器考虑和拒绝的候选计划                               |
+| queryPlanner.rejectedPlans.stage       | SORT 排序阶段                                                |
+| queryPlanner.rejectedPlans.sortPattern | 排序模式                                                     |
+| queryPlanner.rejectedPlans.memLimit    | 内存限制                                                     |
+| ...                                    |                                                              |
+| serverInfo{}                           | MongoDB 服务器信息                                           |
 
 #### （2）executionStats
 
@@ -1867,28 +2079,33 @@ verbosity:
 
 > 参数说明
 
-| 参数                                        | 说明                                     |
-| ------------------------------------------- | ---------------------------------------- |
-| executionSuccess                            | 是否执行成功                             |
-| nReturned                                   | 返回结果数                               |
-| executionTimeMillis                         | 查询计划的选择和执行所耗费的时间         |
-| totalKeysExamined                           | 索引扫描次数                             |
-| totalDocsExamined                           | 文档扫描次数                             |
-| executionStages{}                           | 这个分类下描述执行的状态                 |
-| executionStages.stage                       | 查询方式                                 |
-| executionStages.filter                      | 过滤条件                                 |
-| executionStages.nReturned                   | 返回结果数                               |
-| executionStages.executionTimeMillisEstimate | 预估耗时                                 |
-| executionStages.works                       | 工作单元数，一个查询会分解成小的工作单元 |
-| executionStages.advanced                    |                                          |
-| executionStages.needTime                    |                                          |
-| executionStages.needYield                   |                                          |
-| saveState                                   |                                          |
-| restoreState                                |                                          |
-| isEOF                                       | 是否到达 Steam 结尾                      |
-| docsExamined                                | 文档检查数                               |
-| alreadyHasObj                               |                                          |
-| inputStage{}                                | 输入阶段                                 |
+| 参数                                                       | 说明                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------ |
+| executionStats                                             | 包含描述获胜计划的已完成查询执行情况的统计信息。对于写操作，已完成的查询执行是指将要执行的修改，但不将这些修改应用于数据库。 |
+| executionStats.executionSuccess                            | 是否执行成功                                                 |
+| executionStats.nReturned                                   | 与查询条件匹配的文档数                                       |
+| executionStats.executionTimeMillis                         | 选择查询计划和执行查询所需的总时间（ms）                     |
+| executionStats.totalKeysExamined                           | 扫描的索引条目数                                             |
+| executionStats.totalDocsExamined                           | 执行查询期间检查的文档数。检查文档的常见查询执行阶段是 COLLSCAN 和 FETCH。 |
+| executionStats.executionStages{}                           | 以阶段树的形式详细说明已完成的获胜计划执行情况；<br/>每个阶段都包含特定于该阶段的执行信息。 |
+| executionStats.executionStages.stage                       | 查询方式                                                     |
+| executionStats.executionStages.filter                      | 过滤条件                                                     |
+| executionStats.executionStages.nReturned                   | 返回结果数                                                   |
+| executionStats.executionStages.executionTimeMillisEstimate | 查询执行的估计时间量（ms）                                   |
+| executionStats.executionStages.works                       | 指定查询执行阶段执行的工作单位数。，一个查询会分解成小的工作单元 |
+| executionStats.executionStages.advanced                    | 此阶段返回或推进到其父阶段的中间结果数                       |
+| executionStats.executionStages.needTime                    | 没有将中间结果推进到其父阶段的工作周期数                     |
+| executionStats.executionStages.needYield                   | 存储层请求查询阶段挂起处理并产生锁的次数                     |
+| executionStats.executionStages.saveState                   | 查询阶段挂起处理并保存其当前执行状态的次数，例如为生成其锁做准备的次数 |
+| executionStats.executionStages.restoreState                | 查询阶段恢复已保存的执行状态的次数，例如在恢复以前产生的锁之后 |
+| executionStats.executionStages.isEOF                       | 执行阶段是否已到达 Steam 的结尾：<br>true 或 1，则表示已到达流的结尾<br>false 或 0，则该阶段可能仍有结果要返回 |
+| executionStats.executionStages.docsExamined                | 文档检查数                                                   |
+| executionStats.executionStages.alreadyHasObj               |                                                              |
+| executionStats.executionStages.inputStage{}                | 输入阶段                                                     |
+| executionStats.executionStages.inputStage.keysExamined     | 对于扫描索引的查询执行阶段（IXSCAN），keysExamined 是在索引扫描过程中检查的 in-bounds 和 out-of-bounds 键的总数。如果索引扫描由单个连续的键组成，则只需要检查边界内的键。如果索引边界由多个键范围组成，则索引扫描执行过程可以检查越界键，以便从一个范围的末尾跳到下一个区域的开头。<br>`db.keys.find( { x : { $in : [ 3, 4, 50, 74, 75, 90 ] } } ).explain( "executionStats" )`<br>查询扫描键 3、4、5、50、51、74、75、76、90、91。键 5、51、76 和 91 是仍在检查的越界键。keysExamined的值为10。 |
+| executionStats.executionStages.inputStage.docsExamined     | 指定在查询执行阶段扫描的文档数<br/>用于COLLSCAN阶段以及从集合中检索文档的阶段（FETCH） |
+| executionStats.executionStages.inputStage.seeks            | 仅用于索引扫描（IXSCAN）阶段。<br/>为了完成索引扫描，我们必须将索引光标搜索到新位置的次数。 |
+| executionStats.allPlansExecution                           | 包含在计划选择阶段为获胜计划和被拒绝计划捕获的部分执行信息。仅当解释在 allPlansExecution 详细模式下运行时，该字段才存在。 |
 
 #### （3）allPlansExecution
 

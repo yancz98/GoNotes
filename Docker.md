@@ -2,7 +2,7 @@
 
 [ Docker 官网](https://www.docker.com/)
 
-## 1.1、Docker 概述
+## 1.1、Overview
 
 Docker 是一个用于开发、运输和运行应用程序的开放平台。Docker 使您能够将应用程序与基础架构分开，以便您可以快速交付软件。使用 Docker，您可以像管理应用程序一样管理基础架构。通过利用 Docker 的方法来快速传输、测试和部署代码，您可以显着减少编写代码和在生产环境中运行代码之间的延迟。
 
@@ -24,19 +24,19 @@ Docker 提供工具和平台来管理容器的生命周期：
 
 ### 3、Docker 架构
 
-![Docker 架构图](https://docs.docker.com/engine/images/architecture.svg)
+![Docker 架构图](Images/Docker_Architecture_old.svg)
 
-#### （1）Docker Client（客户端）
+（1）Docker Client（客户端）
 
 Docker 客户端用于与 Docker daemon 交互，客户端将命令发送到守护进程执行。客户端和守护进程使用 REST API，通过 UNIX 套接字或网络接口通信。客户端可以与多个守护进程通信，可以连接到本机或远程守护程序。
 
 另一个 Docker 客户端是 Docker Compose，它允许使用由一组容器组成的应用程序。
 
-#### （2）Docker Daemon（守护程序）
+（2）Docker Daemon（守护程序）
 
 Docker 守护程序负责构建、运行和分发 Docker 容器的繁重工作。 Docker 守护程序侦听 Docker API 请求并管理 Docker 对象（Images、Containers、Networks、Volumes）。守护进程还可以与其他守护进程通信以管理 Docker 服务。
 
-#### （3）Docker Registry（镜像仓库）
+（3）Docker Registry（镜像仓库）
 
 > 公共镜像仓库：[Docker Hub](https://hub.docker.com/) 
 
@@ -44,9 +44,9 @@ Docker 守护程序负责构建、运行和分发 Docker 容器的繁重工作�
 
 当使用 `docker pull` or `docker run` 命令时，将从配置的镜像仓库中提取所需的镜像。当使用 `docker push` 命令时，镜像像会被推送到配置的仓库中。 
 
-#### （4）Docker 对象
+（4）Docker 对象
 
-##### ① 镜像：
+① 镜像：
 
 相当于是一个 `root` 文件系统，镜像名 = <仓库名>:<标签>。
 
@@ -54,7 +54,7 @@ Docker 守护程序负责构建、运行和分发 Docker 容器的繁重工作�
 
 运行容器时，它使用隔离的文件系统。此自定义文件系统由容器映像提供。由于镜像包含容器的文件系统，它必须包含运行应用程序所需的一切（所有依赖项、配置、脚本、二进制文件等）。镜像还包含容器的其他配置，例如环境变量、运行的默认命令、和其他元数据。 
 
-##### ② 容器：
+② 容器：
 
 镜像是静态的定义， 容器是镜像的可运行实例。可以使用 Docker API 或 CLI 创建、启动、停止、删除、暂停容器。还可以将容器连接到一个或多个网络，将存储附加到它，甚至可以根据其当前状态创建新镜像。 
 
@@ -122,7 +122,7 @@ $ sudo yum-config-manager \
 $ sudo yum install docker-ce docker-ce-cli containerd.io
 ```
 
-### 2、使用 Docker
+### 2、管理 Docker
 
 ```shell
 # 开机自启 启动/禁用
@@ -243,6 +243,20 @@ Server:
 
 ### 5、Docker 根目录
 
+> Docker 可执行文件
+
+```shell
+> ll /usr/bin/docker*
+
+-rwxr-xr-x 1 root root  37004160 3月  20 23:17 /usr/bin/docker*
+-rwxr-xr-x 1 root root 105951040 3月  20 23:17 /usr/bin/dockerd*
+-rwxr-xr-x 1 root root     14836 3月  20 23:17 /usr/bin/dockerd-rootless-setuptool.sh*
+-rwxr-xr-x 1 root root      7249 3月  20 23:17 /usr/bin/dockerd-rootless.sh*
+-rwxr-xr-x 1 root root   2193298 3月  20 23:17 /usr/bin/docker-proxy*
+```
+
+
+
 > 与 Docker 相关的本地资源默认存放在 `/var/lib/docker/` 目录下：
 
 ```
@@ -287,7 +301,7 @@ Docker 还支持在主机内存中存储文件的容器：tmpfs mount。
 
 > volume、bind mount、tmpfs mount 之间的差异是数据在 Docker 主机上的位置。
 
-![Types of mounts and where they live on the Docker host](https://docs.docker.com/storage/images/types-of-mounts.png)
+![Types of mounts and where they live on the Docker host](Images/Docker_types-of-mounts.png)
 
 - Volumes：存储在由 Docker 管理的主机文件系统的一部分中 `/var/lib/docker/volumes`，非 Docker 进程不能改文件系统的这一部分。volume 是在 Docker 中持久保存数据的最佳方式。
 - bind mounts：可以存储在主机系统的任何位置。它们甚至可能是重要的系统文件或目录。Docker 主机或 Docker 容器上的非 Docker 进程可以随时修改它们。
@@ -307,7 +321,7 @@ Docker 还支持在主机内存中存储文件的容器：tmpfs mount。
 
 - 当不保证 Docker 主机具有给定的目录结构或文件结构时，优先使用卷。
 
-#### （1）管理卷
+（1）管理卷
 
 ```shell
 # 创建一个卷
@@ -339,7 +353,7 @@ $ docker volume rm <volume_name...>
 $ docker volume prune
 ```
 
-#### （2）`-v` 或 `--mount` 标志
+（2）`-v` 或 `--mount` 标志
 
 ```shell
 $ docker run -d --name <容器名> \
@@ -380,7 +394,7 @@ destination|dst|target  挂载在容器中的文件或目录路径（绝对路�
 bind-propagation        卷使用 rprivate 绑定传播，绑定传播对于卷是不可配置的。
 ```
 
-#### （3）启动一个带有卷的容器
+（3）启动一个带有卷的容器
 
 ```shell
 # --mount 绑定
@@ -441,7 +455,7 @@ $ docker inspect -f '{{json .Mounts}}' mysql_3306 | jq
 - 在 Docker 主机和容器上的开发环境之间共享源代码或构建工件。
 - 当 Docker 主机的文件或目录结构保证与容器所需的绑定挂载一致时。
 
-#### （1）`-v` 或 `--mount` 标志
+（1）`-v` 或 `--mount` 标志
 
 ```shell
 $ docker run -d --name <容器名> \
@@ -484,7 +498,7 @@ bind-propagation        绑定传播属性：rprivate|private|rshared|shared|rsl
 | `rslave`   | 与 slave 相同，但传播也延伸到嵌套在任何原始或副本挂载点内的挂载点。 |
 | `slave`    | 类似于 shared 挂载，但仅限于一个方向。如果原始挂载暴露了子挂载，则副本挂载可以看到它。但是，如果副本挂载暴露了子挂载，则原始挂载无法看到它。 |
 
-#### （2）启动一个绑定挂载的容器
+（2）启动一个绑定挂载的容器
 
 ```shell
 # -v 主机目录不存在时，自动创建
@@ -517,7 +531,7 @@ $ docker inspect -f '{{json .Mounts}}' mysql_3309 | jq
 ]
 ```
 
-#### （3）配置 selinux 标签
+（3）配置 selinux 标签
 
 如果使用 selinux，则可以添加 `z|Z` 选项来修改挂载到容器中的主机文件或目录的 selinux 标签。这会影响主机本身上的文件或目录，并可能产生 Docker 范围之外的后果。
 
@@ -542,7 +556,7 @@ $ docker inspect -f '{{json .Mounts}}' mysql_3309 | jq
 - 此功能仅在您在 Linux 上运行 Docker 时可用。
 - 在 tmpfs 上设置权限可能会导致它们在容器重启后重置。
 
-#### （1）选择 `--tmpfs` 或 `--mount`
+（1）选择 `--tmpfs` 或 `--mount`
 
 ```shell
 $ docker run -d --name <容器名> \
@@ -570,13 +584,13 @@ tmpfs-mode              tmpfs 的八进制文件模式。默认为 1777 或 worl
 
 要有效地使用存储驱动程序，重要的是要了解 Docker 如何构建和存储镜像，以及容器如何使用这些镜像。您可以使用此信息做出明智的选择，以了解从应用程序中持久保存数据的最佳方式，并避免在此过程中出现性能问题。
 
-#### （1）存储驱动与 Docker 卷
+（1）存储驱动与 Docker 卷
 
 Docker 使用存储驱动程序来存储图像层，并将数据存储在容器的可写层中。容器的可写层在容器被删除后不会持久化，而是适合存储运行时产生的临时数据。存储驱动程序针对空间效率进行了优化，但（取决于存储驱动程序）写入速度低于本机文件系统性能，尤其是对于使用写时复制文件系统的存储驱动程序。写入密集型应用程序（例如数据库存储）会受到性能开销的影响，特别是如果只读层中存在预先存在的数据。
 
 将 Docker 卷用于写入密集型数据、必须在容器生命周期之外保留的数据以及必须在容器之间共享的数据。
 
-#### （2）镜像和图层
+（2）镜像和图层
 
 Docker 镜像由一系列层构建而成。每层代表镜像 Dockerfile 中的一条指令。除了最后一层之外的每一层都是只读的。
 
@@ -606,7 +620,7 @@ CMD python /app/app.py
 
 存储驱动程序处理有关这些层彼此交互方式的细节。可以使用不同的存储驱动程序，在不同的情况下各有优缺点。
 
-#### （3）容器和图层
+（3）容器和图层
 
 容器和镜像像之间的主要区别在于顶部的可写层。所有添加新数据或修改现有数据的容器写入都存储在这个可写层中。当容器被删除时，可写层也被删除。底层图像保持不变。
 
@@ -614,7 +628,7 @@ CMD python /app/app.py
 
 Docker 使用存储驱动程序来管理镜像层和可写容器层的内容。每个存储驱动程序以不同方式处理实现，但所有驱动程序都使用可堆叠镜像像层和 copy-on-write (CoW) 策略。
 
-#### （4）磁盘上的容器大小
+（4）磁盘上的容器大小
 
 ```shell
 # 查看正在运行的容器的大概大小
@@ -636,13 +650,13 @@ c24aec90864f  mysql:5.7  ...      ...      ...     ...    mysql_3306  4B (virtua
 
 如上两个容器从完全相同的图像开始，则这些容器在磁盘上的总大小 = SUM（ 每个容器的 `size`）+ 一个镜像的大小（`virtual size` - `size`）。
 
-#### （5）copy-on-write（CoW）策略
+（5）copy-on-write（CoW）策略
 
 copy-on-write 是一种共享和复制文件以实现最大效率的策略。如果一个文件或目录存在于镜像中的较低层，而另一层（包括可写层）需要对其进行读取访问，则它只使用现有文件。第一次另一层需要修改文件时（在构建图像或运行容器时），文件被复制到该层并进行修改。这最大限度地减少了 I/O 和每个后续层的大小。
 
-##### ① 共享促进较小的图像
+① 共享促进较小的图像
 
-##### ② 复制使容器高效
+② 复制使容器高效
 
 ### 5、Docker 存储驱动程序
 
@@ -708,7 +722,7 @@ Docker 的网络子系统是可插拔的，使用驱动程序。默认存在多�
 | 网络插件  | 您可以通过 Docker 安装和使用第三方网络插件。                 | 第三方网络插件允许您将 Docker 与专用网络堆栈集成。           |
 | container | 新创建的容器不会创建自己的网卡和配置自己的IP，而是和一个指定的容器共享 IP，端口范围等。 | --network container:NAME                                     |
 
-#### （1）bridge
+（1）bridge
 
 当启动 Docker 时，会自动创建一个默认的桥接网络（也称为桥接），除非另有指定，否则新启动的容器会连接到默认桥接。你还可以创建用户定义的自定义桥接网络。用户定义的桥接网络优先于默认的桥接网络。
 
@@ -748,7 +762,7 @@ $ docker inspect -f '{{json .NetworkSettings.Networks}}' mysql_3307 | jq
 }
 ```
 
-##### 用户定义的桥接和默认桥接之间的区别
+用户定义的桥接和默认桥接之间的区别
 
 - 用户定义的桥接提供容器之间的自动 DNS 解析。
 
@@ -764,7 +778,7 @@ $ docker inspect -f '{{json .NetworkSettings.Networks}}' mysql_3307 | jq
 
 连接到同一个用户定义的桥接网络的容器有效地相互暴露所有端口。对于不同网络上的容器或非 Docker 主机可以访问的端口，必须使用 `-p, --publish` 发布端口 。
 
-##### 选项
+选项
 
 下表描述了在使用 bridge 驱动程序创建自定义网络时可以传递给 `--option` 的驱动程序特定选项。
 
@@ -781,7 +795,7 @@ $ docker inspect -f '{{json .NetworkSettings.Networks}}' mysql_3307 | jq
 
 Docker 守护进程支持一个 `--bridge` 标志，您可以使用它来定义自己的 `docker0` 桥接。如果要在同一主机上运行多个守护程序实例，请使用此选项。
 
-##### 使用自定义桥接
+使用自定义桥接
 
 ```shell
 # 创建自定义桥接（-d 默认为：bridge）
@@ -850,7 +864,7 @@ $ docker network disconnect mynet mysql_mynet
 $ docker network rm mynet
 ```
 
-##### 使用默认桥接网络
+使用默认桥接网络
 
 默认网桥被认为是 Docker 的遗留细节，不建议用于生产。配置它是一种手动操作，并且存在技术缺陷。
 
@@ -882,13 +896,13 @@ $ vim /etc/docker/daemon.json
 # 重启 Docker 生效
 ```
 
-##### 桥接网络的连接限制
+桥接网络的连接限制
 
 由于 Linux 内核设置的限制，桥接网络变得不稳定，当 1000 个或更多容器连接到单个网络时，容器间通信可能会中断。 
 
-#### （2）[overlay](https://docs.docker.com/network/drivers/overlay/)
+（2）[overlay](https://docs.docker.com/network/drivers/overlay/)
 
-#### （3）host
+（3）host
 
 如果您对容器使用主机网络模式，则该容器的网络堆栈不会与 Docker 主机隔离（容器共享主机的网络命名空间），并且容器不会分配自己的 IP 地址。例如，如果您运行绑定到端口 80 的容器并使用主机网络，则容器的应用程序可在主机 IP 地址的端口 80 上使用。 
 
@@ -912,11 +926,11 @@ docker run -d --network host redis
 
 
 
-#### （4）[IPvlan](https://docs.docker.com/network/drivers/ipvlan/)
+（4）[IPvlan](https://docs.docker.com/network/drivers/ipvlan/)
 
-#### （5）[Macvlan](https://docs.docker.com/network/drivers/macvlan/)
+（5）[Macvlan](https://docs.docker.com/network/drivers/macvlan/)
 
-#### （6）none
+（6）none
 
 如果要完全隔离容器的网络堆栈，可以在启动容器时使用 `--network-none` 标志。在容器中，仅创建环回设备。
 
@@ -936,7 +950,7 @@ $ docker run --rm \
 
 
 
-#### （）container
+（）container
 
 > 当父容器停掉后，子容器的网络不可用。
 
@@ -967,239 +981,171 @@ Options:
       --link-local-ip strings   Add a link-local address for the container
 ```
 
+## 1.5 Container
 
+Docker在隔离的容器中运行进程。容器是在主机上运行的进程。主机可以是本地的或远程的。当您执行 `docker run` 时，运行的容器进程是隔离的，因为它有自己的文件系统，自己的网络，以及自己独立于主机的隔离进程树。
 
-
-
-
-
-# 二、Docker Build
-
-
-
-# 三、Docker Compose
-
-> `Compose` 是 Docker 官方的开源项目，负责实现对 Docker 容器集群的快速编排。 
->
-> `Compose` 是一个用于定义和运行多个 Docker 容器的工具。
->
-> 通过一个单独的 `docker-compose.yml` 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目（project）。
->
-> - 服务 (`service`)：一个应用容器，实际上可以运行多个相同镜像的实例。
-> - 项目 (`project`)：由一组关联的应用容器组成的一个完整业务单元。
-
-### 1、安装
-
-> 如果您为 Windows、Mac 或 Linux 安装了 Docker Desktop，那么您已经拥有 Docker Compose！
+### 1、运行容器
 
 ```
-$ docker compose version
-```
+docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
 
-> 将 Docker Compose 作为单独的包安装
-
-```
-## 1 安装为可执行程序（docker-compose）
-# 下载
-$ curl -L https://github.com/docker/compose/releases/download/v2.7.0/docker-compose-linux-x86_64 > /usr/local/bin/docker-compose
-
-# 可执行权限
-$ chmod +x /usr/local/bin/docker-compose
-
-# 卸载
-$ sudo rm /usr/local/bin/docker-compose
-
-# 安装完成
-$ docker-compose version
-
-## 2 安装为 Docker 插件（docker compose）
-$ cp /usr/local/bin/docker-compose /usr/local/lib/docker/cli-plugins
-
-# 安装完成
-$ docker-compose version
-```
-
-### 2、docker-compose 模板
-
-> 注意：不能使用 tab 缩进，只能用空格。
-
-```yml
-# 模板版本
-version: "3.7"
-
-# 项目名称（默认：directory name）
-name: "app"
-
-# 定义服务（容器）
-services:
-    # 第一个服务
-    web:
-        # 容器名
-        container_name: web
-        
-        # 镜像名（TAG 未设置或为空时，使用 latest）
-        image: "web:${TAG:-latest}"  
-        
-        # 网络配置（数组）
-        networks:                    
-            - web-network
-            
-        # 端口映射（数组）
-        ports:                       
-            - 8080:80
-            
-        # 数据挂载（数组）
-        # 同时配置挂载、绑定到同一目录，后面的配置会覆盖前面的，后面的生效
-        volumes:                     
-            - web-data:/app    # 挂载数据卷
-        #   - /data/web:/app   # 文件系统挂载
-        
-        # 命令行
-        command: "bash"
-        
-        # 在容器中设置环境变量
-        environment:                 
-            - TAG=v1   # docker run -e VARIABLE=VALUE ...
-            - DEBUG    # docker run -e VARIABLE ... 将环境变量从 shell 直接传递给容器
-        
-        # 将环境变量从外部文件传递到容器（默认从：./.env）
-        env_file:                    
-            - .env     # docker run --env-file=FILE ...
-
-    # 第二个服务
+OPTIONS:
+	--name <container_name>	指定容器名称
+	-c, --cpu-shares		CPU份额（相对权重）
+	-d, --detach			以守护进程运行
+	-e, --env list			设置环境变量
+	-h, --hostname			容器主机名
+	-it						以交互式终端模式运行
+	-m, --memory bytes		内存限制
+	-p, --publish			将容器端口映射到主机，[host_port]:[container_port]
+	-P, --publish-all		将 EXPOSE 暴露的端口映射到随机端口
+	--rm					容器退出时自动移除容器（同时移除匿名数据卷）
+	-v, --volume			绑定数据卷
+	--volumes-from			从指定容器加载卷
+	--mount					将文件系统挂载到容器
+	-w, --workdir 			指定容器内的工作目录
+    --privileged=true       授予此容器扩展权限（特权）
+	-u                      -u 0 用root用户登录容器，而不是镜像的默认用户
     
-    # ...
- 
- 
-# 定义数据卷
-# docker-compose 文件中绑定未定义的数据卷时，不会自动创建，需手动创建
-volumes:
-    web-data:
-    
-# 定义网络
-networks:
-    web-network:
+COMMAND:
+	env		查看镜像支持的环境变量
 ```
 
-> 环境变量：
-
-- `${TAG:-latest}`：如果环境变量在环境中未设置或为空，则使用默认值。
-
-- `${TAG-latest}`：如果环境变量在环境中未设置，则使用默认值。
-
-- `${TAG:?latest}`：如果环境变量在环境中未设置或为空，则退出，并显示 err 信息。
-
-- `${TAG?latest}`：如果环境变量在环境中未设置，则退出，并显示 err 信息。
-
-- 环境变量的优先级：？？？
-
-  - .env 文件 > docker-compose 文件
-
-  docker-compose 文件 > 命令行参数 > .env 文件 > Dockerfile > 未定义变量
-
-> 环境文件：
-
-- Compose 期望 `.env` 文件中的每一行都具有 `KEY=VALUE` 格式 。
-- 引号没有特殊处理。这意味着它们是 VALUE 的一部分。所以字符串不用加 `""`。
-
-### 3、命令详解
-
-> 如无特殊说明，命令的对象是项目，项目中所有的服务都会受命令影响。
+> 以下命令运行一个 `ubuntu` 容器，以交互方式附加到您的本地命令行会话，然后运行 `/bin/bash`
 
 ```
-# 基本格式
-docker compose [OPTIONS] COMMAND
+$ docker run -i -t ubuntu /bin/bash
+```
 
-Options:
-	--env-file PATH             指定替代环境文件
-	-f, --file FILE             指定使用的 Compose 模板文件
-                                (default: ./docker-compose.yml)
-    --project-directory string  指定项目目录
-                                （默认：第一个指定 compose 文件的路径）
-	-p, --project-name NAME     指定项目名称
-                                (default: directory name)
+当您运行此命令时，会发生以下情况（假设您使用的是默认注册表配置）：
+
+- 如果您在本地没有`ubuntu`映像，Docker 会从您配置的注册表中提取它，就像您`docker pull ubuntu`手动运行一样。
+- Docker 会创建一个新容器，就像您`docker container create` 手动运行命令一样。
+
+- Docker 为容器分配一个读写文件系统，作为它的最后一层。这允许正在运行的容器在其本地文件系统中创建或修改文件和目录。
+
+- Docker 创建了一个网络接口来将容器连接到默认网络，因为您没有指定任何网络选项。这包括为容器分配 IP 地址。默认情况下，容器可以使用主机的网络连接连接到外部网络。
+
+- Docker 启动容器并执行`/bin/bash`. 因为容器以交互方式运行并附加到您的终端（由于`-i`and`-t` 标志），所以您可以在输出记录到终端时使用键盘提供输入。
+
+- 当您键入`exit`终止`/bin/bash`命令时，容器会停止但不会被删除。您可以重新启动或删除它。
+
+### 2、列出运行容器
+
+```
+docker ps [OPTIONS]
+docker container ls
+
+OPTIONS：
+	-a 列出正在运行+历史运行（已停止）的容器
+	-l 显示最近创建的容器
+	-n 显示最近n个创建的容器
+	-q 静默模式，只显示容器编号
+```
+
+### 3、终止容器
+
+```
+# 启动已停止运行的容器
+docker start <容器ID/容器名>
+
+# 重启容器
+docker restart <容器ID/容器名>
+
+# 停止容器
+docker stop <容器ID/容器名>
+
+# 强制停止容器
+docker kill <容器ID/容器名>
+
+# 删除已停止的容器
+docker rm [OPTIONS] <容器ID/容器名 ...>
+# 批量删除已停止的容器
+docker container prune
+
+OPTIONS：
+	-f 强制删除，删除未停止的容器
+	-v 删除容器时，同时删除数据卷
+	
+# 例：批量删除容器
+docker rm -f $(docker ps -aq)
+```
+
+### 4、查看容器细节
+
+```
+# 获取容器的日志
+docker logs [OPTIONS] <容器ID/容器名>
+
+OPTIONS:
+	-f 跟踪日志输出
+	-n 显示条数，默认 all
+	
+# 显示容器的运行进程
+docker top <容器ID/容器名>
+
+# 返回 Docker 对象的底层信息
+docker inspect [OPTIONS] <容器ID/容器名 ...>
+
+# 查看具体项 -f,--format
+docker inspect -f '{{json .State.Pid }}' <容器ID/容器名 ...> | jq
+
+注：jq 可以对 json 文本进行格式化输出。
+curl -O http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+rpm -ivh epel-release-latest-7.noarch.rpm
+yum install -y jq
+```
+
+### 5、进入容器
+
+> 进入 -d 启动的守护状态容器。
+
+```
+# exit 会导致容器停止
+docker attach [OPTIONS] <容器ID/容器名>
+
+# exit 不会导致容器停止（推荐）
+docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
+```
+
+### 6、导入导出
+
+```
+# 拷贝容器文件到主机
+docker cp 容器ID:容器内路径 目的主机路径
+
+# 导出
+docker export 容器ID > 文件名.tar
+
+# 导入
+cat 文件名.tar | docker import - 镜像用户/镜像名:镜像版本号
+docker import http://example.com/exampleimage.tgz example/imagerepo
+```
+
+## 1.6 Image
+
+```sehll
+Usage:  docker image COMMAND
+
+Manage images
 
 Commands:
-
-# 生成或重建服务
-docker-compose build [SERVICE...]
-
-# 将 compose 文件转换为平台的规范格式并打印
-docker-compose convert
-
-# 
+  build       Build an image from a Dockerfile
+  history     Show the history of an image
+  import      Import the contents from a tarball to create a filesystem image
+  inspect     Display detailed information on one or more images
+  load        Load an image from a tar archive or STDIN
+  ls          List images
+  prune       Remove unused images
+  pull        Download an image from a registry
+  push        Upload an image to a registry
+  rm          Remove one or more images
+  save        Save one or more images to a tar archive (streamed to STDOUT by default)
+  tag         Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
 ```
 
-```
 
-```
-
-（2）
-
-
-
-### 4、案例
-
-#### （1）Dockerfile
-
-> 用 Dockerfile 定义应用程序的环境，以便可以在任何地方复制它。
-
-```
-# Dockerfile
-
-...
-```
-
-#### （2）docker-compose.yml
-
-> 在 `docker-compose.yml` 中定义组成应用程序的服务，以便它们可以在隔离环境中一起运行。
-
-```dockerfile
-    # 第二个服务
-    database:
-        container_name: mysql-3306
-        image: mysql:5.7
-        ports:
-            - 3306:3306
-        volumes:
-            - /data/mysql:/var/lib/mysql
-        environment:
-            - MYSQL_ROOT_PASSWORD=root
-
-    # 第三个服务
-    cache:
-        container_name: redis
-        image: redis
-        ports: 
-            - 6379:6379
-        volumes: 
-            - /data/redis:/data
-
-```
-
-#### （3）docker compose up
-
-> `docker compose up`  启动并运行您的整个应用程序。
-
-```
-docker-compose up -d
-```
-
-注意：
-
-- `docker run` 时，会自动创建不存在的数据卷，但在 composer 中不会自动创建，需要在顶层 volumes 部分定义数据卷，然后才能在服务中挂载数据卷。
-
-
-
-
-
-# 四、Docker Hub
-
-
-
-
-
-## 三、使用镜像
 
 ### 1、搜索镜像
 
@@ -1300,156 +1246,46 @@ docker image history <镜像名>
 --no-trunc 不截断输出
 ```
 
+### 9、导出导入镜像
 
-
-## 四、操作容器
-
-### 1、启动容器
-
-```
-docker run [OPTIONS] IMAGE [COMMAND][ARG...]
-
-OPTIONS:
-	--name <container_name>	指定容器名称
-	-c, --cpu-shares		CPU份额（相对权重）
-	-d, --detach			以守护进程运行
-	-e, --env list			设置环境变量
-	-h, --hostname			容器主机名
-	-it						以交互式终端模式运行
-	-m, --memory bytes		内存限制
-	-p, --publish			将容器端口映射到主机，[host_port]:[container_port]
-	-P, --publish-all		将 EXPOSE 暴露的端口映射到随机端口
-	--rm					容器退出时自动移除容器（同时移除匿名数据卷）
-	-v, --volume			绑定数据卷
-	--volumes-from			从指定容器加载卷
-	--mount					将文件系统挂载到容器
-	-w, --workdir 			指定容器内的工作目录
-    --privileged=true       授予此容器扩展权限（特权）
-	-u                      -u 0 用root用户登录容器，而不是镜像的默认用户
-    
-COMMAND:
-	env		查看镜像支持的环境变量
-```
-
-> 以下命令运行一个 `ubuntu` 容器，以交互方式附加到您的本地命令行会话，然后运行 `/bin/bash`
->
-
-```
-$ docker run -i -t ubuntu /bin/bash
-```
-
-当您运行此命令时，会发生以下情况（假设您使用的是默认注册表配置）：
-
-- 如果您在本地没有`ubuntu`映像，Docker 会从您配置的注册表中提取它，就像您`docker pull ubuntu`手动运行一样。
-- Docker 会创建一个新容器，就像您`docker container create` 手动运行命令一样。
-
-- Docker 为容器分配一个读写文件系统，作为它的最后一层。这允许正在运行的容器在其本地文件系统中创建或修改文件和目录。
-
-- Docker 创建了一个网络接口来将容器连接到默认网络，因为您没有指定任何网络选项。这包括为容器分配 IP 地址。默认情况下，容器可以使用主机的网络连接连接到外部网络。
-
-- Docker 启动容器并执行`/bin/bash`. 因为容器以交互方式运行并附加到您的终端（由于`-i`and`-t` 标志），所以您可以在输出记录到终端时使用键盘提供输入。
-
-- 当您键入`exit`终止`/bin/bash`命令时，容器会停止但不会被删除。您可以重新启动或删除它。
-
-### 2、查看运行容器
-
-```
-docker ps [OPTIONS]
-docker container ls
-
-OPTIONS：
-	-a 列出正在运行+历史运行（已停止）的容器
-	-l 显示最近创建的容器
-	-n 显示最近n个创建的容器
-	-q 静默模式，只显示容器编号
-```
-
-### 3、终止容器
-
-```
-# 启动已停止运行的容器
-docker start <容器ID/容器名>
-
-# 重启容器
-docker restart <容器ID/容器名>
-
-# 停止容器
-docker stop <容器ID/容器名>
-
-# 强制停止容器
-docker kill <容器ID/容器名>
-
-# 删除已停止的容器
-docker rm [OPTIONS] <容器ID/容器名 ...>
-# 批量删除已停止的容器
-docker container prune
-
-OPTIONS：
-	-f 强制删除，删除未停止的容器
-	-v 删除容器时，同时删除数据卷
-	
-# 例：批量删除容器
-docker rm -f $(docker ps -aq)
-```
-
-### 4、查看容器细节
-
-```
-# 获取容器的日志
-docker logs [OPTIONS] <容器ID/容器名>
-
-OPTIONS:
-	-f 跟踪日志输出
-	-n 显示条数，默认 all
-	
-# 显示容器的运行进程
-docker top <容器ID/容器名>
-
-# 返回 Docker 对象的底层信息
-docker inspect [OPTIONS] <容器ID/容器名 ...>
-
-# 查看具体项 -f,--format
-docker inspect -f '{{json .State.Pid }}' <容器ID/容器名 ...> | jq
-
-注：jq 可以对 json 文本进行格式化输出。
-curl -O http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-rpm -ivh epel-release-latest-7.noarch.rpm
-yum install -y jq
-```
-
-### 5、进入容器
-
-> 进入 -d 启动的守护状态容器。
-
-```
-# exit 会导致容器停止
-docker attach [OPTIONS] <容器ID/容器名>
-
-# exit 不会导致容器停止（推荐）
-docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
-```
-
-### 6、导入导出
-
-```
-# 拷贝容器文件到主机
-docker cp 容器ID:容器内路径 目的主机路径
-
+```shell
 # 导出
-docker export 容器ID > 文件名.tar
+docker image save [OPTIONS] IMAGE [IMAGE...]
+
+Options:
+  -o, --output string   Write to a file, instead of STDOUT
+
+# 例1
+docker image save -o base.tar base-api
+
+# 例2
+docker Image save base-api > base.tar
+
 
 # 导入
-cat 文件名.tar | docker import - 镜像用户/镜像名:镜像版本号
-docker import http://example.com/exampleimage.tgz example/imagerepo
+docker image load [OPTIONS]
+
+Options:
+  -i, --input string   Read from tar archive file, instead of STDIN
+  -q, --quiet          Suppress the load output
+
+# 例
+docker image load -i base.tar
 ```
 
 
 
-## 五、使用 Docker 开发
+
+
+
+
+# 二、Docker Build
+
+Docker Build 是 Docker Engine 最常用的功能之一。每当你创建镜像时，你都在使用 Docker Build。构建是软件开发生命周期的关键部分，允许您打包和捆绑代码并将其发送到任何地方。
 
 > Dockfile 是用来构建 Docker 镜像的文本文件，是有一条条构建镜像所需的指令和参数构成的脚本。
 
-### 1、Dockerfile 指令
+## 1、Dockerfile 指令
 
 ##### FROM
 
@@ -1460,7 +1296,6 @@ docker import http://example.com/exampleimage.tgz example/imagerepo
 ##### COPY & ADD
 
 > COPY 将文件/目录从构建上下文目录中复制到新的一层的镜像内。
->
 
 ```
 # 推荐
@@ -1496,7 +1331,7 @@ OPTIONS:
 
 ##### RUN
 
-> RUN 是在 `dicker build` 时运行。
+> RUN 是在 `docker build` 时运行。
 >
 > RUN 指令将在当前镜像上加新的一层，并执行任何命令和提交结果，生成的提交镜像将用于 Dockfile 中的后续步骤。（每一个 `RUN` 都是启动一个容器、执行命令、然后提交存储层文件变更。）
 >
@@ -1569,7 +1404,7 @@ RUN export ADMIN_USER="mark" \
 
 ##### ARG
 
-> 和 ENV 效果一眼，都是设置环境变量。
+> 和 ENV 效果一样，都是设置环境变量。
 >
 > 其默认值可以在 `docker build --build-arg 参数名=值` 时覆盖。
 >
@@ -1658,7 +1493,7 @@ LABEL <key>=<value> <key>=<value> <key>=<value> ...
 SHELL ["executable", "parameters"]
 ```
 
-### 2、从 Dockerfile 构建镜像（docker build）
+## 2、从 Dockerfile 构建镜像（docker build）
 
 > Docker 能够通过 stdin 管道传输 Dockerfile 使用本地或远程构建上下文来构建镜像。
 
@@ -1757,7 +1592,7 @@ EOF
 - 使用 Dockfile 创建镜像时要添加 `.dockerignore` 文件或使用干净的工作目录。
 - `.dockerignore` 需要在构建上下文的根目录中。
 
-### 3、案例
+## 3、案例
 
 ```
 # 目录结构
@@ -1828,12 +1663,10 @@ docker run --name=hello-ycz-v1 hello-ycz:v1
 > MultistageDockerfile
 
 ```dockerfile
-# syntax=docker/dockerfile:1
-
 ## Build
 # 第一构建阶段：仅用于 build 出可执行文件
 # AS <NAME> 命名构建阶段
-FROM golang:1.17-alpine AS build
+FROM golang:1.18-alpine AS build
 
 WORKDIR /app
 
@@ -1844,15 +1677,27 @@ RUN go build -o server main.go
 ## Deploy
 # 第二构建阶段：这里的改变将影响生成的镜像
 # 轻量的 alpine：适用于静态二进制文件的精益部署
-FROM alpine 
+FROM alpine
 
-WORKDIR /
+WORKDIR /app
 
 # 从 build 阶段复制 server
 # 该文件仅存在于前一个 Docker 阶段，因此需要用 --from=build 来复制它
-COPY --from=build /app/server /server
+COPY --from=build /app/server /app
 
-CMD ["/server"]
+
+# 由于 alpine 镜像使用的是 musl libc 而不是 gnu libc
+# /lib64/ 目录是不存在的，但它们是兼容的，可以创建 lib64 软链接
+# 动态链接库位置错误导致：
+#  - exec /app/server: no such file or directory
+#  - sh: /app/server: not found
+#使用 golang:1.18-alpine 不需要做兼容处理
+#RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+
+# 定义暴露的端口
+EXPOSE 9999
+
+CMD ["/app/server", "--config", "/app/app.yaml"]
 ```
 
 > 构建 & 运行
@@ -1871,7 +1716,7 @@ hello-ycz     v1            98fa0a4e5ab9   40 minutes ago   316MB
 > docker run --name=hello-ycz hello-ycz
 ```
 
-### 4、BuildKit 构建镜像
+## 4、BuildKit 构建镜像
 
 ```
 # 启用 BuildKit 构建
@@ -1887,11 +1732,282 @@ DOCKER_BUILDKIT=1 docker build .
 
 
 
-## 十、其它
+# 三、Docker Compose
 
-### 1、Portainer Docker 可视化工具
+> `Compose` 是 Docker 官方的开源项目，负责实现对 Docker 容器集群的快速编排。 
+>
+> `Compose` 是一个用于定义和运行多个 Docker 容器的工具。
+>
+> 通过一个单独的 `docker-compose.yml` 模板文件（YAML 格式）来定义一组相关联的应用容器为一个项目（project）。
+>
+> - 服务 (`service`)：一个应用容器，实际上可以运行多个相同镜像的实例。
+> - 项目 (`project`)：由一组关联的应用容器组成的一个完整业务单元。
 
-### 2、CIG 容器重量级监控系统
+## 1、安装
+
+> 如果您为 Windows、Mac 或 Linux 安装了 Docker Desktop，那么您已经拥有 Docker Compose！
+
+```
+$ docker compose version
+```
+
+> 将 Docker Compose 作为单独的包安装
+
+```
+## 1 安装为可执行程序（docker-compose）
+# 下载
+$ curl -L https://github.com/docker/compose/releases/download/v2.7.0/docker-compose-linux-x86_64 > /usr/local/bin/docker-compose
+
+# 可执行权限
+$ chmod +x /usr/local/bin/docker-compose
+
+# 卸载
+$ sudo rm /usr/local/bin/docker-compose
+
+# 安装完成
+$ docker-compose version
+
+## 2 安装为 Docker 插件（docker compose）
+$ cp /usr/local/bin/docker-compose /usr/local/lib/docker/cli-plugins
+
+# 安装完成
+$ docker-compose version
+```
+
+## 2、docker-compose 模板
+
+> 注意：不能使用 tab 缩进，只能用空格。
+
+```yml
+# 模板版本
+version: "3.7"
+
+# 项目名称（默认：directory name）
+name: "app"
+
+# 定义服务（容器）
+services:
+    # 第一个服务
+    web:
+        # 容器名
+        container_name: web
+        
+        # 镜像名（TAG 未设置或为空时，使用 latest）
+        image: "web:${TAG:-latest}"  
+        
+        # 网络配置（数组）
+        networks:                    
+            - web-network
+            
+        # 端口映射（数组）
+        ports:                       
+            - 8080:80
+            
+        # 数据挂载（数组）
+        # 同时配置挂载、绑定到同一目录，后面的配置会覆盖前面的，后面的生效
+        volumes:                     
+            - web-data:/app    # 挂载数据卷
+        #   - /data/web:/app   # 文件系统挂载
+        
+        # 命令行
+        command: "bash"
+        
+        # 在容器中设置环境变量
+        environment:                 
+            - TAG=v1   # docker run -e VARIABLE=VALUE ...
+            - DEBUG    # docker run -e VARIABLE ... 将环境变量从 shell 直接传递给容器
+        
+        # 将环境变量从外部文件传递到容器（默认从：./.env）
+        env_file:                    
+            - .env     # docker run --env-file=FILE ...
+
+    # 第二个服务
+    
+    # ...
+ 
+ 
+# 定义数据卷
+# docker-compose 文件中绑定未定义的数据卷时，不会自动创建，需手动创建
+volumes:
+    web-data:
+    
+# 定义网络
+networks:
+    web-network:
+```
+
+> 环境变量：
+
+- `${TAG:-latest}`：如果环境变量在环境中未设置或为空，则使用默认值。
+
+- `${TAG-latest}`：如果环境变量在环境中未设置，则使用默认值。
+
+- `${TAG:?latest}`：如果环境变量在环境中未设置或为空，则退出，并显示 err 信息。
+
+- `${TAG?latest}`：如果环境变量在环境中未设置，则退出，并显示 err 信息。
+
+- 环境变量的优先级：？？？
+
+  - .env 文件 > docker-compose 文件
+
+  docker-compose 文件 > 命令行参数 > .env 文件 > Dockerfile > 未定义变量
+
+> 环境文件：
+
+- Compose 期望 `.env` 文件中的每一行都具有 `KEY=VALUE` 格式 。
+- 引号没有特殊处理。这意味着它们是 VALUE 的一部分。所以字符串不用加 `""`。
+
+## 3、命令详解
+
+> 如无特殊说明，命令的对象是项目，项目中所有的服务都会受命令影响。
+
+```
+# 基本格式
+docker compose [OPTIONS] COMMAND
+
+Define and run multi-container applications with Docker
+
+Options:
+      --ansi string                Control when to print ANSI control characters ("never"|"always"|"auto") (default "auto")
+      --compatibility              Run compose in backward compatibility mode
+      --dry-run                    Execute command in dry run mode
+      --env-file stringArray       指定环境配置文件
+  -f, --file stringArray           指定 Compose 配置文件 
+                                   (default: docker-compose.yml)
+      --parallel int               Control max parallelism, -1 for unlimited (default -1)
+      --profile stringArray        Specify a profile to enable
+      --progress string            Set type of progress output (auto, tty, plain, quiet) (default "auto")
+      --project-directory string   指定工作目录
+                                   (default: 第一个指定 Compose 配置文件的路径)
+  -p, --project-name string        项目名称
+
+Commands:
+  attach      Attach local standard input, output, and error streams to a service's running container
+  build       Build or rebuild services
+  config      Parse, resolve and render compose file in canonical format
+  cp          Copy files/folders between a service container and the local filesystem
+  create      Creates containers for a service
+  down        Stop and remove containers, networks
+  events      Receive real time events from containers
+  exec        Execute a command in a running container
+  images      List images used by the created containers
+  kill        Force stop service containers
+  logs        View output from containers
+  ls          List running compose projects
+  pause       Pause services
+  port        Print the public port for a port binding
+  ps          List containers
+  pull        Pull service images
+  push        Push service images
+  restart     Restart service containers
+  rm          Removes stopped service containers
+  run         Run a one-off command on a service
+  scale       Scale services
+  start       Start services
+  stats       Display a live stream of container(s) resource usage statistics
+  stop        Stop services
+  top         Display the running processes
+  unpause     Unpause services
+  up          Create and start containers
+  version     Show the Docker Compose version information
+  wait        Block until the first service container stops
+  watch       Watch build context for service and rebuild/refresh containers when files are updated
+
+
+# 生成或重建服务
+docker compose build [SERVICE...]
+
+# 将 compose 文件转换为平台的规范格式并打印
+docker compose convert
+```
+
+```
+
+```
+
+（2）
+
+
+
+## 4、案例
+
+### （1）Dockerfile
+
+> 用 Dockerfile 定义应用程序的环境，以便可以在任何地方复制它。
+
+```
+# Dockerfile
+
+...
+```
+
+### （2）docker-compose.yml
+
+> 在 `docker-compose.yml` 中定义组成应用程序的服务，以便它们可以在隔离环境中一起运行。
+
+```dockerfile
+    # 第二个服务
+    database:
+        container_name: mysql-3306
+        image: mysql:5.7
+        ports:
+            - 3306:3306
+        volumes:
+            - /data/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+
+    # 第三个服务
+    cache:
+        container_name: redis
+        image: redis
+        ports: 
+            - 6379:6379
+        volumes: 
+            - /data/redis:/data
+
+```
+
+### （3）docker compose up
+
+> `docker compose up`  启动并运行您的整个应用程序。
+
+```
+docker-compose up -d
+```
+
+注意：
+
+- `docker run` 时，会自动创建不存在的数据卷，但在 composer 中不会自动创建，需要在顶层 volumes 部分定义数据卷，然后才能在服务中挂载数据卷。
+
+
+
+
+
+# 四、Docker Hub
+
+
+
+
+
+
+
+# 五、其它
+
+## 1、Portainer Docker 可视化工具
+
+```shell
+docker run --name portainer -d \
+  --restart=always \
+  -p 9000:9000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /data/docker-run/portainer/data:/data \
+  portainer/portainer
+```
+
+
+
+## 2、CIG 容器重量级监控系统
 
 CAdvisor：容器资源监控工具，包括 内存、CPU、网络IO、磁盘IO等。
 

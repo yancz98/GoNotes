@@ -7,28 +7,7 @@
 - [x] [Go 基础](GoBasic.md)
 - [x] [Go 高级](GoAdvanced.md)
 
-
-
-## Cloud Native
-
-- [x] [Docker](Docker.md)
-- [ ] [Kubernetes](https://kubernetes.io/)
-- [ ] [DevOps]()
-  - [ ] 项目管理（PM）
-  - [ ] 代码管理（GitLab）
-  - [ ] API 文档（YApi）
-  - [x] [CICD (GitLab)](GitLab.md)
-  - [ ] 容器编排（Docker / K8S）
-  - [ ] 服务治理
-    - [ ] 服务注册发现（Consul）
-    - [ ] 配置中心（Apollo、Etcd）
-    - [ ] 负载均衡（Nginx）
-    - [ ] 服务网关（Envoy）
-  - [ ] 日志中心（ELK）
-  - [ ] 链路追踪（OpenTelemetry、Zipkin）
-  - [ ] [监控系统（Prometheus + Grafana）](Promethues.md)
-  - [ ] 报警管理
-- [x] [微服务](MicroService.md)
+- [x] [Python](Python.md)
 
 
 
@@ -90,6 +69,25 @@
 | 消息跟踪         | ×                                                            | √                                          | ×                                                            |          |
 | 配置             | Kafka 使用键值对格式进行配置。这些值可以从文件或以编程方式提供。 | 开箱即用，用户只需注意几个配置             | 默认配置为低级别，用户需要优化配置参数                       |          |
 | 管理运营工具     | 支持，使用终端命令暴露核心指标                               | 支持丰富的 Web 和终端命令以公开核心指标    | √                                                            |          |
+
+
+
+## Cloud Native
+
+- [x] [Docker](Docker.md)
+- [ ] [Kubernetes](https://kubernetes.io/)
+- [x] [DevOps](DevOps.md)
+- [x] [CICD (GitLab)](GitLab.md)
+- [ ] 容器编排（Docker / K8S）
+- [ ] 服务治理
+- [ ] 服务注册发现（Consul、ETCD）
+- [ ] 配置中心（Apollo、ETCD）
+- [ ] 负载均衡（Nginx）
+- [ ] 服务网关（Envoy）
+- [ ] 日志中心（ELK）
+- [ ] 链路追踪（OpenTelemetry、Zipkin）
+- [ ] [监控&报警（Prometheus + Grafana）](Promethues.md)
+- [x] [微服务](MicroService.md)
 
 
 

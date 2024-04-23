@@ -144,7 +144,7 @@ CREATE TABLE 表名(
 # 字段属性（六大约束）
 	NOT NULL	非空
 	DEFAULT		默认值
-	PRIMARY KEY 主键（可以在字段后增加关键字，也可以在表选项中用primary key(字段)）
+	PRIMARY KEY 主键（可以在字段后增加关键字，也可以在表选项中用 primary key(字段)）
 	 - AUTO_INCREMENT	自动增长
 	UNIQUE KEY	唯一键（唯一键在非空的情况下不允许重复，可以有多个NULL）
 	CHECK		检查（MySQL不支持）
@@ -574,6 +574,13 @@ FROM 表名
 INSERT INTO 表名(字段名, ...) 
 VALUES(值, ...) 
 ON DUPLICATE KEY UPDATE 字段名=值, ...;
+
+1、存在主键，当主键重复时则执行 UPDATE；
+2、不存在主键，存在唯一键，当唯一键重复时则执行 UPDATE；
+3、不存在主键，不存在唯一键，存在普通索引，当普通索引重复时则执行 UPDATE；
+
+键冲突比较优先级：
+主键 ＞ 唯一键 ＞ 普通索引
 
 # 主键冲突替换
 REPLACE INTO 表名(字段名, ...)
@@ -1284,100 +1291,7 @@ DROP INDEX [索引名称] ON 数据表;
 SHOW INDEX FROM 表名;
 ```
 
-### 6、EXPLAIN
-
-EXPLAIN 可以模拟执行 SQL 查询语句，从而知道 MySQL 是如何处理你的 SQL 语句的。分析你的查询语句或表结构的性能瓶颈。
-
-> EXPLAIN 性能指标参数：
-
-| id   | select_type | table | type | possible_keys | key  | key_len | ref  | rows | Extra |
-| ---- | ----------- | ----- | ---- | ------------- | ---- | ------- | ---- | ---- | ----- |
-|      |             |       |      |               |      |         |      |      |       |
-
--  id：说明每个对象（表）的执行顺序，id越大执行越早，id越小执行越晚，id一样的按照顺序从前到后执行。
-
-- select_type：查询类型
-
-  ①SIMPLE 简单查询
-
-  ②PRIMARY 主查询
-
-  ③SUBQUERY 子查询
-
-  ④DERIVED 衍生查询
-
-  ⑤UNION 联合查询
-
-  ⑥UNION RESULT：使用 UNION 对结果去重时使用，使用 UNION ALL 时，不会出现该查询类型。
-
-- table：查询的表
-
-- type：显示查询使用了何种索引类型，从好到差：system>const>eq_ref>ref>range>index>ALL
-
-  system：表只有一行记录（等于系统表），这是const类型的特例，平时不会出现。
-
-  const：常量
-
-  eq_ref：唯一性索引扫描，对于每个索引键，表中只有一条记录与之匹配。常见于主键或唯一索引扫描。
-
-  ref：非唯一索引扫描，返回匹配某个单独值的所有行，本质上也是一种索引访问，它返回所有匹配某个单独值的行，然而，它可能会找到多个符合条件的行，所以他应该属于查找和扫描的混合体。
-
-  range：范围查询。
-
-  index：index与all的区别为：index类型只遍历索引树。这通常比all快，虽然all和index都是读全表，但index是从索引中读取的，而all是从硬盘中读的。
-
-  all：将遍历全表以找到匹配的行。
-
-- possible_keys：显示可能应用在这张表中的索引，一个或多个。
-
-- key：实际使用的索引，如果为NULL，则没有使用索引。
-
-- key_len：显示的值为索引字段的最大可能长度，非实际长度。
-
-- ref：显示索引的哪一列被使用了，如果可能的话，是一个常数。哪些列或常量被用于查找索引列上的值。
-
-- rows：根据表统计信息及索引选用情况，大致估算出找到所需记录所需读取的行数。
-
-- Extra：额外信息。提示以下信息代表SQL性能差。
-
-  Using filesort 文件排序：MySQL中无法利用索引完成的排序（慢）。
-
-  USing temporary 使用临时表：MySQL在对查询结果排序或分组时，将中间结果保存在临时表（慢）。
-
-  USing index	索引覆盖：查询字段在索引中，直接读取，不需要再查找一遍。
-
-  Using where 使用索引用来查找数据。
-
-  Using join buffer 使用了连接缓存。
-
-  impossible where where子句的值为false，不能获取到数据。
-
-  select tables optimized
-
-  distinct
-
-```
-防止索引失效口诀：
-全职匹配我最爱，最左前缀要遵守。
-带头大哥不能死，中间兄弟不能断。
-索引列上少计算，范围之后全失效。
-LIKE百分写最右，覆盖索引不写 * 。
-不等空值还有OR，索引影响要注意。
-VAR引号不可丢，SQL优化有诀窍。
-
-排序优化：
-排序字段也要按索引规则。
-sort_buffer_size
-max_length_for_sort_data
-
-分组字段也要按索引规则，可以使用 order by null 禁用排序。
-
-连接时，副表的条件字段需要加上索引。
-索引列上不能计算、不能进行类型转换。
-用 union 代替 or
-```
-
-### 7、索引的数据结构：
+### 6、索引的数据结构：
 
 - 二叉树
 
@@ -1424,14 +1338,6 @@ max_length_for_sort_data
 最左前缀：若未使用第一个字段，第二个字段无法顺序获取，走全表扫描；
 
 范围之后全失效：第一个值取为区间，第二个值无法顺序排序，此时还是得全表扫描；
-
-### 8、索引提示
-
-（1）USE INDEX
-
-（2）IGNORE INDEX
-
-（3）FORCE INDEX
 
 
 
@@ -1868,9 +1774,87 @@ SHOW PROCESSLIST;
 
 ### 3、EXPLAIN 执行计划
 
-```mysql
-EXPLAIN SQL;
+EXPLAIN 可以模拟执行 SQL 查询语句，从而知道 MySQL 是如何处理你的 SQL 语句的。分析你的查询语句或表结构的性能瓶颈。
+
+> EXPLAIN 性能指标参数：
+
+```sql
+EXPLAIN SELECT * FROM table WHERE 1 = 1;
 ```
+
+| 字段          | 说明                                                         |
+| :------------ | :----------------------------------------------------------- |
+| id            | 执行顺序标识符，id 越大优先级越高，id 相同，从上往下执行。   |
+| select_type   | 查询类型：<br/>**SIMPLE**：简单查询，不包括连接查询和子查询。<br/>**PRIMARY**：主查询，通常与 SUBQUERY、DERIVED、UNION 一起出现。<br/>**SUBQUERY**：子查询。<br/>**DERIVED**：衍生查询，得到最终查询结果前会用到临时表。<br/>**UNION**：联合查询，第一个表为 PRIMARY，后面的表为 UNION。<br/>**UNION RESULT**：使用 UNION 会出现 UNION RESULT 对结果去重，使用 UNION ALL 时不会出现。 |
+| table         | 查询的表                                                     |
+| partition     |                                                              |
+| type          | 访问类型（MySQL 在表中找到所需行的方式）：<br/>system > const >eq_ref > ref > range > index > ALL ＞ NULL <br/><br/>**NULL**：MySQL 在优化过程中分解语句，执行时甚至都不用访问表或索引，例如从一个索引列里选取最小值（通过单独索引查找即可完成）。<br/>**system**，**const**：当 MySQL 对查询部分进行优化，并转换为一个常量时，使用这类型访问。如 [Primary Key] 查找，system 是 const 的特例，当查询的表只有一行的情况下使用。<br/>**eq_ref**：类似 ref，区别在于使用的索引时唯一索引。常见于多表连接中使用 [Primary Key] 或 [Unique Key] 作为关联条件。<br/>**ref**：查询用到了非唯一索引（常与 Extra：Using index condition 一起出现）。<br/>**range**：范围查询，只使用一个索引来检索给定范围的行。<br/>**index**：Full Index Scan，index 与 all 的区别：index 类型只遍历索引树（常与 Extra：Using index 一起出现）。<br/>**all**：Full Table Scan 全表扫描。 |
+| possible_keys | 可能使用的索引。                                             |
+| key           | 实际使用的索引，如果为 NULL，则没有使用索引。<br/>在查询中使用 `FORCE INDEX`、`IGNORE INDEX`、`USE INDEX` 可以强制 MySQL 使用索引和忽视 possible_type 中的索引。 |
+| key_len       | 表示 MySQL 选择的索引字段的长度（Byte）。通过 key_len 可以确定 mysql 将实际使用复合索引中的几个字段。 |
+| ref           | 哪些列或常量被用于查找索引列上的值。                         |
+| rows          | 查询时必须检查的行数。                                       |
+| filtered      | 通过查询条件获取的最终记录数 ÷ 通过访问类型（type）指定的方式搜索出来的记录数×100% <br/>如果比例很低，说明存储引擎层返回的数据需要经过大量过滤，效率低。 |
+| Extra         | Extra：处理查询时的额外信息。<br/><br/>**Using filesort**【慢】：MySQL中无法利用索引完成的排序，只能在内存或磁盘中进行排序操作。<br/>**Using temporary**【慢】：使用临时表，MySQL 如果不能有效利用索引来完成去重、排序、分组等查询，将创建内部临时表来保存中间结果。<br/>**Using index**：使用索引覆盖，扫描索引树一步完成，不需要回表。<br/>**Using index condition**：使用了索引，但需要回表。<br/>**Using where**：使用 WHERE 条件过滤。<br/>**Using join buffer**：使用了连接缓存，在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，MySQL 一般会为其分配一块名叫 join buffer 的内存块来加快查询速度。<br/>**impossible where**：WHERE 子句的值总是 false，不能获取到数据。<br/>**select tables optimized away**：在没有 GROUP 子句的情况下，基于索引优化 MIN、MAX 操作或者对于 MyISAM 存储引擎优化 COUNT(*) 操作，不必等到执行阶段再进行计算，查询执行计划生成的阶段即完成优化。 <br/>**distinct**：优化 DISTINCT，在找到第一个匹配的元组后记停止找相同值的工作。 |
+
+> `Using temporary` 产生的条件：
+
+- GROUP BY 的列没有用到索引。
+- DISTINCT 的列没有用到索引。
+- GROUP BY 的列有索引，ORDER BY 的列没有索引。
+- GROUP BY 的列和 ORDER BY 的列不一样，即使都有索引也会产生临时表。
+- GROUP BY 或 ORDER BY 的列不是来自 JOIN 语句的第一个表（驱动表）。
+
+注：连接查询的 Explain 结果中第一行出现的表就是驱动表。
+
+
+
+索引最左原则：
+
+```
+# SQL 语句执行时的最左原则
+WHERE ＞ GROUP BY ＞ ORDER BY
+
+# WHERE 条件最左原则
+索引顺序：主键 ＞ 唯一索引 ＞ 普通索引 ＞ 无索引
+范围顺序：等号 ＞ IN ＞ 范围（＞、＜、BETWEEN、LIKE）
+
+# 联合索引的最左原则
+创建联合索引 (a, b, c)
+将生成以下索引
+(a)
+(a, b)
+(a, b, c)
+```
+
+
+
+```
+防止索引失效口诀：
+全职匹配我最爱，最左前缀要遵守。
+带头大哥不能死，中间兄弟不能断。
+索引列上少计算，范围之后全失效。
+LIKE百分写最右，覆盖索引不写 * 。
+不等空值还有OR，索引影响要注意。
+VAR引号不可丢，SQL优化有诀窍。
+
+排序优化：
+排序字段也要按索引规则。
+sort_buffer_size
+max_length_for_sort_data
+
+分组字段也要按索引规则，可以使用 order by null 禁用排序。
+
+连接时，副表的条件字段需要加上索引。
+索引列上不能计算、不能进行类型转换。
+用 union 代替 or：You can also solve the problem efficiently by using a UNION that combines the output of two separate SELECT statements. See Section 13.2.9.3, “UNION Clause”.
+
+Each SELECT searches only one key and can be optimized:
+用 join 代替 子查询
+使用 UNION ALL 代替 UNION
+```
+
+
 
 ### 4、SHOW PROFILE 分析 SQL
 
@@ -1980,5 +1964,18 @@ innodb_lock_wait_timeout
 
 
 
+```
+
+### MySQL 错误码
+
+```
+# 外键名冲突
+MySQL 1022 - Can't write; duplicate key in table '#sql-998_1d24672'
+
+# 等待其它事务释放锁超时
+Error 1205: Lock wait timeout exceeded; try restarting transaction
+
+# 语句太长
+Error 1390: Prepared statement contains too many placeholders
 ```
 

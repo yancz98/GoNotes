@@ -1071,7 +1071,7 @@ cat /etc/passwd
 
 root:x:0:0:root:/root:/bin/bash
 ========================================
-用户名:密码:uid:gid:注释性描述:home目录:命令解析文件
+用户名:密码:uid:gid:注释性描述:home目录:登录Shell
 ```
 
 > /etc/shadow 密码文件
@@ -1869,4 +1869,903 @@ pdbedit -a readonly
 > 利用 SFTP 协议利用 SSH 可以直接连接，无需搭建 FTP 服务。
 
 
+
+## 十、Shell 编程
+
+Shell 是一个命令行解释器，它接收应用程序、用户命令，然后调用操作系统内核。
+
+Shell 还是一个功能相当强大的编程语言，易编写、易调试、灵活性强。
+
+```
+# Linux 提供的 Shell 解释器有
+> cat /etc/shells
+# /etc/shells: valid login shells
+/bin/sh
+/bin/bash
+/usr/bin/bash
+/bin/rbash
+/usr/bin/rbash
+/bin/dash
+/usr/bin/dash
+
+# 默认的 Shell 解释器就是 bash：sh -> bash 
+> ll /bin/ | grep bash
+-rwxr-xr-x    1 root root     964536 Nov 25  2021 bash
+lrwxrwxrwx    1 root root          4 May 10  2023 sh -> bash
+
+# 查看默认的 Shell 解释器
+> echo $SHELL
+/bin/bash
+
+# 查看当前运行的 Shell 名 
+> echo $0
+-bash
+> bash
+> echo $0
+bash
+> sh
+sh-4.2# echo $0
+sh
+```
+
+### 1、基础
+
+#### （1）编写脚本
+
+> vim hello.sh
+
+```sh
+#!/bin/bash
+
+echo "Hello World!"
+```
+
+注：脚本以 `#!/bin/bash` 开头指定 Shell 解释器。
+
+#### （2）执行脚本
+
+方式 1：用 bash 或 sh 跟 shell 脚本的路径执行（不需要赋予脚本可执行权限）。
+
+方式 2：直接输入脚本的路径执行（需要脚本有可执行权限 chmod +x hello.sh）。
+
+方式 3：在脚本的路劲前加上 `.` 或 `source` 执行。
+
+```sh
+# 方式 1（无需 +x）
+# 本质是 bash 解析器在执行脚本，所以脚本不需要可执行权限。
+> bash hello.sh
+# 或
+> sh hello.sh
+
+# 方式 2
+# 脚本需要自己执行，所以需要可执行权限。
+> chmod +x hello.sh
+> ./hello.sh
+
+# 方式 3（无需 +x）
+> source hello.sh
+# 或
+> . hello.sh
+```
+
+> 子 Shell
+
+```sh
+> cat test.sh
+
+#!/bin/bash
+
+A=5
+echo $A
+
+# 分别使用以上方式执行
+> bash test.sh
+5
+> echo $A
+
+> chmod +x test.sh
+> ./test.sh
+5
+> echo $A
+
+> chmod -x test.sh
+> source test.sh
+5
+> echo $A
+5
+
+# 原因
+# 方式1、方式2 都是在当前 Shell 打开一个子 Shell 来执行脚本内容，当脚本内容结束，则子 Shell 关闭，回到父 Shell 中。
+# 方式3 是在当前 Shell 下执行脚本内容，而无需打开子 Shell。
+# 开与不开子 Shell 的区别在于：环境变量的继承关系，在子 Shell 中设置的环境变量，父 Shell 中是不可见的。
+# 应用场景：修改配置后：source /etc/profile
+```
+
+#### （3）变量
+
+- 系统预定义变量
+
+```
+# 查看系统环境变量
+> env
+> printenv
+
+# 显示当前 Shell 中所有的变量和函数（包含系统的和用户的）
+> set
+```
+
+- 用户自定义变量
+
+```sh
+# 定义局部变量
+# = 两边不能有空格
+> name=ycz
+> age=18
+> echo $name $age
+ycz 18
+
+
+# 定义全局变量
+> export hello="Hello Yancz"
+> echo $hello
+Hello Yancz
+> bash
+# 已进入子 Shell
+> ps -f
+UID        PID  PPID  C STIME TTY          TIME CMD
+root     18988 18984  0 14:03 pts/0    00:00:00 -bash
+root     20132 18988  0 15:28 pts/0    00:00:00 bash
+root     20135 20132  0 15:28 pts/0    00:00:00 ps -f
+# 在子 Shell 中也能获取到 $hello
+> echo $hello
+Hello Yancz
+
+# 继承关系：父 ==> 子
+# 注意：子 Shell 中的修改不会影响到父 Shell
+> export hello="Hello Son Shell"
+> echo $hello
+Hello Son Shell
+> exit
+# 已退回父 Shell
+> ps -f
+UID        PID  PPID  C STIME TTY          TIME CMD
+root     18988 18984  0 14:03 pts/0    00:00:00 -bash
+root     20455 18988  0 15:34 pts/0    00:00:00 ps -f
+> echo $hello
+Hello Yancz
+
+# 撤销变量（变量名前不要加 $）
+> unset name age
+
+# 生命静态变量（不能 unset）
+> readonly CONST=ABCDE
+> echo $CONST
+> unset CONST
+-bash: unset: CONST: cannot unset: readonly variable
+```
+
+- 特殊变量
+
+```sh
+# ========== $n ========== #
+# $0    : 脚本名称
+# $1-$9 : 代表第 1 个到第 9 个参数
+# ${10} : 代表第 10 个参数
+
+
+# ========== $# ========== #
+# 获取所有输入参数的个数
+# 常用于循环，判断参数个数是否正确
+
+
+# ========== $* | $@ ========== #
+# $* 获取命令行中所有的参数，把所有参数看成一个整体
+# $@ 获取命令行中所有的参数，把每个参数区分对待
+
+>  cat hello.sh
+#!/bin/bash
+
+echo "当前脚本：$0"
+echo "Hello, $1"
+echo "参数个数: $#"
+echo '$*: ' $*
+echo '$@: ' $@
+
+echo '===== for $* ====='
+# 只有 for var in "$*" 时才是一个整体
+# for var in $* 与 for var in $@ 效果一样
+for i in "$*"
+do
+    echo $i
+done
+
+echo '===== for $@ ====='
+for j in $@
+do
+    echo $j
+done
+
+
+> bash hello.sh ycz params2 params3
+当前脚本：hello.sh
+Hello, ycz
+参数个数: 3
+$*:  ycz params2 params3
+$@:  ycz params2 params3
+===== for $* =====
+ycz params2 params3
+===== for $@ =====
+ycz
+params2
+params3
+
+# ========== $? ========== #
+# 最后一个执行的命令的返回状态。
+# 0 代表上一个命令执行正确
+# 非 0 代表上一个命令执行出错
+> echo $?
+0
+```
+
+#### （4）运算符
+
+```sh
+# 语法1：$((运算表达式))
+# 语法2：$[运算表达式]
+
+> echo $[ (2+3)*4 ]
+20
+
+> echo $(( (3+4)*5 ))
+35
+
+# expr 不推荐使用
+
+# + 两边的空格必须
+> expr 2 + 3
+5
+
+# * 会被当作通配符，必须转义才能用作乘法
+> expr $(expr 2 + 3) \* 4
+20
+```
+
+#### （5）条件判断
+
+```sh
+# 语法 1:
+# test condition
+> name=ycz
+> test $name = ycz
+> echo $?
+0
+
+# 语法 2：（推荐）
+# [ condition ] 
+# condition 前后要有空格，中间的表达式也要用空格分开
+> [ $name = ycz ]
+> echo $?
+0
+
+# 注：condition 非空时即为 true，[  ] 返回 false
+> [  ]
+> echo $?
+1
+> [ H2O ]
+> echo $?
+0
+```
+
+> 常用判断条件
+
+```sh
+# 整数比较
+-eq  等于
+-ne  不等于
+-lt  小于
+-gt  大于
+-le  小于等于
+-ge  大于等于
+
+# 字符串比较
+=   相等比较
+!=  不等比较
+
+# 文件权限判断
+-r  可读权限
+-w  可写权限
+-x  可执行权限
+
+# 文件类型判断
+-e  文件存在
+-f  文件存在并且是一个常规文件
+-d  文件存在并且是一个目录
+
+# 案例
+> [ 5 -lt 4 ]
+> echo $?
+1
+
+> [ -x hello.sh ]
+> echo $?
+1
+
+> [ -e hello.sh ]
+> echo $?
+0
+
+> [ -f hello.sh ]
+> echo $?
+0
+
+> [ -d hello.sh ]
+> echo $?
+1
+
+# 多条件判断
+# && 表示前一条命令执行成功时，才执行后一条命令
+# || 表示前一条命令执行失败后，才执行下一条命令
+# ?:
+> a=15
+> [ $a -lt 20 ] && echo "$a < 20" || echo "$a >= 20"
+15 < 20
+```
+
+#### （6）流程控制
+
+- if
+
+```sh
+if [ condition ]; then
+    ...
+fi
+
+
+if [condition]
+then
+    ...
+fi
+
+
+if [ condition ]; then
+    ...
+elif [ condition ]; then
+    ...
+else
+    ...
+fi
+```
+
+- case
+
+```sh
+case var in
+"v1")
+    ...
+;;
+
+"v2")
+    ...
+;;
+
+"v3")
+    ...
+;;
+
+# default
+*) 
+    ...
+;;
+esac
+```
+
+- for
+
+```sh
+for (( 初始值; 循环控制条件; 变量变化 ))
+do
+    ...
+done
+
+
+for var in v1 v2 v3 ...
+do
+    ...
+done
+
+# 案例
+#!/bin/bash
+
+# for 语法 1：
+for (( i = 1; i <= $1; i++ ))
+do
+    sum=$[ $sum + $i ]
+    # let sum+=$i
+done
+
+echo $sum
+
+
+# for 语法 2：
+# {1..100} 代表从 1 ~ 100 的序列
+for i in {1..100}
+do
+    total=$[ $total + $i ]
+    # let total+=$i
+done
+
+echo $total
+```
+
+- while
+
+```sh
+while [ condition ]
+do
+    ...
+done
+
+# 案例
+i=1
+while [ $i -le $1 ]
+do
+    # sum3=$[ $sum3 + $i ]
+    # i=$[ $i + 1 ]
+
+    # 高级语言语法
+    let sum3+=$i
+    let i++
+done
+
+echo $sum3
+```
+
+#### （7）读取控制台输入
+
+```sh
+# 语法
+read [options] [变量名]
+
+Options:
+    -p  指定参数的提示语
+    -t  指定读取值时等待的时间（s），如果不加 -t 则一直等待
+    
+# 案例
+> cat read.sh
+#!/bin/bash
+
+read -p "请输入姓名：" name
+read -p "你的年龄：" age
+
+echo "欢迎 $age 岁的朋友：$name"
+
+> bash read.sh
+请输入姓名：ycz
+你的年龄：18
+欢迎 18 岁的朋友：ycz
+```
+
+#### （8）函数
+
+- 系统函数
+
+```sh
+# 取路径的最后一部分
+# 如果指定 suffix 则去掉后缀
+basename [path|string] [suffix]
+
+> basename /root/script/test.sh
+test.sh
+
+> basename /root/script/test.sh .sh
+test
+
+
+# 取路径的目录部分
+dirname [path]
+
+> dirname $(pwd)
+/root/script
+```
+
+- 自定义函数
+
+```sh
+# 语法
+function name() {
+	# ...
+	# 函数返回值只能通过 $? 获取，
+	# 可以指定函数返回值 [0~255]
+	# 如果不指定 return，将返回最后一条命令的执行结果
+	# return int;
+}
+
+> cat add.sh
+#!/bin/bash
+
+function add() {
+    echo $[ $1 + $2 ]
+}
+
+read -p "第一个参数：" a
+read -p "第二个参数：" b
+
+echo "$a + $b = $(add a b)"
+
+> bash add.sh
+第一个参数：999
+第二个参数：999
+999 + 999 = 1998
+```
+
+### 2、正则
+
+#### （1）正则基础
+
+| 特殊字符 | 说明                                   | 例子                                                         |
+| -------- | -------------------------------------- | ------------------------------------------------------------ |
+| ^        | 匹配一行的开头                         | `^abc` 匹配所有以 abc 开头的行                               |
+| $        | 匹配一行的结尾                         | `xyz$` 匹配所有以 xyz 结尾的行<br />`^$` 匹配所有空行        |
+| .        | 匹配一个任意字符                       | `r..t` 匹配包含如 rabt、root 等的所有行                      |
+| *        | 匹配上一个字符 0 次或多次，不单独使用  | `.*` 任意字符出现任意次                                      |
+| []       | 匹配范围内的一个字符                   | `[1,3,5,7,9]` 匹配一个奇数<br />`[a-z,A-Z]` 匹配一个英文字母<br />`[0-9]` 匹配一个数字 |
+| \        | 转义字符，用于匹配特殊字符，不单独使用 | `'\$'var` 匹配包含 $var 的行                                 |
+
+#### （2）正则扩展
+
+| 特殊字符 | 说明                                   | 例子                          |
+| -------- | -------------------------------------- | ----------------------------- |
+| +        | 匹配上一个字符 1 次或多次，不单独使用  | `ro+t` 匹配 root ~ roo......t |
+| ?        | 匹配上一个字符 0 次或 1 次，不单独使用 | `ro?t` 匹配 rot 或 root       |
+| {n}      | 匹配上一个字符 n 次，不单独使用，n ≥ 0 | `o{2}` 匹配 root、food、...   |
+| {n,}     | 匹配上一个字符至少 n 次，n ≥ 0         |                               |
+| {n,m}    | 匹配上一个字符 n 到 m 次，m ≥ n ≥ 0    |                               |
+| more...  | ...                                    | ...                           |
+
+#### （3）案例
+
+> 准备文件 for.sh
+
+```sh
+> cat -n for.sh
+     1  #!/bin/bash
+     2
+     3  # for 语法 1：
+     4  for (( i = 1; i <= $1; i++ ))
+     5  do
+     6      sum=$[ $sum + $i ]
+     7  done
+     8
+     9  echo $sum
+    10
+    11
+    12  # for 语法 2：
+    13  # {1..100} 代表从 1 ~ 100 的序列
+    14  for i in {1..100}
+    15  do
+    16      total=$[ $total + $i ]
+    17  done
+    18
+    19  echo $total
+    20
+    21
+    22  # while
+    23  i=1
+    24  while [ $i -le $1 ]
+    25  do
+    26      # sum3=$[ $sum3 + $i ]
+    27      # i=$[ $i + 1 ]
+    28
+    29      # 高级语言语法
+    30      let sum3+=$i
+    31      let i++
+    32
+    33  done
+    34
+    35  echo $sum3
+```
+
+> 案例
+
+```sh
+# 查看 for.sh 文件中的空行
+#  -n 显示行号
+> cat for.sh | grep -n ^$
+2:
+8:
+10:
+11:
+18:
+20:
+21:
+32:
+34:
+
+# 匹配以 # 开头的行
+> cat for.sh | grep -n ^#
+1:#!/bin/bash
+3:# for 语法 1：
+12:# for 语法 2：
+13:# {1..100} 代表从 1 ~ 100 的序列
+22:# while
+
+# 匹配包含 [ ] 的行
+> cat for.sh | grep -n '\['.*'\]'
+6:    sum=$[ $sum + $i ]
+16:    total=$[ $total + $i ]
+24:while [ $i -le $1 ]
+26:    # sum3=$[ $sum3 + $i ]
+27:    # i=$[ $i + 1 ]
+
+# 匹配使用了命令行参数（$n）的行
+#  -E 使用扩展表达式语法
+> cat for.sh | grep -n -E '\$'[0-9]+
+4:for (( i = 1; i <= $1; i++ ))
+24:while [ $i -le $1 ]
+```
+
+### 3、文本处理器
+
+#### （1）cut
+
+cut 的工作就是剪切，cut 命令从文件的每一行剪切字节、字符和字段并输出。
+
+```
+Usage: cut [OPTION...] [FILE...]
+从每个输入<文件>中输出指定部分到标准输出。
+
+如果没有指定文件，或者文件为"-"，则从标准输入读取。
+
+必选参数对长短选项同时适用。
+  -b, --bytes=列表               只选中指定的这些字节（按字节切）
+  -c, --characters=列表          只选中指定的这些字符（按字符切）
+  -d, --delimiter=分界符         使用指定分界符代替制表符作为区域分界（-d 只能与 -f 配合使用）
+  -f, --fields=列表              只选中指定的这些域；并打印所有不包含分界符的行，除非-s 选项被指定
+  -n                            (忽略)
+      --complement              补全选中的字节、字符或域
+  -s, --only-delimited          不打印没有包含分界符的行
+      --output-delimiter=STRING 使用指定的字符串作为输出分界符，默认采用输入的分界符
+  -z, --zero-terminated         以 NUL 字符而非换行符作为行尾分隔符
+
+只能使用 -b, -c 或 -f 中的一个。
+每一个列表都是专门为一个类别作出的，或者您可以用逗号隔开要同时显示的不同类别。您的输入顺序将作为读取顺序，每个仅能输入一次。
+每种参数格式表示范围如下：
+    N     从第1个开始数的第N个字节、字符或域
+    N-    从第N个开始到所在行结束的所有字符、字节或域
+    N-M   从第N个开始到第M个之间(包括第M个)的所有字符、字节或域
+    -M    从第1个开始到第M个之间(包括第M个)的所有字符、字节或域
+```
+
+```sh
+# 查看可以登录系统的用户，并显示其 home 目录
+#  `cut -d :`   按`:`切割
+#  `cut -f 1,6` 取切割完后的第1个字段（用户名）和第6字段（home目录）
+> cat /etc/passwd | grep /bin/bash | cut -d : -f 1,6
+root:/root
+czy:/home/czy
+dev:/home/dev2
+
+# 取出 ifconfig 中每个网卡的 IP 
+> ifconfig | grep netmask | cut -d " " -f 10
+172.18.0.1
+172.19.0.1
+172.17.0.1
+172.16.56.56
+127.0.0.1
+```
+
+#### （2）awk
+
+```
+Usage: awk [Options] [-f Program] [file...]
+
+Options:
+    -f program-file  程序文本是从文件读取的，而不是从命令行读取的。可以接受多个-f选项。
+    -F value         设置字段分隔符, FS, to value.
+    -v var=value     为 program-file 的变量 var 赋值。
+    --               选项的明确结束。
+```
+
+```sh
+# 基本用法
+awk [Options] '/pattern/ {action} /pattern/ {action} ...' [file...]
+
+# pattern 可以是正则表达式或条件表达式
+# ${n} 
+#  $0  存储整行数据
+#  $1  第 1 个字段
+#  $2  第 2 个字段
+#  ...
+
+# 查看 root 用户的 Shell 解释器
+#  -F :         用`:`分割
+#  /^root/        匹配以 root 开头的行
+#  {print $1,$6}  输出第 1 列和第 7 列
+#  /etc/passwd    处理文件
+> awk -F : '/^root/ {print $1,$7}' /etc/passwd
+root /bin/bash
+
+# 每个匹配的 pattern 执行对应的 action
+> awk -F : '/^root/ {print $1,$7} /^dev/ {print $1,$6,$7}' /etc/passwd
+root /bin/bash
+dev /home/dev /bin/bash
+
+# 显示所有用户的 Shell 解释器，用逗号分隔，并添加表头和表尾
+#  BEGIN{} 在所有数据行读取之前执行
+#  END{}   在所有数据行读取之后执行
+> awk -F : 'BEGIN{print "user, shell"} {print $1", "$7} END{print "===== END ====="}' /etc/passwd
+
+# 将 passwd 文件中的用户 id 加 i
+#  -v i=1   为程序变量 i 赋值
+> awk -F : -v i=2 'BEGIN{print "user, uid, uid +", i} {print $1, $3, $3+i}' /etc/passwd
+```
+
+- 内置变量
+
+| 变量     | 说明                                         |
+| -------- | -------------------------------------------- |
+| FILENAME | 处理的文件名，通过管道传递柜 awk 时，为：`-` |
+| NR       | 已读的记录数（行号）                         |
+| NF       | 浏览记录的域的个数（切割后的列数）           |
+
+```sh
+# 输出 passwd 的文件名、行号、列数
+> awk -F : 'BEGIN{print "文件名 \t\t 行号 \t 列数"} {print FILENAME, "\t", NR, "\t", NF}' /etc/passwd
+文件名           行号    列数
+/etc/passwd      1       7
+/etc/passwd      2       7
+/etc/passwd      3       7
+/etc/passwd      4       7
+/etc/passwd      5       7
+...
+
+# 查询 ifconfig 结果中的空行及行号
+> ifconfig | awk '/^$/ {print "filename: " FILENAME, "\t", "line: " NR}'
+filename: -      line: 9
+filename: -      line: 18
+filename: -      line: 27
+filename: -      line: 36
+filename: -      line: 45
+filename: -      line: 53
+filename: -      line: 61
+filename: -      line: 69
+
+# 切割 IP
+ifconfig enp2s0 | awk -F " " '/netmask/ {print "IP:", $2}'
+IP: 172.16.56.56
+```
+
+### 4、综合应用
+
+> 给在线用户发送通知
+
+```sh
+# 显示当前已登录的用户信息
+who [Options]
+
+Options:
+  -a, --all             等于-b -d --login -p -r -t -T -u 选项的组合
+  -b, --boot            上次系统启动时间
+  -d, --dead            显示已死的进程
+  -H, --heading         输出头部的标题列
+      --ips             打印ips而不是主机名
+  -l，--login           显示系统登录进程
+      --lookup          尝试通过 DNS 规范化主机名
+  -m                    只针对和标准输入有直接交互的主机和用户
+  -p, --process         显示由 init 进程衍生的活动进程
+  -q, --count           列出所有已登录用户的登录名与用户数量
+  -r, --runlevel        显示当前的运行级别
+  -s, --short           只显示名称、线路和时间(默认)
+  -u, --users           列出已登录的用户
+  -T, -w,               用 +，- 或 ? 标注用户消息状态
+      --mesg,           等于 -T
+      --message,        等于 -T
+      --writable,       等于 -T
+
+
+# 控制其他用户对您终端的写权限
+mesg [选项] [y | n]
+
+
+# 向指定终端写入消息
+write <user> [tty]
+
+# 查看当前终端的写权限
+> mesg
+是 y
+
+# 开启当前终端可写权限
+> mesg y
+
+# 当前已登录的用户信息和消息状态
+#  `+` 代表开启
+> who -T
+czy      + pts/0        2024-05-06 10:39 (172.16.56.5)
+dev      + pts/1        2024-04-16 10:46 (172.16.56.5)
+
+# 测试消息发送
+> write czy pts/0
+hello czy
+```
+
+> vim send.sh
+
+```sh
+#!/bin/bash
+
+# 判断参数个数
+if [ $# -lt 1 ]; then
+    echo "Usage send_notify.sh <msg>"
+    exit
+fi
+
+echo "请在 60s 内指定收信用户，不指定时向所有在线用户发送通知..."
+read -p "user: " -t 60 user
+
+# 将所有输入参数都作为消息
+msg=$( echo $* | cut -d " " -f 1- )
+
+if [ -z $user ]; then
+
+    echo "向所有在线用户发送通知 ..."
+
+    # 获取当前登录用户
+    user_tty=$( who -T | awk -F " " '/\+/ {print $1"@"$3}' )
+
+    # 遍历在线用户发送消息
+    for users in $user_tty
+    do
+        # 切割出 user 和 tty
+        user=$( echo $users | awk -F "@" '{print $1}' )
+        tty=$( echo $users | awk -F "@" '{print $2}' )
+
+        # 发送消息
+        echo $msg | write $user $tty
+
+        # 判断发送状态
+        if [ $? -ne 0 ]; then
+            echo "向 $user $tty 发送消息失败"
+        else
+            echo "向 $user $tty 发送消息成功"
+        fi
+    done
+
+else
+
+    # grep 忽略大小写，匹配1次 $user
+    mesg=$( who -T | grep -i -m 1 $user | awk -F " " '{print $2}' )
+    tty=$( who -T | grep -i -m 1 $user | awk -F " " '{print $3}' )
+    if [ -z $mesg ]; then
+        echo "用户: $user 不在线"
+        exit
+    elif [ $mesg != "+" ]; then
+        echo "用户: $user 未开启 mesg"
+        exit
+    fi
+
+    # 向指定用户发送消息
+    echo $msg | write $user $tty
+
+    # 判断发送状态
+    if [ $? -ne 0 ]; then
+        echo "向 $user $tty 发送消息失败"
+    fi
+
+fi
+```
+
+> 运行
+
+```sh
+> bash send.sh hello world
+请在 60s 内指定收信用户，不指定时向所有在线用户发送通知...
+user:
+向所有在线用户发送通知 ...
+向 czy pts/0 发送消息成功
+
+Message from dev@172.16.56.53 on pts/1 at 13:50 ...
+hello world
+EOF
+向 dev pts/1 发送消息成功
+```
 

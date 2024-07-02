@@ -2188,6 +2188,38 @@ P（processor）：调度器，可以承载若干个 G，且能够使这些 G �
 
 G（goroutine）：用户级线程 => 协程；
 
+### 5、控制 Goroutine 的数量
+
+> 应用：避免 MySQL: 1040 Too many connections. 错误
+
+```go
+// 最大 Goroutine 数量
+maxG := make(chan struct{}, 400)
+
+wg := sync.WaitGroup{}
+wg.Add(len(works))
+
+// 遍历任务
+for _, w := range works {
+    // 每个任务开一个协程
+    go func() {
+        // 释放
+        defer func() {
+            wg.Done()
+            // 运行完成，退位
+            <-maxG
+        }
+
+        // 开始运行，占位
+        maxG <- struct{}{}
+        
+        // 开始任务...
+    }()
+}
+
+wg.Wait()
+```
+
 
 
 ## 五、网络编程

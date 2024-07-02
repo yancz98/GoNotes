@@ -59,6 +59,16 @@ ssh-keygen
 cat ~/.ssh/id_rsa.pub
 ```
 
+- 生成多套 SSH 密钥对
+
+```
+ssh-keygen -t rsa -f ~/.ssh/id_rsa_github -C "root@szreadline.com"
+ssh-keygen -t rsa -f ~/.ssh/id_rsa_aliyun -C "root@szreadline.com"
+
+# 使用 SSH 时，通过 -i 参数指定私钥文件
+ssh -i ~/.ssh/id_rsa_ssh root@192.168.0.1
+```
+
 
 
 ## 2、Git 基础

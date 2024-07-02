@@ -1980,7 +1980,116 @@ docker-compose up -d
 
 - `docker run` 时，会自动创建不存在的数据卷，但在 composer 中不会自动创建，需要在顶层 volumes 部分定义数据卷，然后才能在服务中挂载数据卷。
 
+### （4）docker compose 资源限制
 
+> 定义 docker-compose.yml 文件
+
+```yaml
+# docker compose --compatibility up -d
+
+version: "3.7"
+
+name: "mongodb"
+
+services:
+  mongo_27017:
+    container_name: mongo_27017
+    image: mongo_7.0.5
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - /data/docker/mongodb/db:/data/db
+    deploy:
+      resources:
+        # mongo_27017 服务的资源限制为 50% 的 CPU 和 32G 的内存
+        limits:
+          cpus: "0.50"
+          memory: 32G
+        # 同时，这个服务最少需要 25% 的 CPU 和 1G 内存
+        reservations:
+          cpus: "0.25"
+          memory: 1G
+
+  mongo_27022:
+    container_name: mongo_27022
+    image: mongo_7.0.5
+    restart: always
+    ports:
+      - "27022:27017"
+    volumes:
+      - /data/docker/mongodb/db_64_79:/data/db
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+
+  mongo_27023:
+    container_name: mongo_27023
+    image: mongo_7.0.5
+    restart: always
+    ports:
+      - "27023:27017"
+    volumes:
+      - /data/docker/mongodb/db_80_95:/data/db
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+
+  mongo_27024:
+    container_name: mongo_27024
+    image: mongo_7.0.5
+    restart: always
+    ports:
+      - "27024:27017"
+    volumes:
+      - /data/docker/mongodb/db_96_111:/data/db
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+
+  mongo_27025:
+    container_name: mongo_27025
+    image: mongo_7.0.5
+    restart: always
+    ports:
+      - "27025:27017"
+    volumes:
+      - /data/docker/mongodb/db_112_127:/data/db
+    deploy:
+      resources:
+        limits:
+          memory: 32G
+
+```
+
+> 启动服务
+
+```sh
+# 需要 --compatibility 以兼容模式运行，否则限制不生效
+$ docker compose --compatibility up -d
+[+] Running 6/6
+ ✔ Network mongodb_default  Created
+ ✔ Container mongo_27023    Started
+ ✔ Container mongo_27025    Started
+ ✔ Container mongo_27017    Started
+ ✔ Container mongo_27024    Started
+ ✔ Container mongo_27022    Started      
+```
+
+> 验证
+
+```sh
+$ docker compose stats
+CONTAINER ID   NAME          CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O         PIDS
+782a410c0f42   mongo_27017   0.02%     440.2MiB / 32GiB    1.34%     66.3kB / 1.67MB   153MB / 4.12MB    35
+1c94a819b194   mongo_27023   0.01%     203MiB / 32GiB      0.62%     73.8kB / 99.4kB   54.1MB / 5.02MB   32
+fa2854f4c535   mongo_27022   0.03%     818.4MiB / 32GiB    2.50%     96kB / 1.46MB     437MB / 4.37MB    32
+16b934bb4097   mongo_27024   0.02%     203.3MiB / 32GiB    0.62%     75.7kB / 102kB    71MB / 4.35MB     32
+0104bcdf3ed0   mongo_27025   1.55%     829.1MiB / 32GiB    2.53%     105kB / 1.72MB    455MB / 4.37MB    32
+```
 
 
 

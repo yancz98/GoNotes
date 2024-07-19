@@ -824,6 +824,16 @@ db.collection.replaceOne( filter, replacement, <optional params> )
 
 #### （2）[使用聚合管道进行更新](https://www.mongodb.com/docs/v5.0/tutorial/update-documents-with-aggregation-pipeline/)
 
+#### （3）批量处理
+
+```
+// 将毫秒时间戳转换为 Date 对象
+db.system_log.find().forEach(function(doc) {
+    doc.visible_time = new Date(doc.created_at);
+    db.system_log.save(doc);
+});
+```
+
 
 
 ### 4、Delete
@@ -1804,6 +1814,7 @@ TTL 索引是一种特殊的单字段索引，MongoDB 可以使用它在一定�
 db.collection.createIndex( { <field>: 1 }, { expireAfterSeconds: <second> } )
 
 # 例：已删除数据 7天后自动过期
+# deleted_at 字段必须为 Date 类型
 db.request_log.createIndex( { "deleted_at": 1 }, { expireAfterSeconds: 7 * 24 * 3600 } )
 ```
 

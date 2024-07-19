@@ -1,6 +1,6 @@
-## 一、安装 / 配置
+# 一、安装 & 配置
 
-### 1、概述
+## 1.1、概述
 
 Unix 的由来：20 世纪 70 年代，由贝尔实验室的 Ken tompsom 和 Dennis richres 共同创造的 C 语言编写而成。近期 Ken tompsom 又创造了 Go 语言。
 
@@ -12,7 +12,7 @@ Linux 主要发行版本：Ubuntu、RedHat、CentOS、Debian、Fedora、SuSE、O
 
 [Linux 内核源码](https://www.kernel.org/)
 
-### 2、安装 CentOS_7
+## 1.2、安装 CentOS 7
 
 - [VirtualBox 下载](https://www.virtualbox.org/)
 - [CentOS 下载](https://www.centos.org/download/) （推荐使用阿里云镜像下载）
@@ -24,19 +24,18 @@ Linux 主要发行版本：Ubuntu、RedHat、CentOS、Debian、Fedora、SuSE、O
 dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 ```
 
-### 3、网络配置
+## 1.3、网络配置
 
-#### （1）在虚拟机中无法 ping 通外网
+### 1、访问外网（NAT）
 
-① VirtualBox 配置：设置 > 网络 > 网卡 1 > 连接方式：网络地址转换（NAT）。
-
-② 修改网络配置文件： `ifcfg-enp0s3`  （网络地址转换(NAT) 对应的配置）：
-
-```
-vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
-```
+在虚拟机中无法 ping 通外网时：
 
 ```sh
+# 1 VirtualBox 配置：设置 > 网络 > 网卡 1 > 连接方式：网络地址转换（NAT）
+
+# 2 修改网络配置文件： `ifcfg-enp0s3`  （网络地址转换(NAT) 对应的配置）
+$ vim /etc/sysconfig/network-scripts/ifcfg-enp0s3
+`
 TYPE=Ethernet
 PROXY_METHOD=none
 BROWSER_ONLY=no
@@ -53,30 +52,27 @@ UUID=6ae4e71b-23d5-42e5-8e05-48e2e6b36d21
 DEVICE=enp0s3
 # ONBOOT=no
 ONBOOT=yes   # 修改为 yes
-```
+`
 
-③ 重启网络服务
-
-```
+# 3 重启网络服务
 service network restart
+
+# 4 Ping 测试
+#  -c 5  发送 5 次 ping 请求，否则一直发送
+ping -c 5 www.baidu.com 
 ```
 
-④ ping
+### 2、主机访问（Host-Only）
 
-```
-# 请求5次后停止，不带 -c 选项时，一直发送，需要 Ctrl+C 停止
-ping www.baidu.com -c 5
-```
+主机无法连接到虚拟机时：
 
-#### （2）主机无法连接到虚拟机
+- 用 `ip addr` 命令查看网卡信息，是否存在 `enp0s8` 网卡，默认没有。
 
-① 用 `ip addr` 命令查看网卡信息，是否存在 `enp0s8` 网卡，默认没有。
+- VirtualBox 配置：设置 > 网络 > 网卡 2 > 启用网络连接 =>  连接方式：仅主机（Host-Only）网络。
 
-② VirtualBox 配置：设置 > 网络 > 网卡 2 > 启用网络连接 =>  连接方式：仅主机（Host-Only）网络。
+- 修改网络配置文件： `ifcfg-enp0s8`，类似 `ifcfg-enp0s3`。
 
-③ 修改网络配置文件： `ifcfg-enp0s8`，同上。
-
-④ 再次用 `ip addr` 命令查看网卡信息：
+- 再次用 `ip addr` 命令查看网卡信息：
 
 ```
 enp0s8: ...
@@ -85,13 +81,13 @@ enp0s8: ...
 	...
 ```
 
-⑤ 用 SSH 连接到虚拟机：
+- 用 SSH 连接到虚拟机：
 
 ```
 ssh root@192.168.1.159
 ```
 
-#### （3）连接模式配置
+### 3、网络连接模式
 
 |                       | NAT  | Bridged Adapter |   Internal   |   Host-Only    |
 | --------------------: | :--: | :-------------: | :----------: | :------------: |
@@ -101,66 +97,30 @@ ssh root@192.168.1.159
 | **其他主机 → 虚拟机** |  ×   |        √        |      ×       | 默认不能需设置 |
 |        **虚拟机之间** |  ×   |        √        | 同网段下可以 |       √        |
 
-**各模式的特点：**
+（1）网络地址转换（NAT）
 
-- 网络地址转换(NAT)：连接这个网络可以访问外部网络，但是外部网络不可访问虚拟机。
+连接这个网卡可以访问外部网络，但是外部网络不可访问虚拟机。
 
-  原理：在主机上创建一个虚拟网卡，与虚拟机的 IP 同网段，主机与虚拟机之前形成一个网络。
+原理：在主机上创建一个虚拟网卡，与虚拟机的 IP 同网段，主机与虚拟机之前形成一个网络。
 
-- 桥接网卡：这个网络完全可以共享主机网络，主机网络发生变化时，也跟随变化，IP 也随之变动。
+（2）桥接网卡（Bridged Adapter）
 
-  优点：局域网内的其它主机可以访问到虚拟机。
+这个网络完全可以共享主机网络，主机网络发生变化时，也跟随变化，IP 也随之变动。
 
-  缺点：会占用局域网中同网段的一个 IP，易造成 IP 冲突。
+优点：局域网内的其它主机可以访问到虚拟机。
 
-- 仅主机(Host-Only)网络：这个网络也可以用来主机访问虚拟机以及虚拟机上web服务，但是虚拟机不可访问外网。
+缺点：会占用局域网中同网段的一个 IP，易造成 IP 冲突。
 
-  原理：相当于一个独立网络。
+（3）仅主机（Host-Only）
 
+这个网络也可以用来主机访问虚拟机以及虚拟机上web服务，但是虚拟机不可访问外网。
 
+原理：相当于一个独立网络。
 
-### 4、目录结构
-
-> 在 Linux 的世界里，一切皆文件。
-
-```
-/：根目录
-    /bin -> usr/bin：    程序的启动文件（所有命令）
-    /boot：              启动目录
-    /dev：               设备目录
-    /etc：               可编辑文本配置
-    /home：              普通用户目录
-    /lib -> usr/lib：    库
-    /lib64 -> usr/lib64：64位操作系统的库
-    /lost+found：        非正常关机留下的文件（无）
-    /media：             媒体
-    /mnt：               安装临时文件
-    /opt：               放置程序安装包
-    /proc：              虚拟文件系统目录
-    /root：              root用户目录
-    /run：
-    /sbin -> usr/sbin：  超级用户的可执行程序
-    /srv：               可访问数据库目录
-    /sys：               sysfs文件系统的挂载点
-    /tmp：               公用临时文件存储点
-    /usr：               Unix系统资源，存放一些应用程序
-    /var：               存放运行时需改变数据的文件，如：日志文件
-    /selinux：           保证系统安全（无）
-        getenforce：        获取状态
-        setenforce = 1：    设置状态
-        永久关闭：修改配置文件/etc/selinux/config -> SELINUX=disabled
-
-注：
-    软件安装目录：/usr/local
-```
-
-
-
-## 二、常用命令
-
-### 1、开关机
+## 1.4、开关机
 
 ```sh
+# 不指定选项和参数，默认1分钟后关闭电脑（shutdown -h 1）
 shutdown [选项] [时间] 
 
 # 立即重启（或 reboot）
@@ -171,33 +131,14 @@ shutdown -h now
 
 # 取消关机计划
 shutdown -c
-
-注：不指定选项和参数，默认1分钟后关闭电脑（shutdown -h 1）
 ```
 
-### 2、其它
+## 1.5、常用命令
 
 ```sh
 # 自动补全（命令、参数）：tab
 # 清屏：clear
 # 结束进程：Ctrl+c
-
-# 重定向：
-    将本该显示在终端上的内容 输出、追加到指定文件中
-    >    表示输出到文件，会覆盖文件原有的内容
-    >>   表示追加，追加到文件的末尾
-
-    另一种创建文件的方式：
-    echo text > text.txt
-    touch 只能创建一个空文件，而重定向方式可以创建带内容的文件
-    还可以将其他命令的输出结果追加到文件中：
-    tree laravel >> laravel_directory_structure.txt
-
-# 管道：|
-    Linux允许将一个命令的输出通过管道作为另一个命令的输入。
-    常与管道搭配使用的命令有：
-    more
-    grep
 
 # 通配符：
     *
@@ -208,21 +149,6 @@ shutdown -c
     man <command>  获得帮助信息
     help <command> 获得Shell内置命令的帮助信息
 
-# 查看已经执行过的历史命令
-history     # 显示全部
-history 10  # 显示最近10条
-!15         # 执行历史第15条命令
-!-3         # 执行倒数第3条
-
-# 隐藏当前会话的历史，任何时间执行都会隐藏本次会话的所有历史命令
-bash +o history
-# 敏感命令，如密钥等信息
-mmm 
-# 清除本次会话的历史命令
-bash -o history
-
-# 清除历史
-history -c 
 
 
 # 输出内容到控制台
@@ -231,9 +157,13 @@ echo [Options] <Content>
 例：
     输出环境变量：echo $PATH 
     输出内容并写入文件：echo 'Hello World' > hello
+
+# 后台运行 &
+$ sleep 5 &
+
 ```
 
-#### （2）修改主机名
+### 1、修改主机名
 
 ```sh
 # 修改主机名（reboot 生效）
@@ -244,12 +174,12 @@ local.domain
 `
 ```
 
-#### （3）ssh 免密
+### 2、ssh 免密
 
 - 将 .101 的 SSH 公钥 `~/.ssh/id_rsa.pub` 写入 .102 的 `~/.ssh/authorized_keys` 则可实现 101 到 102 的免密登录和 scp 操作。
 - 注意：如果 `~/.ssh/authorized_keys` 文件及其目录让本用户之外的用户拥有写权限，那么 sshd 都会拒绝使用 `~/.ssh/authorized_keys` 文件中的 key 来进行认证。
 
-#### （4）环境变量
+### 3、环境变量
 
 ```sh
 # 查看：
@@ -268,34 +198,6 @@ export PATH=$PATH:dir1[:dir2]
 # 方法3：永久性的设置，针对一个用户有效，需重启或使用 source 命令生效
 
 将方法1的配置添加到文件 `~/.bashrc` 的末尾。
-```
-
-
-
-### 3、运行级别
-
-```sh
-# 查看系统默认运行级别
-systemctl get-default
-
-multi-user.target    # 3
-
-# 设置系统默认运行级别
-systemctl set-default multi-user.target
-
-# 通过 init 来切换不同的运行级别
-init [0123456]
-
-说明：
-    0 关机
-    1 单用户【找回密码】
-    2 多用户状态没有网络服务
-    3 多用户状态有网络服务：multi-user.target
-    4 系统未使用，保留给用户
-    5 图形界面：graphical.target
-    6 系统重启
-    
-# 运行级别 1 的应用：[找回 root 密码]（www.baidu.com）
 ```
 
 ### 4、日期时间
@@ -347,9 +249,365 @@ $ cal
 26 27 28 29 30 31
 ```
 
+## 1.6、运行级别
+
+```sh
+# 查看系统默认运行级别
+systemctl get-default
+
+multi-user.target    # 3
+
+# 设置系统默认运行级别
+systemctl set-default multi-user.target
+
+# 通过 init 来切换不同的运行级别
+init [0123456]
+
+说明：
+    0 关机
+    1 单用户【找回密码】
+    2 多用户状态没有网络服务
+    3 多用户状态有网络服务：multi-user.target
+    4 系统未使用，保留给用户
+    5 图形界面：graphical.target
+    6 系统重启
+    
+# 运行级别 1 的应用：[找回 root 密码]（www.baidu.com）
+```
 
 
-## 三、文件 & 目录
+
+# 二、文件 & 目录
+
+## 2.1 文件权限
+
+### 1、文件属性（ls）
+
+Linux 一般将文件可存取的身份分为三个类别： owner/group/others，且三种身份各有 read/write/execute 等权限。
+
+```sh
+# list 列出文件
+ls [Options...] [Files...]
+
+列出给定文件（默认为当前目录）的信息。
+如果不指定 -cftuvSUX 中任意一个或 --sort 选项，则根据字母大小排序。
+
+常用选项：
+    -a, --all             显示所有文件，包括隐藏文件（以 . 开头的文件）
+    -h, --human-readable  与 -l 和 -s 一起，以易于阅读的格式输出文件大小（例如 1K 234M 2G等）
+    -i, --inode           显示每个文件的索引编号（inode 号）
+    -I, --ignore=模式      不显示任何匹配指定 shell <模式>的项目
+    -l                    列表显示文件，使用较长格式列出信息
+    -r, --reverse         逆序排列
+    -R, --recursive       递归显示子目录
+    -1                    每行只列出一个文件
+
+
+# 列出当前目录的文件，文件大小带单位
+$ ls -lh
+-rw-r--r--. 1 root root 7.4M 9月  23 16:19 tree.txt
+
+
+# 结果说明：
+文件类型及权限 | 引用数 | 文件所有者 | 文件所属组 | 文件大小 | 最后修改时间：月 日 年/时间 | 文件名
+
+# 文件类型及权限分解：
+[-]             代表文件类型
+[rw-][r--][r--] 代表三种身份的 rwx 权限
+.               表示启用了selinux，空表示没有开启
+```
+
+（1）文件类型
+
+- 普通文件 [-]
+  - 纯文本文件（ASCII）
+  - 二进制文件（binary）：如可执行程序。
+  - 数据格式文件（data）：某些程序的特定格式文件。
+
+- 目录 [d]（directory）
+- 链接文件 [l]（link）
+- 设备文件 （device）
+  - 区块设备文件 [b]（block），用于存储数据，以提供系统随机存取的周边设备，如软盘、硬盘。
+  - 字符设备文件 [c]（character），是一些序列埠的周边设备，如键盘、鼠标等。
+- 网络套接字 [s]（sockets），常在 /run 或 /tmp 目录中看到这种文件类型。
+- 管道 [p]（pipeline）
+
+（2）文件权限
+
+```
+[rw-][r--][r--] 分别代表三种身份的权限：
+    rw-  文件所有者的权限
+    r--  文件所属组的权限
+    r--  其它用户的权限
+
+    读(r)/写(w)/执行(x)/无权限(-)
+```
+
+> 案例
+
+```sh
+$ ll /data/
+
+-rwxrw-r--  1 dev  devgroup     0 7月   9 16:29 README
+drwxr-xr--  2 dev  devgroup  4096 7月   9 16:26 src/
+
+# 所属组的权限将被组中成员继承。
+# 对文件拥有写（权限）不代表可以删除文件，同时还需要对该目录的写权限才可删除文件。
+# devgroup 对 src 目录有 r-w 权限，可以进入本目录进行工作，但是不能在本目录下进行写入的动作。
+# other 对 src 目录有 r-- 权限，虽然有 r ，但是没有 x，因此并不能进入此目录。
+```
+
+> 实用指令
+
+```sh 
+# 统计当前目录下的文件数量
+$ ls -l | grep '^-' | wc -l
+
+# 统计当前目录下的目录数量
+$ ls -l | grep '^d' | wc -l
+
+# 递归统计（包括子孙）文件/文件夹 数量
+$ ls -lR | grep '^-' | wc -l
+
+# 以树形结构打印目录
+$ yum install tree
+$ tree [目录]
+```
+
+
+
+### 2、改变文件属性与权限
+
+#### （1）chgrp
+
+```sh
+# 改变文件所属组
+chgrp [选项]... 用户组 文件...
+
+Options:
+  -c, --changes           类似 verbose 选项，但仅在做出修改时进行报告
+  -f, --silent, --quiet   不显示大多数错误消息
+  -v, --verbose           输出各个处理的文件的诊断信息
+      --dereference       影响每个符号链接的原始引用文件（这是默认行为），而非符号链接本身
+  -h, --no-dereference    只影响符号链接，而非被引用的任何文件（仅当系统支持更改符号链接的所有者时，该选项才有用）
+      --no-preserve-root  不特殊对待“/”（默认行为）
+      --preserve-root     不允许在“/”上递归操作
+      --reference=<file>  使用<参考文件>的属组信息而非指定一个<用户组>的值
+  -R, --recursive         递归操作文件和目录
+
+以下选项是在指定了 -R 选项时被用于设置如何遍历目录结构体系。
+如果您指定了多于一个选项，那么只有最后一个会生效。
+
+  -H                     如果命令行参数是一个指向目录的符号链接，则对其进行遍历
+  -L                     遍历每一个遇到的指向目录的符号链接
+  -P                     不遍历任何符号链接（默认）
+
+
+# 将 /data/src 及其子目录下所有文件的所属组改为 dev
+$ chgrp dev /data/src
+
+# 使用 --reference 选项，
+# 把指定 src 的所属组设置为与参考文件 README 相同
+$ chgrp --reference=/data/README /data/src
+```
+
+#### （2）chown
+
+```sh
+# 改变文件所有者和所属组
+chown [选项]... [所有者][:组] 文件...
+
+Options:
+  -c, --changes          类似 verbose 选项，但仅在做出修改时进行报告
+  -f, --silent, --quiet  不显示大多数错误消息
+  -v, --verbose          输出各个处理的文件的诊断信息
+      --dereference      影响每个符号链接的原始引用文件（这是默认行为），而非符号链接本身
+  -h, --no-dereference   只影响符号链接，而非被引用的任何文件（仅当系统支持更改符号链接的所有者时，该选项才有用）
+      --from=当前所有者:当前所属组  只当每个文件的所有者和组符合选项所指定时才更改所有者和组。
+                                其中一个可以省略，这时已省略的属性就不需要符合原有的属性。
+      --no-preserve-root  不特殊对待“/”（默认行为）
+      --preserve-root     不允许在“/”上递归操作
+      --reference=<file>  使用指定<参考文件>的所有者和所属组信息，而非手工指定 所有者:组 的值
+  -R, --recursive         递归操作文件和目录
+
+以下选项是在指定了 -R 选项时被用于设置如何遍历目录结构体系。
+如果您指定了多于一个选项，那么只有最后一个会生效。
+
+  -H                     如果命令行参数是一个指向目录的符号链接，则对其进行遍历
+  -L                     遍历每一个遇到的指向目录的符号链接
+  -P                     不遍历任何符号链接（默认）
+
+
+如果没有指定所有者，则不会更改所有者信息。若所属组若没有指定也不会对其更改，但当加上 ':' 时 GROUP 会更改为指定所有者的主要组。所有者和所属组可以是数字或名称。
+
+示例：
+  chown root /u         将 /u 的属主更改为"root"。
+  chown root:staff /u   和上面类似，但同时也将其属组更改为"staff"。
+  chown -hR root /u     将 /u 及其子目录下所有文件的属主更改为"root"
+```
+
+#### （3）chmod
+
+```sh
+# 改变文件的权限
+chmod [Optinos] 模式[,模式] 文件...
+chmod [Optinos] 八进制模式 文件...
+
+Options:
+  -c, --changes           类似 verbose 选项，但仅在做出修改时进行报告
+  -f, --silent, --quiet   不显示大多数错误消息
+  -v, --verbose           输出各个处理的文件的诊断信息
+      --no-preserve-root  不特殊对待“/”（默认行为）
+      --preserve-root     不允许在“/”上递归操作
+      --reference=<file>  使用参考文件的模式而非给定模式的值
+  -R, --recursive         递归修改文件和目录
+
+
+符号模式：
+  chmod [u|g|o|a][+|-|=][r|w|x] <files...>
+  
+  1 身份：
+    u    所有者
+    g    所属组
+    o    其它人
+    a    全部身份（默认）
+  2 操作：
+    +    添加权限
+    -    去除权限
+    =    设置权限
+  3 权限：
+    r    可读
+    w    可写
+    x    可执行
+
+
+八进制模式:
+  chmod 777 <files...>
+    
+    777 => 111 111 111 
+    三组二进制分别代表 u g o 的 rwx 权限，0 无权限，1 有权限
+	
+# 给 file 的全部人添加 x 权限
+$ chmod +x file     给文件添加可执行权限（所有者、组、其它）
+
+# 给 file 的所有者添加 x 权限
+$ chmod u+x file    给文件所有者添加可执行权限
+
+# 分别设置权限
+$ chmod u=rwx,g=rx,o=- file    
+
+# 设置 file 全部人都有 rwx 权限
+$ chmod 777 file    用八进制数来设置权限
+
+# 设置 file 所有者有 rwx 权限，所属组有 rw 权限，其他人无权限
+$ chmod 760 file
+```
+
+### 3、文件权限的意义
+
+（1）对文件
+
+文件是实际存放数据的，包括一般文本文件、数据库内容档、二进制可可执行文件（binary program）等。
+
+- r （read）：可读取此一文件的实际内容，如读取文本文件的文字内容等；
+
+- w （write）：可以编辑、新增或者是修改该文件的内容（但不含删除该文件）；
+
+- x （execute）：该文件具有可以被系统执行的权限。
+
+（2）对目录
+
+- r （read contents in directory）：表示具有读取目录结构清单的权限，即 ls。
+
+- w （modify contents of directory）：表示你具有改变该目录结构清单的权限，即可以创建、删除、移动、重命名当前目录下的文件和目录。
+
+- x （access directory）：目录不可以被执行，因此目录的 x 代表能否进入该目录成为工作目录， 即 cd。
+
+## 2.2、目录结构
+
+> Linux 目录配置的依据：FHS（Filesystem Hierarchy Standard）
+
+### 1、根目录（/）
+
+根目录是整个系统最重要的一个目录，所有的目录都是由根目录衍生出来的，同时根目录也与开机/还
+
+原/系统修复等动作有关。
+
+因此 FHS 建议：根目录（/）所在分区应该越小越好， 且应用程序所安装的软件最好不要与根目录放在同一
+
+个分区内，保持根目录越小越好。 如此不但性能较佳，根目录所在的文件系统也较不容易发生问题。
+
+```sh
+/
+├── bin -> usr/bin        可以被 root 和普通用户执行的指令（cd, cp, ls, ...）
+├── boot                  启动目录，包括 Linux 核心文件、开机菜单、开机所需配置文件
+├── dev                   设备目录
+├── etc                   配置文件目录
+├── home                  普通用户目录
+├── lib -> usr/lib        放置开机和 /bin 或 /sbin 下的指令调用的函数库
+├── lib32 -> usr/lib32
+├── lib64 -> usr/lib64
+├── libx32 -> usr/libx32
+├── lost+found            当文件系统发生错误时保留遗失的片段（仅 ext2/ext3/ext4 格式会产生）
+├── media                 媒体目录：放置可移除的设备，包括软盘、光盘、DVD 等
+├── mnt                   [mount] 暂时挂载额外设备
+├── opt                   放置第三方协力软件
+├── proc                  [process] 虚拟文件系统，放置进程信息、周边设备状态、网络状态等内存数据
+├── root                  root用户目录
+├── run                   系统开机后所产生的各项信息
+├── sbin -> usr/sbin      仅 root 可执行的设置系统环境的指令（shutdown, fdisk, mount, ...）
+├── srv                   [service] 存放网络服务所需要取用的数据，如 WWW、FTP
+├── sys                   虚拟文件系统（不占磁盘空间），记录核心与系统硬件信息
+├── tmp                   普通用户或是正在执行的程序暂时放置文件
+├── usr                   [Unix Software Resource] 放置 Unix 操作系统软件资源
+└── var                   放置变动性的数据
+```
+
+### 2、/usr
+
+依据 FHS 的基本定义，/usr 里面放置的数据属于可分享的与不可变动的（shareable, static）。
+
+```sh
+/usr
+├── bin      放置所有普通用户能执行的指令（新版 CentOS-7 包含全部用户指令），此目录下不应该有子目录
+├── games
+├── include  c/c++ 等程序语言的依赖文件
+├── lib      与 /lib 功能相同
+├── lib32
+├── lib64
+├── libexec  不被普通用户使用的可执行文件或脚本（script）等
+├── libx32
+├── local    系统管理员在本机自行安装的软件
+├── sbin     非系统正常运行所需要的系统指令，如网络服务器软件的服务指令（daemon）。
+├── share    放置只读架构的数据文件，包括共享文件
+└── src      一般源代码建议放置到这里
+```
+
+### 3、/var
+
+```
+/var
+├── backups
+├── cache        应用程序本身运行过程中会产生的一些暂存盘
+├── crash
+├── lib          程序本身执行的过程中，需要使用到的数据文件放置的目录。如：/var/lib/mysql/
+├── local
+├── lock -> /run/lock
+├── log          登录文件放置的目录
+├── mail         放置个人电子邮件信箱的目录，/var/spool/mail -> /var/mail
+├── metrics
+├── opt
+├── run -> /run  程序或者是服务启动后的 PID 放置目录
+├── snap
+├── spool        放置排队等待其他程序使用的数据，使用后删除。
+└── tmp
+```
+
+
+
+## 2.3 文件与目录管理
+
+1、目录与路径
 
 ### 1、工作目录
 
@@ -368,262 +626,19 @@ pwd [Options]
 
 特殊目录：
     /     根目录
-    .     当前目录
-    ..    上级目录
+    .     代表当前目录
+    ..    代表上级目录
+    -     代表前一个工作目录
     #     root 的 home 目录
     $     普通用户的 home 目录
     ~     当前用户的 home 目录
+    ~account  代表 account 用户的主目录
 
 # 打印并切换回上一个工作目录
 > cd -
 ```
 
-### 2、文本编辑器（vi | vim）
-
-> 终端编辑工具有：vi、vim、emacs 等。
->
-> 系统默认自带 vi 编辑器。
->
-> vim 是 vi 的增加版，如：语法高亮、代码补全、编译及错误跳转等功能。
-
-#### （1）打开文件
-
-```sh
-# 若文件存在，则直接打开。
-# 若文件不存在，则新建文件，不修改时不会创建空文件。
-vi filename
-
-# 打开文件，光标定位到第n行
-vi filename +n
-
-# 打开文件，光标定位到最后一行
-vi filename +
-```
-
-#### （2）工作模式
-
-- 正常模式
-
-> 主要用来浏览或修改文本内容；
->
-> 使用 vi 打开文件的默认工作模式；
->
-> 在任意模式下按 ESC 键即可进入正常模式。
-
-- 编辑模式（插入模式）
-
-> 主要用来编辑文本，正常模式下输入以下字符进入编辑模式。
-
-```
-i：在光标所在字符前开始输入文本；
-I：在行首第一个非空白字符处开始输入文本；
-a：在光标所在字符后开始输入文本；
-A：在行尾开始输入文本；
-o：在光标所在行的下面新增一行来开始输入文本；
-O：在光标所在行的上面新增一行来开始输入文本；
-s：删除光标所在字符开始输入；
-S：删除光标所在行开始输入；
-```
-
-- 命令模式（单行模式）
-
-> 主要用来管理文件或设置 vi，如：保存、退出、放弃等。
->
-> 在正常模式下，输入 `:` 即可进入命令模式。
-
-```
-:w    保存文件；
-:q    退出软件；
-:x    保存退出（:wq）；
-:!    强制操作；
-:e!   放弃修改；
-```
-
-- 可视模式（正常模式下操作）
-
-> 可视模式主要用作批量操作
-
-```
-v        可视字符模式（通过左右逐个选择字符）
-V        可视行模式（通过上下选择行数）
-Ctrl+v   可视块模式（通过上下左右(或 kjhl)选择行数和列数）
-
-# 例1：多行注释
-① Esc 进入正常模式；
-② Ctrl+v 进入可视化块模式；
-③ 利用上下左右调整需要注释的行数及列数；
-④ Shift+i 进入插入模式，插入注释符：“#”；
-⑤ 再次按 Esc，即可完成多行注释。
-
-# 例2：取消多行注释
-① Esc 进入正常模式；
-② Ctrl+v 进入可视化块模式；
-③ 利用上下左右调整需要注释的行数及列数；
-④ 按 d 即可取消注释。
-```
-
-#### （3）光标定位（正常模式下）
-
-```
-gg    定位到首行
-GG    定位到末行
-ngg   定位到第 n 行
-0     定位到行首
-^     定位到行首第一个非空字符
-$     定位到行尾
-kjhl  上下左右
-```
-
-#### （4）复制粘贴（正常模式下）
-
-```
-yy    复制光标所在行
-dd    剪切光标所在行
-p     粘贴缓冲区的内容
-nyy   复制光标开始的 n 行
-ndd   剪切光标开始的 n 行
-```
-
-#### （5）操作回退（正常模式下）
-
-```
-u           撤销操作
-Ctrl+r      反撤销
-shift + zz  保存编辑（:x）
-```
-
-#### （6）查找替换（命令模式下）
-
-```
-# 查找，回车查找，n向前查找，N向后查找
-?
-/
-
-# 替换，g代表全局替换，可选
-%s/查找内容/替换内容/[g]
-
-# 替换从起始行到结束行查找到的内容
-起始行,结束行s/查找内容/替换内容/[g]
-
-# 删除所有行
-%d
-```
-
-#### （7）vi/vim 配置项
-
-- 一次性配置（命令模式下操作，仅针对本次打开文件有效）
-
-```
-:set nu							显示行号
-:set nonu						取消显示行号
-:set tabstop=4					设置缩进字符数
-:set fileeccodings=utf-8,gbk	设置字符集
-```
-
-- 配置文件： `~/.vimrc`（永久生效）
-
-````shell 
-# 编辑配置文件
-vi ~/.vimrc
-
-`
-set nu
-set ...
-
-" Indent & Tab
-set autoindent      " 自动保留上一行的缩进
-set smartindent     " 以 { 结尾的行，在新行会触发缩进
-set tabstop=4       " Tab 宽度，4 空格
-set shiftwidth=4    " 自动缩进时的宽度，4 空格
-set expandtab       " 将 Tab 转换为空格，而不是 \t（注意不能打开 Makefile 文件）
-
-" 粘贴格式不错乱，两种都可以暂不知道区别
-set clipboard=unnamed      " 系统缓冲区中的内容
-set clipboard=unnamedplus  " 系统剪切板里的内容  
-`
-
-# 立即生效
-source ~/.vimrc
-````
-
-#### （8）vi/vim 键盘图
-
-![vi / vim 键盘图](Images/Linux_vi-vim键盘图.jpg)
-
-### 3、查看文件内容
-
-#### （1）cat & tac
-
-```sh
-# 将<文件>或标准输入组合输出到标准输出
-cat [Options] <文件, ...>
-
-Options:
-    -b  对非空行进行编号
-    -n  对所有行进行编号（包含空行）
-    
-注：
-    如果没有指定文件，或者文件为 `-`，则从标准输入读取。
-    与 more 结合，翻页显示 cat <File> | more
-
-# 倒序输出 cat
-tac [Options] <文件, ...>
-```
-
-#### （2）more & less
-
-```sh
-# 分页显示文件内容（留痕）
-more [Options] <文件 ,...>
-
-说明：
-    more 指令是一个基于 VI 编辑器的文本过滤器，它以全屏幕的方式按页显示文本内容。
-    【其它命令 | more】：分页显示其它命令执行的结果。
-    more 内置了若干快捷键（交互指令）：
-    |--------|------------------|
-    | space  | 向下翻一页         |
-    | Enter  | 向下翻一行         |
-    | q      | 退出（结束分页）    |
-    | Ctrl+F | 向下滚动一屏       |
-    | Ctrl+B | 返回上一屏         |
-    | =      | 输出当前行号       |
-    | :f     | 输出文件名和当前行号 |
-    |--------|------------------|
-
-
-
-# 与 more 功能一样（动态加载）
-less [选项] 文件名
-
-说明：
-    其它命令 | less：分页显示其它命令执行的结果
-```
-
-#### （3）head & tail
-
-```sh
-# 打印每个文件的【前】 n 行（默认10行）
-head [Options] <文件, ...>
-
-Options：
-    -c, --bytes   打印前 c 字节
-    -n, --lines   打印前 n 行
-
-
-# 打印每个文件的【后】 n 行（默认10行）
-tail [Options] <文件, ...>
-
-Options：
-    -c, --bytes   打印前 c 字节
-    -n, --lines   打印前 n 行
-    -f, --follow  监听文件的更新
-    -F            等同 --follow=name --retry
-        --max-unchanged-stats=N  with -f，重新打开一个在迭代 N 次（默认5）后没有更改大小的 FILE，检查它是否已被取消链接或重命名（旋转日志）。
-        --pid=PID                with -f，在 PID 终止后进程终止
-        --retry                  若文件无法访问，重试
-```
-
-### 4、文件 & 目录操作
+### 2、文件与目录管理
 
 #### （1）mkdir & rmdir
 
@@ -684,7 +699,19 @@ Options:
     -m  更改修改时间
 ```
 
-#### （3）rm
+#### （3）cp
+
+```sh
+# 拷贝文件 & 目录
+cp [Options] <源文件> <目标文件>
+
+Options:
+    -i  覆盖前提示
+    -r  递归复制目录及其子目录内的所有内容（拷贝目录时必须）
+    -T  将目标目录视作普通文件
+```
+
+#### （4）rm
 
 ```sh
 # 删除文件 & 目录
@@ -698,31 +725,7 @@ Options:
 注：默认 rm 不会删除目录，使用 rm -r 删除目录及其内容
 ```
 
-#### （4）cp
-
-```sh
-# 拷贝文件 & 目录
-cp [Options] <源文件> <目标文件>
-
-Options:
-    -i  覆盖前提示
-    -r  递归复制目录及其子目录内的所有内容（拷贝目录时必须）
-    -T  将目标目录视作普通文件
-```
-
-#### （5）scp
-
-```sh
-# 拷贝到远程
-scp -P port <文件> user@host:File
-
-例：scp my.ini root@192.168.0.159:/usr/mysql/
-
-# 从远程到本机
-scp root@192.168.0.159:/etc/hosts ./
-```
-
-#### （6）mv
+#### （5）mv
 
 ```sh
 # 重命名或移动文件 & 文件夹
@@ -736,7 +739,31 @@ mv [选项] 源文件 目标文件
 注：指定 -i、-f、-n 中的多个时，仅最后一个生效。
 ```
 
-#### （7）ln
+#### （6）basename & dirname
+
+```sh
+# 取得文件名
+$ basename /etc/sysconfig/network
+network 
+
+# 取得目录名
+$ dirname /etc/sysconfig/network
+/etc/sysconfig
+```
+
+#### （7）scp
+
+```sh
+# 拷贝到远程
+scp -P port <文件> user@host:File
+
+例：scp my.ini root@192.168.0.159:/usr/mysql/
+
+# 从远程到本机
+scp root@192.168.0.159:/etc/hosts ./
+```
+
+#### （8）ln
 
 > 硬链接（hard link）
 
@@ -855,9 +882,164 @@ $ cd /data/database/ && ll taxonomy
 lrwxrwxrwx 1 dell dell 14 5月  20 12:06 taxonomy -> /data/taxonomy/
 ```
 
-### 6、查找文件
+## 
 
-#### （1）grep
+### 3、文件内容查看
+
+#### （1）cat & tac
+
+```sh
+# 将<文件>或标准输入组合输出到标准输出
+cat [Options] <文件, ...>
+
+Options:
+    -b  对非空行进行编号
+    -n  对所有行进行编号（包含空行）
+    
+注：
+    如果没有指定文件，或者文件为 `-`，则从标准输入读取。
+    与 more 结合，翻页显示 cat <File> | more
+
+# 倒序输出 cat
+tac [Options] <文件, ...>
+```
+
+#### （2）more & less
+
+```sh
+# 分页显示文件内容（留痕）
+more [Options] <文件 ,...>
+
+说明：
+    more 指令是一个基于 VI 编辑器的文本过滤器，它以全屏幕的方式按页显示文本内容。
+    【其它命令 | more】：分页显示其它命令执行的结果。
+    more 内置了若干快捷键（交互指令）：
+    |--------|------------------|
+    | space  | 向下翻一页         |
+    | Enter  | 向下翻一行         |
+    | q      | 退出（结束分页）    |
+    | Ctrl+F | 向下滚动一屏       |
+    | Ctrl+B | 返回上一屏         |
+    | =      | 输出当前行号       |
+    | :f     | 输出文件名和当前行号 |
+    |--------|------------------|
+
+
+
+# 与 more 功能一样（动态加载）
+less [选项] 文件名
+
+说明：
+    其它命令 | less：分页显示其它命令执行的结果
+```
+
+#### （3）head & tail
+
+```sh
+# 打印每个文件的【前】 n 行（默认10行）
+head [Options] <文件, ...>
+
+Options：
+    -c, --bytes   打印前 c 字节
+    -n, --lines   打印前 n 行
+
+
+# 打印每个文件的【后】 n 行（默认10行）
+tail [Options] <文件, ...>
+
+Options：
+    -c, --bytes   打印前 c 字节
+    -n, --lines   打印前 n 行
+    -f, --follow  监听文件的更新
+    -F            等同 --follow=name --retry
+        --max-unchanged-stats=N  with -f，重新打开一个在迭代 N 次（默认5）后没有更改大小的 FILE，检查它是否已被取消链接或重命名（旋转日志）。
+        --pid=PID                with -f，在 PID 终止后进程终止
+        --retry                  若文件无法访问，重试
+```
+
+#### （4）od
+
+```
+用法：od [选项]... [文件]...
+　或：od [-abcdfilosx]... [文件] [[+]偏移量[.][b]]
+　或：od --traditional [选项]... [文件] [[+]偏移量[.][b] [+][标签][.][b]]
+
+以无歧义的表示方式将指定文件输出至标准输出，默认为八进制字节形式。
+如果指定了多于一个文件，将它们以列出的顺序连接起来作为输入。
+
+如果没有指定文件，或者文件为"-"，则从标准输入读取。
+
+如果两个调用格式都适用，系统会在最后一个运算量以"+"或数字开始
+(如果有两个运算量)的情况下采用第二种格式。
+偏移量是指 -j 偏移量。标签是第一个字节的伪地址，
+随着累积过程递增。偏移量和标签如果冠以"0x"或"0X"前缀则
+表示十六进制数；后缀"."代表八进制数，后缀"b"表示乘以 512。
+
+必选参数对长短选项同时适用。
+  -A, --address-radix=RADIX   output format for file offsets; RADIX is one
+                                of [doxn], for Decimal, Octal, Hex or None
+      --endian={big|little}   swap input bytes according the specified order
+  -j, --skip-bytes=BYTES      skip BYTES input bytes first
+  -N, --read-bytes=BYTES      limit dump to BYTES input bytes
+  -S BYTES, --strings[=BYTES]  output strings of at least BYTES graphic chars;
+                                3 is implied when BYTES is not specified
+  -t, --format=TYPE           select output format or formats
+  -v, --output-duplicates     do not use * to mark line suppression
+  -w[BYTES], --width[=BYTES]  output BYTES bytes per output line;
+                                32 is implied when BYTES is not specified
+      --traditional           accept arguments in third form above
+      --help            显示此帮助信息并退出
+      --version         显示版本信息并退出
+
+
+传统格式命令可混合使用，不同的格式可叠加：
+  -a   即 -t a， 使用命名的字符，忽略高阶位
+  -b   即 -t o1，使用八进制单字节字符
+  -c   即 -t c， 使用可打印字符或者反斜杠转义的特殊字符
+  -d   即 -t u2，使用无符号十进制双字节字符
+  -f    即 -t fF，指定浮点数对照输出格式
+  -i    即 -t dl，指定十进制整数对照输出格式
+  -l    即 -t dL，指定十进制长整数对照输出格式
+  -o    即 -t o2，指定双字节单位八进制数的对照输出格式
+  -s    即 -t d2，指定双字节单位十进制数的对照输出格式
+  -x    即 -t x2，指定双字节单位十六进制数的对照输出格式
+
+
+TYPE is made up of one or more of these specifications:
+  a          named character, ignoring high-order bit
+  c          printable character or backslash escape
+  d[SIZE]    signed decimal, SIZE bytes per integer
+  f[SIZE]    floating point, SIZE bytes per float
+  o[SIZE]    octal, SIZE bytes per integer
+  u[SIZE]    unsigned decimal, SIZE bytes per integer
+  x[SIZE]    hexadecimal, SIZE bytes per integer
+
+SIZE is a number.  For TYPE in [doux], SIZE may also be C for
+sizeof(char), S for sizeof(short), I for sizeof(int) or L for
+sizeof(long).  If TYPE is f, SIZE may also be F for sizeof(float), D
+for sizeof(double) or L for sizeof(long double).
+
+Adding a z suffix to any type displays printable characters at the end of
+each output line.
+
+
+BYTES is hex with 0x or 0X prefix, and may have a multiplier suffix:
+  b    512
+  KB   1000
+  K    1024
+  MB   1000*1000
+  M    1024*1024
+and so on for G, T, P, E, Z, Y.
+```
+
+#### （5）nl
+
+```
+用法：nl [选项]... [文件]...
+将指定的各个<文件>添加行号标注后写到标准输出。
+```
+
+#### （6）grep
 
 ```sh
 grep [OPTIONS...] PATTERN [FILE...]
@@ -959,34 +1141,164 @@ dev:x:1000:1000:DEV,,,:/home/dev:/bin/bash
 root:x:0:
 ```
 
-#### （2）find
+### 4、默认权限与隐藏权限
 
+#### （1）umask 
+
+```sh
+# 查看或设置 umask 的值，用来确定创建文件的默认权限。
+umask [-p] [-S] [模式]
+
+    显示或设定文件模式掩码。
+
+    选项：
+      -p        如果省略 MODE 模式，以可重用为输入的格式输入
+      -S        以符号形式输出，否则以八进制数格式输出
+
+
+# 以八进制形式输出 umask
+$ umask
+0002
+
+# 以符号形式输出 umask
+$ umask -S
+u=rwx,g=rwx,o=rx
+
+# 设置 umask
+$ umask 0022
+$ umask -S
+u=rwx,g=rx,o=rx
+
+
+# umask 与文件和目录的权限关系：
+  umask: 0022 => 000 010 010
+  创建目录的权限 => rwx r-x r-x （取反）
+  创建文件的权限 => rw- r-- r-- （目录的权限去掉 x）
+	
+
+# 修改配置文件（永久生效）：
+  所有用户：/etc/profile
+  单个用户：~/.profile 或 ~/.bash_profile
 ```
-find [-H] [-L] [-P] [-Olevel] [-D help|tree|search|stat|rates|opt|exec] [path...] [expression]
 
-find [目录] [条件] [动作]
+#### （2）lsattr 
 
-目录：所要搜索的目录及其所有子目录。默认为当前目录。
+```sh
+# 显示文件隐藏属性
+lsattr [-RVadlv] [files...]
 
-条件：所要搜索的文件特征。
+Options:
+    -a  显示所有文件和目录的属性，包括隐藏属性。
+    -d  只显示目录的属性，而不是其中的文件。
+    -R  递归显示所有子目录的属性。
+    -v  显示文件或目录的版本信息。
 
-动作：对搜索结果进行特定的处理。
-
-选项：
-    -name     指定文件名，可以通过*模糊匹配
-    -type     指定文件类型（b/c/d/p/l/f）
-    -size     指定文件大小，+表示大于，-表示小于
-    -user     指定用户
-    -group    指定组
-    -mtime/atime/ctime  指定修改/访问/创建时间，单位为天，+表示几天前，-表示几天内
-    -mmin/amin/cmin     同上，单位为分钟
-
-例：
-    find：查找当前目录下的所有文件。
-    find -name '*.log' ：查找 .log 文件。
+# 显示根目录（/）的隐藏属性
+$ lsattr -d /
+--------------e----- /
 ```
 
-#### （3）whereis
+#### （3）chattr
+
+```sh
+# 修改文件隐藏属性，提高系统的稳定性
+chattr [-RVf] [-+=aAcCdDeijsStTu] [-v version] files...
+
+操作：
+    +  增加某一个特殊参数，其他原本存在参数则不动。
+    -  移除某一个特殊参数，其他原本存在参数则不动。
+    =  设置一定，且仅有后面接的参数
+
+参数：
+  A  存取此文件（或目录）时，他的存取时间 atime 将不会被修改，可避免 I/O 较慢的机器过度的存取磁盘。
+     （目前建议使用文件系统挂载参数处理这个项目）
+  S  默认文件是非同步写入磁盘的， 加 S 属性后，文件的修改会同步写入磁盘中。
+  a  文件将只能增加数据，而不能删除也不能修改数据，只有 root 才能设置这属性。
+  c  自动的将此文件压缩，在读取的时候将会自动解压缩，但是在储存的时候，将会先进行压缩后再储存。
+  d  当 dump 程序被执行的时候，设置 d 属性将可使该文件（或目录）不会被 dump 备份
+  i  文件不能被删除、改名、设置链接，无法新增数据，提高系统安全性，只有 root 能设置此属性。
+  s  如果这个文件被删除，他将会被完全的移除出这个硬盘空间，完全无法挽救。
+  u  与 s 相反的，如果该文件被删除了，则数据内容其实还存在磁盘中，可以使用来救援该文件。
+  
+注意1：属性设置常见的是 a 与 i 的设置值，而且很多设置值必须要身为 root 才能设置
+注意2：xfs 文件系统仅支持 AadiS 而已
+
+# 设置 ssh 免登文件不可被修改
+$ lsattr ~/.ssh/authorized_keys
+--------------e----- /home/dev/.ssh/authorized_keys
+# +i 属性
+$ sudo chattr +i ~/.ssh/authorized_keys
+# 再次查看
+$ lsattr ~/.ssh/authorized_keys
+----i---------e----- /home/dev/.ssh/authorized_keys
+```
+
+#### （4）特殊权限：SUID, SGID, SBIT
+
+```sh
+# /tmp 的特殊权限 t
+# /usr/bin/passwd 的特殊权限 s
+$ ls -ld /tmp ; ls -l /usr/bin/passwd
+drwxrwxrwt 16 root root 4096 7月  10 17:26 /tmp
+-rwsr-xr-x 1 root root 68208 2月   6 20:49 /usr/bin/passwd
+
+# SUID
+# 当 s 标志出现在文件拥有者的 x 权限上时，就被称为 Set UID，简称为 SUID 的特殊权限。
+# SUID 的限制与功能：
+# SUID 权限仅对二进制程序（binary program）有效；
+# 执行者对于该程序需要具有 x 的可执行权限；
+# 本权限仅在执行该程序的过程中有效 （run-time）；
+# 执行者将具有该程序拥有者 （owner） 的权限。
+
+# SGID
+# 当 s 标志出现在群组的 x 权限上时，则称为 Set GID, 简称 SGID 的特殊权限。
+# SGID 对二进制程序有用；
+# 程序执行者对于该程序来说，需具备 x 的权限；
+# 执行者在执行的过程中将会获得该程序群组的支持！
+```
+
+#### （5）file
+
+```sh
+# 文件类型查看
+$ file README
+README: ASCII text
+```
+
+
+
+### 5、指令与文件搜寻
+
+#### （1）which
+
+```sh
+# 在环境变量 $PATH 中搜索指定命令的绝对路径，并返回第一个匹配的结果
+# 使用 which 可以检查某个命令是否存在，以及执行的到底是哪个命令
+
+Usage: which [-a] <COMMAND...>
+
+Options:
+    -a  显示所有匹配的位置
+
+# 查看 which 的所有位置
+> which -a which
+/usr/bin/which
+/bin/which
+
+# 查看 docker 的绝对路径
+> which docker
+/usr/bin/docker
+
+# 查找 history 的位置【找不到】
+# 因为 history 是 bash 内置的指令，不在 $PATH 变量中
+$ which -a history
+
+# 通过 type 查看
+$ type history
+history 是 shell 内嵌
+```
+
+#### （2）whereis
 
 ```sh
 whereis [Options] [-BMS <dir>... -f] <file>
@@ -1001,7 +1313,7 @@ Options：
  -s        只搜索源代码
  -S <目录>  定义源代码查找路径
  -f        终止 <目录> 参数列表
- -u        搜索不常见记录
+ -u        搜寻不在上述三个项目当中的其他特殊文件
  -l        输出有效查找路径
 
 # bash: 程序、bash路径、bash的man手册路径
@@ -1021,28 +1333,798 @@ bash:
 bash: /usr/bin/bash /etc/bash.bashrc
 ```
 
-#### （4）which
+#### （3）locate & updatedb
+
+```sh
+# 在 mlocate 数据库中搜索条目
+locate [OPTION]... [PATTERN]...
+
+  -A, --all              only print entries that match all patterns
+  -b, --basename         match only the base name of path names
+  -c, --count            仅打印找到的条目数
+  -d, --database DBPATH  use DBPATH instead of default database (which is
+                         /var/lib/mlocate/mlocate.db)
+  -e, --existing         only print entries for currently existing files
+  -L, --follow           follow trailing symbolic links when checking file
+                         existence (default)
+  -i, --ignore-case      匹配模式时忽略大小写差异
+  -l, --limit, -n LIMIT  限制输出（或 count）数量
+  -m, --mmap             ignored, for backward compatibility
+  -P, --nofollow, -H     don't follow trailing symbolic links when checking file
+                         existence
+  -0, --null             separate entries with NUL on output
+  -S, --statistics       不搜索条目，打印每个已使用数据库的统计信息
+  -q, --quiet            report no error messages about reading databases
+  -r, --regexp REGEXP    基本正则表达式
+      --regex            扩展正则表达式
+  -s, --stdio            ignored, for backward compatibility
+  -V, --version          print version information
+  -w, --wholename        match whole path name (default)
+
+# 找出系统中的所有 authorized_keys 文件
+$  locate authorized_keys
+/root/.ssh/authorized_keys
+/usr/share/augeas/lenses/dist/authorized_keys.aug
+
+# 打印数据库信息
+$ locate -S
+数据库 /var/lib/mlocate/mlocate.db:
+        204,134 文件夹
+        4,206,252 文件
+        575,053,251 文件名中的字节数
+        89,983,518 字节用于存储数据库
+
+# 新建文件
+$ touch new_ycz
+# 找不到
+# 因为数据默认每天更新一次（CentOS-7）
+$ locate new_ycz
+# 手动更新数据库，再次查找
+# 根据 /etc/updatedb.conf 配置文件搜寻系统硬盘内的文件名
+# 并更新 /var/lib/mlocate 内的数据库文件
+$ updatedb
+$ locate new_ycz
+/data/wwwroot/test.ssns-api/new_ycz
+```
+
+#### （4）find
+
+```sh
+find [-H] [-L] [-P] [-Olevel] [-D help|tree|search|stat|rates|opt|exec] [path...] [expression]
+
+find [PATH] [Options] [Action]
+
+Options：
+# 时间相关：
+  -mtime, -atime, -ctime  修改时间/访问时间/创建时间，单位：天，+表示几天前，-表示几天内
+    mtime -4    列出 4 天内被修改过的文件（ ≤n 天）
+    mtime 4     列出第 4~5 天之间被修改过的文件（ (n, n+1] 天 ）
+    mtime +4    列出 5 天前被修改过的文件（ ≥n+1 天）
+  -mmin, -amin, -cmin     修改时间/访问时间/创建时间，单位：分钟
+    mmin -m    m 分钟内
+    mmin m     (m, m+1] 分钟之间
+    mmin +m    m+1 分钟之前
+
+# 时间相关选项的参数（+ - =）图解：
+      ←  +4  →  │ 4 |   ←  -4  →    |
+  ←─────────────┴───┴───┴───┴───┴───┘
+          n ... 5   4   3   2   1   0
+
+# 用户&用户组相关：
+  -uid <uid>, -user <name>     按文件所属者查找
+  -gid <gid>, -group <name>    按文件所属组查找
+  -nouser                      查找无归属者的文件
+  -nogroup                     查找无归属组的文件
+
+# 文件权限及名称相关：
+  -name <file>        按文件名搜索（可以通过*模糊匹配）
+  -size [+-]<SIZE>    按文件大小搜索：大于(+)、小于(-)或等于 SIZE 的文件
+                      （单位：c 代表 Byte，k 代表 KB, M 代表 MB）
+  -type               按文件类型搜索（f/b/c/d/p/l）
+                      普通文件(f) 设备文件(b,c) 目录(d) 链接文件(l) socket(s) FIFO(p)
+  -perm <mode>        搜索文件权限完全等于 mode 的文件
+  -perm <-mode>       搜索文件权限包含 mode 的文件
+  -perm </mode>       搜索文件权限包含任一 mode 的文件
+
+# 额外：
+  -exec cmd \;        对 find 的结果执行 cmd，注意 -exec 的结束标志为 `;`
+  -print              打印到屏幕上（默认）
+
+# ==============
+#  1 时间相关选项
+# ==============
+
+# 查找当前目录下的所有文件
+$ find
+
+# 查找 /etc 目录下，1 天内被修改过的文件
+$ find /etc -mtime -1
+# 或
+$ find /etc -mtime 0
+
+# 查找 /etc 目录下，日期比 /etc/passwd 新的文件
+$ find /etc -newer /etc/passwd
+
+# ====================
+#  2 用户&用户组相关选项
+# ====================
+
+# 查找 /etc 目录下，归属 root 的文件
+$ find /etc -uid 0
+# 或
+$ find /etc -user root
+
+# 查找 /etc 目录下，没有归属者的文件
+$ find /etc -nouser
+
+# ======================
+#  3 文件权限及名称相关选项
+# ======================
+
+# 查找 /etc 目录下，文件名为 passwd 的文件
+$ find /etc -name passwd
+/etc/passwd
+/etc/pam.d/passwd
+
+# 查找当前目录下的.log 文件
+$ find -name *.log
+./log/2024-06-20_db.log
+./log/2024-06-21_db.log
+
+# 查找当前目录下 size < 1024B 的文件
+$ find -size -1024c
+
+# 查找当前目录下 size 等于 4K 的文件
+$ find -size 4k
+
+# 查找当前目录下的文件夹
+$ find -type d
+
+# ===========
+#  4 额外选项
+# ===========
+
+# find 的结果会被放置到 {} 位置中
+# -exec 的结束符是 \;
+# find 的额外动作就是：ls -l {find result}
+$ sudo find /etc -name passwd -exec ls -l {} \;
+-rw-r--r-- 1 root root 3280 7月   1 16:24 /etc/passwd
+-rw-r--r-- 1 root root 92 2月   7  2020 /etc/pam.d/passwd
+```
+
+> find 按 perm 权限搜索专栏
+
+```sh
+# 生成 perm 文件的 Shell 脚本（文件名为 perm 的八进制形式）
+
+$ vim gen_perm_file.sh
+
+#!/bin/bash
+
+for u in {0..7}
+do
+    for g in {0..7}
+    do
+        for o in {0..7}
+        do
+            perm=$(printf "%03d" $[$u*100+$g*10+$o])
+            # echo $perm
+            touch $perm
+            chmod $perm $perm
+        done
+    done
+done
+
+# 生成 perm 文件（512 个）
+$ bash gen_perm_file.sh
+
+# 查看文件数量（包含一个 gen_perm_file.sh）
+$ ls -l | grep ^- | wc -l
+513
+
+# 3.1 完全匹配
+# 查找权限为 644 的文件
+#  仅匹配 rw-r--r--
+$ find -perm 644
+./644
+
+# 3.2 包含匹配
+# 查找权限包含 644 的文件（匹配权限 >= 644 的文件）
+#  匹配 '[6,7][4,5,6,7][4,5,6,7]' => 32
+$  find -perm -644 | sort
+./644
+./645
+./646
+./647
+./654
+./655
+./656
+./657
+./664
+./665
+./666
+./667
+./674
+./675
+./676
+./677
+./744
+./745
+./746
+./747
+./754
+./755
+./756
+./757
+./764
+./765
+./766
+./767
+./774
+./775
+./776
+
+
+# 3.3 包含任一匹配
+#  匹配 644 => rw-r--r--
+#  即匹配 [user 有 rw 权限的] 或 [group 有 r 权限的] 或 [other 有 r 权限的]
+$ find -perm /644
+
+# 搜索归属者有 x 权限的文件
+# 匹配：'[1,3,5,7][0-7][0-7]' => 4*8*8 = 256个
+#  --x******
+#  -wx******
+#  rwx******
+$ find -perm /100 | sort | wc -l
+
+# 搜索归属者有 w 或 x 权限的文件
+# 匹配 '[1,2,3,5,6,7][0-7][0-7]' => 6*8*8 = 384个
+#  --x******
+#  -w-******
+#  -wx******
+#  r-x******
+#  rw-******
+#  rwx******
+$ find -perm /300 | sort | wc -l
+```
+
+> 列出所有情况的权限文件
+
+```sh
+$ ll
+---------- 1 dev dev     0 7月  12 09:55 000
+---------x 1 dev dev     0 7月  12 09:55 001*
+--------w- 1 dev dev     0 7月  12 09:55 002
+--------wx 1 dev dev     0 7月  12 09:55 003*
+-------r-- 1 dev dev     0 7月  12 09:55 004
+-------r-x 1 dev dev     0 7月  12 09:55 005*
+-------rw- 1 dev dev     0 7月  12 09:55 006
+-------rwx 1 dev dev     0 7月  12 09:55 007*
+------x--- 1 dev dev     0 7月  12 09:55 010*
+------x--x 1 dev dev     0 7月  12 09:55 011*
+------x-w- 1 dev dev     0 7月  12 09:55 012*
+------x-wx 1 dev dev     0 7月  12 09:55 013*
+------xr-- 1 dev dev     0 7月  12 09:55 014*
+------xr-x 1 dev dev     0 7月  12 09:55 015*
+------xrw- 1 dev dev     0 7月  12 09:55 016*
+------xrwx 1 dev dev     0 7月  12 09:55 017*
+-----w---- 1 dev dev     0 7月  12 09:55 020
+-----w---x 1 dev dev     0 7月  12 09:55 021*
+-----w--w- 1 dev dev     0 7月  12 09:55 022
+-----w--wx 1 dev dev     0 7月  12 09:55 023*
+-----w-r-- 1 dev dev     0 7月  12 09:55 024
+-----w-r-x 1 dev dev     0 7月  12 09:55 025*
+-----w-rw- 1 dev dev     0 7月  12 09:55 026
+-----w-rwx 1 dev dev     0 7月  12 09:55 027*
+-----wx--- 1 dev dev     0 7月  12 09:55 030*
+-----wx--x 1 dev dev     0 7月  12 09:55 031*
+-----wx-w- 1 dev dev     0 7月  12 09:55 032*
+-----wx-wx 1 dev dev     0 7月  12 09:55 033*
+-----wxr-- 1 dev dev     0 7月  12 09:55 034*
+-----wxr-x 1 dev dev     0 7月  12 09:55 035*
+-----wxrw- 1 dev dev     0 7月  12 09:55 036*
+-----wxrwx 1 dev dev     0 7月  12 09:55 037*
+----r----- 1 dev dev     0 7月  12 09:55 040
+----r----x 1 dev dev     0 7月  12 09:55 041*
+----r---w- 1 dev dev     0 7月  12 09:55 042
+----r---wx 1 dev dev     0 7月  12 09:55 043*
+----r--r-- 1 dev dev     0 7月  12 09:55 044
+----r--r-x 1 dev dev     0 7月  12 09:55 045*
+----r--rw- 1 dev dev     0 7月  12 09:55 046
+----r--rwx 1 dev dev     0 7月  12 09:55 047*
+----r-x--- 1 dev dev     0 7月  12 09:55 050*
+----r-x--x 1 dev dev     0 7月  12 09:55 051*
+----r-x-w- 1 dev dev     0 7月  12 09:55 052*
+----r-x-wx 1 dev dev     0 7月  12 09:55 053*
+----r-xr-- 1 dev dev     0 7月  12 09:55 054*
+----r-xr-x 1 dev dev     0 7月  12 09:55 055*
+----r-xrw- 1 dev dev     0 7月  12 09:55 056*
+----r-xrwx 1 dev dev     0 7月  12 09:55 057*
+----rw---- 1 dev dev     0 7月  12 09:55 060
+----rw---x 1 dev dev     0 7月  12 09:55 061*
+----rw--w- 1 dev dev     0 7月  12 09:55 062
+----rw--wx 1 dev dev     0 7月  12 09:55 063*
+----rw-r-- 1 dev dev     0 7月  12 09:55 064
+----rw-r-x 1 dev dev     0 7月  12 09:55 065*
+----rw-rw- 1 dev dev     0 7月  12 09:55 066
+----rw-rwx 1 dev dev     0 7月  12 09:55 067*
+----rwx--- 1 dev dev     0 7月  12 09:55 070*
+----rwx--x 1 dev dev     0 7月  12 09:55 071*
+----rwx-w- 1 dev dev     0 7月  12 09:55 072*
+----rwx-wx 1 dev dev     0 7月  12 09:55 073*
+----rwxr-- 1 dev dev     0 7月  12 09:55 074*
+----rwxr-x 1 dev dev     0 7月  12 09:55 075*
+----rwxrw- 1 dev dev     0 7月  12 09:55 076*
+----rwxrwx 1 dev dev     0 7月  12 09:55 077*
+---x------ 1 dev dev     0 7月  12 09:55 100*
+---x-----x 1 dev dev     0 7月  12 09:55 101*
+---x----w- 1 dev dev     0 7月  12 09:55 102*
+---x----wx 1 dev dev     0 7月  12 09:55 103*
+---x---r-- 1 dev dev     0 7月  12 09:55 104*
+---x---r-x 1 dev dev     0 7月  12 09:55 105*
+---x---rw- 1 dev dev     0 7月  12 09:55 106*
+---x---rwx 1 dev dev     0 7月  12 09:55 107*
+---x--x--- 1 dev dev     0 7月  12 09:55 110*
+---x--x--x 1 dev dev     0 7月  12 09:55 111*
+---x--x-w- 1 dev dev     0 7月  12 09:55 112*
+---x--x-wx 1 dev dev     0 7月  12 09:55 113*
+---x--xr-- 1 dev dev     0 7月  12 09:55 114*
+---x--xr-x 1 dev dev     0 7月  12 09:55 115*
+---x--xrw- 1 dev dev     0 7月  12 09:55 116*
+---x--xrwx 1 dev dev     0 7月  12 09:55 117*
+---x-w---- 1 dev dev     0 7月  12 09:55 120*
+---x-w---x 1 dev dev     0 7月  12 09:55 121*
+---x-w--w- 1 dev dev     0 7月  12 09:55 122*
+---x-w--wx 1 dev dev     0 7月  12 09:55 123*
+---x-w-r-- 1 dev dev     0 7月  12 09:55 124*
+---x-w-r-x 1 dev dev     0 7月  12 09:55 125*
+---x-w-rw- 1 dev dev     0 7月  12 09:55 126*
+---x-w-rwx 1 dev dev     0 7月  12 09:55 127*
+---x-wx--- 1 dev dev     0 7月  12 09:55 130*
+---x-wx--x 1 dev dev     0 7月  12 09:55 131*
+---x-wx-w- 1 dev dev     0 7月  12 09:55 132*
+---x-wx-wx 1 dev dev     0 7月  12 09:55 133*
+---x-wxr-- 1 dev dev     0 7月  12 09:55 134*
+---x-wxr-x 1 dev dev     0 7月  12 09:55 135*
+---x-wxrw- 1 dev dev     0 7月  12 09:55 136*
+---x-wxrwx 1 dev dev     0 7月  12 09:55 137*
+---xr----- 1 dev dev     0 7月  12 09:55 140*
+---xr----x 1 dev dev     0 7月  12 09:55 141*
+---xr---w- 1 dev dev     0 7月  12 09:55 142*
+---xr---wx 1 dev dev     0 7月  12 09:55 143*
+---xr--r-- 1 dev dev     0 7月  12 09:55 144*
+---xr--r-x 1 dev dev     0 7月  12 09:55 145*
+---xr--rw- 1 dev dev     0 7月  12 09:55 146*
+---xr--rwx 1 dev dev     0 7月  12 09:55 147*
+---xr-x--- 1 dev dev     0 7月  12 09:55 150*
+---xr-x--x 1 dev dev     0 7月  12 09:55 151*
+---xr-x-w- 1 dev dev     0 7月  12 09:55 152*
+---xr-x-wx 1 dev dev     0 7月  12 09:55 153*
+---xr-xr-- 1 dev dev     0 7月  12 09:55 154*
+---xr-xr-x 1 dev dev     0 7月  12 09:55 155*
+---xr-xrw- 1 dev dev     0 7月  12 09:55 156*
+---xr-xrwx 1 dev dev     0 7月  12 09:55 157*
+---xrw---- 1 dev dev     0 7月  12 09:55 160*
+---xrw---x 1 dev dev     0 7月  12 09:55 161*
+---xrw--w- 1 dev dev     0 7月  12 09:55 162*
+---xrw--wx 1 dev dev     0 7月  12 09:55 163*
+---xrw-r-- 1 dev dev     0 7月  12 09:55 164*
+---xrw-r-x 1 dev dev     0 7月  12 09:55 165*
+---xrw-rw- 1 dev dev     0 7月  12 09:55 166*
+---xrw-rwx 1 dev dev     0 7月  12 09:55 167*
+---xrwx--- 1 dev dev     0 7月  12 09:55 170*
+---xrwx--x 1 dev dev     0 7月  12 09:55 171*
+---xrwx-w- 1 dev dev     0 7月  12 09:55 172*
+---xrwx-wx 1 dev dev     0 7月  12 09:55 173*
+---xrwxr-- 1 dev dev     0 7月  12 09:55 174*
+---xrwxr-x 1 dev dev     0 7月  12 09:55 175*
+---xrwxrw- 1 dev dev     0 7月  12 09:55 176*
+---xrwxrwx 1 dev dev     0 7月  12 09:55 177*
+--w------- 1 dev dev     0 7月  12 09:55 200
+--w------x 1 dev dev     0 7月  12 09:55 201*
+--w-----w- 1 dev dev     0 7月  12 09:55 202
+--w-----wx 1 dev dev     0 7月  12 09:55 203*
+--w----r-- 1 dev dev     0 7月  12 09:55 204
+--w----r-x 1 dev dev     0 7月  12 09:55 205*
+--w----rw- 1 dev dev     0 7月  12 09:55 206
+--w----rwx 1 dev dev     0 7月  12 09:55 207*
+--w---x--- 1 dev dev     0 7月  12 09:55 210*
+--w---x--x 1 dev dev     0 7月  12 09:55 211*
+--w---x-w- 1 dev dev     0 7月  12 09:55 212*
+--w---x-wx 1 dev dev     0 7月  12 09:55 213*
+--w---xr-- 1 dev dev     0 7月  12 09:55 214*
+--w---xr-x 1 dev dev     0 7月  12 09:55 215*
+--w---xrw- 1 dev dev     0 7月  12 09:55 216*
+--w---xrwx 1 dev dev     0 7月  12 09:55 217*
+--w--w---- 1 dev dev     0 7月  12 09:55 220
+--w--w---x 1 dev dev     0 7月  12 09:55 221*
+--w--w--w- 1 dev dev     0 7月  12 09:55 222
+--w--w--wx 1 dev dev     0 7月  12 09:55 223*
+--w--w-r-- 1 dev dev     0 7月  12 09:55 224
+--w--w-r-x 1 dev dev     0 7月  12 09:55 225*
+--w--w-rw- 1 dev dev     0 7月  12 09:55 226
+--w--w-rwx 1 dev dev     0 7月  12 09:55 227*
+--w--wx--- 1 dev dev     0 7月  12 09:55 230*
+--w--wx--x 1 dev dev     0 7月  12 09:55 231*
+--w--wx-w- 1 dev dev     0 7月  12 09:55 232*
+--w--wx-wx 1 dev dev     0 7月  12 09:55 233*
+--w--wxr-- 1 dev dev     0 7月  12 09:55 234*
+--w--wxr-x 1 dev dev     0 7月  12 09:55 235*
+--w--wxrw- 1 dev dev     0 7月  12 09:55 236*
+--w--wxrwx 1 dev dev     0 7月  12 09:55 237*
+--w-r----- 1 dev dev     0 7月  12 09:55 240
+--w-r----x 1 dev dev     0 7月  12 09:55 241*
+--w-r---w- 1 dev dev     0 7月  12 09:55 242
+--w-r---wx 1 dev dev     0 7月  12 09:55 243*
+--w-r--r-- 1 dev dev     0 7月  12 09:55 244
+--w-r--r-x 1 dev dev     0 7月  12 09:55 245*
+--w-r--rw- 1 dev dev     0 7月  12 09:55 246
+--w-r--rwx 1 dev dev     0 7月  12 09:55 247*
+--w-r-x--- 1 dev dev     0 7月  12 09:55 250*
+--w-r-x--x 1 dev dev     0 7月  12 09:55 251*
+--w-r-x-w- 1 dev dev     0 7月  12 09:55 252*
+--w-r-x-wx 1 dev dev     0 7月  12 09:55 253*
+--w-r-xr-- 1 dev dev     0 7月  12 09:55 254*
+--w-r-xr-x 1 dev dev     0 7月  12 09:55 255*
+--w-r-xrw- 1 dev dev     0 7月  12 09:55 256*
+--w-r-xrwx 1 dev dev     0 7月  12 09:55 257*
+--w-rw---- 1 dev dev     0 7月  12 09:55 260
+--w-rw---x 1 dev dev     0 7月  12 09:55 261*
+--w-rw--w- 1 dev dev     0 7月  12 09:55 262
+--w-rw--wx 1 dev dev     0 7月  12 09:55 263*
+--w-rw-r-- 1 dev dev     0 7月  12 09:55 264
+--w-rw-r-x 1 dev dev     0 7月  12 09:55 265*
+--w-rw-rw- 1 dev dev     0 7月  12 09:55 266
+--w-rw-rwx 1 dev dev     0 7月  12 09:55 267*
+--w-rwx--- 1 dev dev     0 7月  12 09:55 270*
+--w-rwx--x 1 dev dev     0 7月  12 09:55 271*
+--w-rwx-w- 1 dev dev     0 7月  12 09:55 272*
+--w-rwx-wx 1 dev dev     0 7月  12 09:55 273*
+--w-rwxr-- 1 dev dev     0 7月  12 09:55 274*
+--w-rwxr-x 1 dev dev     0 7月  12 09:55 275*
+--w-rwxrw- 1 dev dev     0 7月  12 09:55 276*
+--w-rwxrwx 1 dev dev     0 7月  12 09:55 277*
+--wx------ 1 dev dev     0 7月  12 09:55 300*
+--wx-----x 1 dev dev     0 7月  12 09:55 301*
+--wx----w- 1 dev dev     0 7月  12 09:55 302*
+--wx----wx 1 dev dev     0 7月  12 09:55 303*
+--wx---r-- 1 dev dev     0 7月  12 09:55 304*
+--wx---r-x 1 dev dev     0 7月  12 09:55 305*
+--wx---rw- 1 dev dev     0 7月  12 09:55 306*
+--wx---rwx 1 dev dev     0 7月  12 09:55 307*
+--wx--x--- 1 dev dev     0 7月  12 09:55 310*
+--wx--x--x 1 dev dev     0 7月  12 09:55 311*
+--wx--x-w- 1 dev dev     0 7月  12 09:55 312*
+--wx--x-wx 1 dev dev     0 7月  12 09:55 313*
+--wx--xr-- 1 dev dev     0 7月  12 09:55 314*
+--wx--xr-x 1 dev dev     0 7月  12 09:55 315*
+--wx--xrw- 1 dev dev     0 7月  12 09:55 316*
+--wx--xrwx 1 dev dev     0 7月  12 09:55 317*
+--wx-w---- 1 dev dev     0 7月  12 09:55 320*
+--wx-w---x 1 dev dev     0 7月  12 09:55 321*
+--wx-w--w- 1 dev dev     0 7月  12 09:55 322*
+--wx-w--wx 1 dev dev     0 7月  12 09:55 323*
+--wx-w-r-- 1 dev dev     0 7月  12 09:55 324*
+--wx-w-r-x 1 dev dev     0 7月  12 09:55 325*
+--wx-w-rw- 1 dev dev     0 7月  12 09:55 326*
+--wx-w-rwx 1 dev dev     0 7月  12 09:55 327*
+--wx-wx--- 1 dev dev     0 7月  12 09:55 330*
+--wx-wx--x 1 dev dev     0 7月  12 09:55 331*
+--wx-wx-w- 1 dev dev     0 7月  12 09:55 332*
+--wx-wx-wx 1 dev dev     0 7月  12 09:55 333*
+--wx-wxr-- 1 dev dev     0 7月  12 09:55 334*
+--wx-wxr-x 1 dev dev     0 7月  12 09:55 335*
+--wx-wxrw- 1 dev dev     0 7月  12 09:55 336*
+--wx-wxrwx 1 dev dev     0 7月  12 09:55 337*
+--wxr----- 1 dev dev     0 7月  12 09:55 340*
+--wxr----x 1 dev dev     0 7月  12 09:55 341*
+--wxr---w- 1 dev dev     0 7月  12 09:55 342*
+--wxr---wx 1 dev dev     0 7月  12 09:55 343*
+--wxr--r-- 1 dev dev     0 7月  12 09:55 344*
+--wxr--r-x 1 dev dev     0 7月  12 09:55 345*
+--wxr--rw- 1 dev dev     0 7月  12 09:55 346*
+--wxr--rwx 1 dev dev     0 7月  12 09:55 347*
+--wxr-x--- 1 dev dev     0 7月  12 09:55 350*
+--wxr-x--x 1 dev dev     0 7月  12 09:55 351*
+--wxr-x-w- 1 dev dev     0 7月  12 09:55 352*
+--wxr-x-wx 1 dev dev     0 7月  12 09:55 353*
+--wxr-xr-- 1 dev dev     0 7月  12 09:55 354*
+--wxr-xr-x 1 dev dev     0 7月  12 09:55 355*
+--wxr-xrw- 1 dev dev     0 7月  12 09:55 356*
+--wxr-xrwx 1 dev dev     0 7月  12 09:55 357*
+--wxrw---- 1 dev dev     0 7月  12 09:55 360*
+--wxrw---x 1 dev dev     0 7月  12 09:55 361*
+--wxrw--w- 1 dev dev     0 7月  12 09:55 362*
+--wxrw--wx 1 dev dev     0 7月  12 09:55 363*
+--wxrw-r-- 1 dev dev     0 7月  12 09:55 364*
+--wxrw-r-x 1 dev dev     0 7月  12 09:55 365*
+--wxrw-rw- 1 dev dev     0 7月  12 09:55 366*
+--wxrw-rwx 1 dev dev     0 7月  12 09:55 367*
+--wxrwx--- 1 dev dev     0 7月  12 09:55 370*
+--wxrwx--x 1 dev dev     0 7月  12 09:55 371*
+--wxrwx-w- 1 dev dev     0 7月  12 09:55 372*
+--wxrwx-wx 1 dev dev     0 7月  12 09:55 373*
+--wxrwxr-- 1 dev dev     0 7月  12 09:55 374*
+--wxrwxr-x 1 dev dev     0 7月  12 09:55 375*
+--wxrwxrw- 1 dev dev     0 7月  12 09:55 376*
+--wxrwxrwx 1 dev dev     0 7月  12 09:55 377*
+-r-------- 1 dev dev     0 7月  12 09:55 400
+-r-------x 1 dev dev     0 7月  12 09:55 401*
+-r------w- 1 dev dev     0 7月  12 09:55 402
+-r------wx 1 dev dev     0 7月  12 09:55 403*
+-r-----r-- 1 dev dev     0 7月  12 09:55 404
+-r-----r-x 1 dev dev     0 7月  12 09:55 405*
+-r-----rw- 1 dev dev     0 7月  12 09:55 406
+-r-----rwx 1 dev dev     0 7月  12 09:55 407*
+-r----x--- 1 dev dev     0 7月  12 09:55 410*
+-r----x--x 1 dev dev     0 7月  12 09:55 411*
+-r----x-w- 1 dev dev     0 7月  12 09:55 412*
+-r----x-wx 1 dev dev     0 7月  12 09:55 413*
+-r----xr-- 1 dev dev     0 7月  12 09:55 414*
+-r----xr-x 1 dev dev     0 7月  12 09:55 415*
+-r----xrw- 1 dev dev     0 7月  12 09:55 416*
+-r----xrwx 1 dev dev     0 7月  12 09:55 417*
+-r---w---- 1 dev dev     0 7月  12 09:55 420
+-r---w---x 1 dev dev     0 7月  12 09:55 421*
+-r---w--w- 1 dev dev     0 7月  12 09:55 422
+-r---w--wx 1 dev dev     0 7月  12 09:55 423*
+-r---w-r-- 1 dev dev     0 7月  12 09:55 424
+-r---w-r-x 1 dev dev     0 7月  12 09:55 425*
+-r---w-rw- 1 dev dev     0 7月  12 09:55 426
+-r---w-rwx 1 dev dev     0 7月  12 09:55 427*
+-r---wx--- 1 dev dev     0 7月  12 09:55 430*
+-r---wx--x 1 dev dev     0 7月  12 09:55 431*
+-r---wx-w- 1 dev dev     0 7月  12 09:55 432*
+-r---wx-wx 1 dev dev     0 7月  12 09:55 433*
+-r---wxr-- 1 dev dev     0 7月  12 09:55 434*
+-r---wxr-x 1 dev dev     0 7月  12 09:55 435*
+-r---wxrw- 1 dev dev     0 7月  12 09:55 436*
+-r---wxrwx 1 dev dev     0 7月  12 09:55 437*
+-r--r----- 1 dev dev     0 7月  12 09:55 440
+-r--r----x 1 dev dev     0 7月  12 09:55 441*
+-r--r---w- 1 dev dev     0 7月  12 09:55 442
+-r--r---wx 1 dev dev     0 7月  12 09:55 443*
+-r--r--r-- 1 dev dev     0 7月  12 09:55 444
+-r--r--r-x 1 dev dev     0 7月  12 09:55 445*
+-r--r--rw- 1 dev dev     0 7月  12 09:55 446
+-r--r--rwx 1 dev dev     0 7月  12 09:55 447*
+-r--r-x--- 1 dev dev     0 7月  12 09:55 450*
+-r--r-x--x 1 dev dev     0 7月  12 09:55 451*
+-r--r-x-w- 1 dev dev     0 7月  12 09:55 452*
+-r--r-x-wx 1 dev dev     0 7月  12 09:55 453*
+-r--r-xr-- 1 dev dev     0 7月  12 09:55 454*
+-r--r-xr-x 1 dev dev     0 7月  12 09:55 455*
+-r--r-xrw- 1 dev dev     0 7月  12 09:55 456*
+-r--r-xrwx 1 dev dev     0 7月  12 09:55 457*
+-r--rw---- 1 dev dev     0 7月  12 09:55 460
+-r--rw---x 1 dev dev     0 7月  12 09:55 461*
+-r--rw--w- 1 dev dev     0 7月  12 09:55 462
+-r--rw--wx 1 dev dev     0 7月  12 09:55 463*
+-r--rw-r-- 1 dev dev     0 7月  12 09:55 464
+-r--rw-r-x 1 dev dev     0 7月  12 09:55 465*
+-r--rw-rw- 1 dev dev     0 7月  12 09:55 466
+-r--rw-rwx 1 dev dev     0 7月  12 09:55 467*
+-r--rwx--- 1 dev dev     0 7月  12 09:55 470*
+-r--rwx--x 1 dev dev     0 7月  12 09:55 471*
+-r--rwx-w- 1 dev dev     0 7月  12 09:55 472*
+-r--rwx-wx 1 dev dev     0 7月  12 09:55 473*
+-r--rwxr-- 1 dev dev     0 7月  12 09:55 474*
+-r--rwxr-x 1 dev dev     0 7月  12 09:55 475*
+-r--rwxrw- 1 dev dev     0 7月  12 09:55 476*
+-r--rwxrwx 1 dev dev     0 7月  12 09:55 477*
+-r-x------ 1 dev dev     0 7月  12 09:55 500*
+-r-x-----x 1 dev dev     0 7月  12 09:55 501*
+-r-x----w- 1 dev dev     0 7月  12 09:55 502*
+-r-x----wx 1 dev dev     0 7月  12 09:55 503*
+-r-x---r-- 1 dev dev     0 7月  12 09:55 504*
+-r-x---r-x 1 dev dev     0 7月  12 09:55 505*
+-r-x---rw- 1 dev dev     0 7月  12 09:55 506*
+-r-x---rwx 1 dev dev     0 7月  12 09:55 507*
+-r-x--x--- 1 dev dev     0 7月  12 09:55 510*
+-r-x--x--x 1 dev dev     0 7月  12 09:55 511*
+-r-x--x-w- 1 dev dev     0 7月  12 09:55 512*
+-r-x--x-wx 1 dev dev     0 7月  12 09:55 513*
+-r-x--xr-- 1 dev dev     0 7月  12 09:55 514*
+-r-x--xr-x 1 dev dev     0 7月  12 09:55 515*
+-r-x--xrw- 1 dev dev     0 7月  12 09:55 516*
+-r-x--xrwx 1 dev dev     0 7月  12 09:55 517*
+-r-x-w---- 1 dev dev     0 7月  12 09:55 520*
+-r-x-w---x 1 dev dev     0 7月  12 09:55 521*
+-r-x-w--w- 1 dev dev     0 7月  12 09:55 522*
+-r-x-w--wx 1 dev dev     0 7月  12 09:55 523*
+-r-x-w-r-- 1 dev dev     0 7月  12 09:55 524*
+-r-x-w-r-x 1 dev dev     0 7月  12 09:55 525*
+-r-x-w-rw- 1 dev dev     0 7月  12 09:55 526*
+-r-x-w-rwx 1 dev dev     0 7月  12 09:55 527*
+-r-x-wx--- 1 dev dev     0 7月  12 09:55 530*
+-r-x-wx--x 1 dev dev     0 7月  12 09:55 531*
+-r-x-wx-w- 1 dev dev     0 7月  12 09:55 532*
+-r-x-wx-wx 1 dev dev     0 7月  12 09:55 533*
+-r-x-wxr-- 1 dev dev     0 7月  12 09:55 534*
+-r-x-wxr-x 1 dev dev     0 7月  12 09:55 535*
+-r-x-wxrw- 1 dev dev     0 7月  12 09:55 536*
+-r-x-wxrwx 1 dev dev     0 7月  12 09:55 537*
+-r-xr----- 1 dev dev     0 7月  12 09:55 540*
+-r-xr----x 1 dev dev     0 7月  12 09:55 541*
+-r-xr---w- 1 dev dev     0 7月  12 09:55 542*
+-r-xr---wx 1 dev dev     0 7月  12 09:55 543*
+-r-xr--r-- 1 dev dev     0 7月  12 09:55 544*
+-r-xr--r-x 1 dev dev     0 7月  12 09:55 545*
+-r-xr--rw- 1 dev dev     0 7月  12 09:55 546*
+-r-xr--rwx 1 dev dev     0 7月  12 09:55 547*
+-r-xr-x--- 1 dev dev     0 7月  12 09:55 550*
+-r-xr-x--x 1 dev dev     0 7月  12 09:55 551*
+-r-xr-x-w- 1 dev dev     0 7月  12 09:55 552*
+-r-xr-x-wx 1 dev dev     0 7月  12 09:55 553*
+-r-xr-xr-- 1 dev dev     0 7月  12 09:55 554*
+-r-xr-xr-x 1 dev dev     0 7月  12 09:55 555*
+-r-xr-xrw- 1 dev dev     0 7月  12 09:55 556*
+-r-xr-xrwx 1 dev dev     0 7月  12 09:55 557*
+-r-xrw---- 1 dev dev     0 7月  12 09:55 560*
+-r-xrw---x 1 dev dev     0 7月  12 09:55 561*
+-r-xrw--w- 1 dev dev     0 7月  12 09:55 562*
+-r-xrw--wx 1 dev dev     0 7月  12 09:55 563*
+-r-xrw-r-- 1 dev dev     0 7月  12 09:55 564*
+-r-xrw-r-x 1 dev dev     0 7月  12 09:55 565*
+-r-xrw-rw- 1 dev dev     0 7月  12 09:55 566*
+-r-xrw-rwx 1 dev dev     0 7月  12 09:55 567*
+-r-xrwx--- 1 dev dev     0 7月  12 09:55 570*
+-r-xrwx--x 1 dev dev     0 7月  12 09:55 571*
+-r-xrwx-w- 1 dev dev     0 7月  12 09:55 572*
+-r-xrwx-wx 1 dev dev     0 7月  12 09:55 573*
+-r-xrwxr-- 1 dev dev     0 7月  12 09:55 574*
+-r-xrwxr-x 1 dev dev     0 7月  12 09:55 575*
+-r-xrwxrw- 1 dev dev     0 7月  12 09:55 576*
+-r-xrwxrwx 1 dev dev     0 7月  12 09:55 577*
+-rw------- 1 dev dev     0 7月  12 09:55 600
+-rw------x 1 dev dev     0 7月  12 09:55 601*
+-rw-----w- 1 dev dev     0 7月  12 09:55 602
+-rw-----wx 1 dev dev     0 7月  12 09:55 603*
+-rw----r-- 1 dev dev     0 7月  12 09:55 604
+-rw----r-x 1 dev dev     0 7月  12 09:55 605*
+-rw----rw- 1 dev dev     0 7月  12 09:55 606
+-rw----rwx 1 dev dev     0 7月  12 09:55 607*
+-rw---x--- 1 dev dev     0 7月  12 09:55 610*
+-rw---x--x 1 dev dev     0 7月  12 09:55 611*
+-rw---x-w- 1 dev dev     0 7月  12 09:55 612*
+-rw---x-wx 1 dev dev     0 7月  12 09:55 613*
+-rw---xr-- 1 dev dev     0 7月  12 09:55 614*
+-rw---xr-x 1 dev dev     0 7月  12 09:55 615*
+-rw---xrw- 1 dev dev     0 7月  12 09:55 616*
+-rw---xrwx 1 dev dev     0 7月  12 09:55 617*
+-rw--w---- 1 dev dev     0 7月  12 09:55 620
+-rw--w---x 1 dev dev     0 7月  12 09:55 621*
+-rw--w--w- 1 dev dev     0 7月  12 09:55 622
+-rw--w--wx 1 dev dev     0 7月  12 09:55 623*
+-rw--w-r-- 1 dev dev     0 7月  12 09:55 624
+-rw--w-r-x 1 dev dev     0 7月  12 09:55 625*
+-rw--w-rw- 1 dev dev     0 7月  12 09:55 626
+-rw--w-rwx 1 dev dev     0 7月  12 09:55 627*
+-rw--wx--- 1 dev dev     0 7月  12 09:55 630*
+-rw--wx--x 1 dev dev     0 7月  12 09:55 631*
+-rw--wx-w- 1 dev dev     0 7月  12 09:55 632*
+-rw--wx-wx 1 dev dev     0 7月  12 09:55 633*
+-rw--wxr-- 1 dev dev     0 7月  12 09:55 634*
+-rw--wxr-x 1 dev dev     0 7月  12 09:55 635*
+-rw--wxrw- 1 dev dev     0 7月  12 09:55 636*
+-rw--wxrwx 1 dev dev     0 7月  12 09:55 637*
+-rw-r----- 1 dev dev     0 7月  12 09:55 640
+-rw-r----x 1 dev dev     0 7月  12 09:55 641*
+-rw-r---w- 1 dev dev     0 7月  12 09:55 642
+-rw-r---wx 1 dev dev     0 7月  12 09:55 643*
+-rw-r--r-- 1 dev dev     0 7月  12 09:55 644
+-rw-r--r-x 1 dev dev     0 7月  12 09:55 645*
+-rw-r--rw- 1 dev dev     0 7月  12 09:55 646
+-rw-r--rwx 1 dev dev     0 7月  12 09:55 647*
+-rw-r-x--- 1 dev dev     0 7月  12 09:55 650*
+-rw-r-x--x 1 dev dev     0 7月  12 09:55 651*
+-rw-r-x-w- 1 dev dev     0 7月  12 09:55 652*
+-rw-r-x-wx 1 dev dev     0 7月  12 09:55 653*
+-rw-r-xr-- 1 dev dev     0 7月  12 09:55 654*
+-rw-r-xr-x 1 dev dev     0 7月  12 09:55 655*
+-rw-r-xrw- 1 dev dev     0 7月  12 09:55 656*
+-rw-r-xrwx 1 dev dev     0 7月  12 09:55 657*
+-rw-rw---- 1 dev dev     0 7月  12 09:55 660
+-rw-rw---x 1 dev dev     0 7月  12 09:55 661*
+-rw-rw--w- 1 dev dev     0 7月  12 09:55 662
+-rw-rw--wx 1 dev dev     0 7月  12 09:55 663*
+-rw-rw-r-- 1 dev dev     0 7月  12 09:55 664
+-rw-rw-r-x 1 dev dev     0 7月  12 09:55 665*
+-rw-rw-rw- 1 dev dev     0 7月  12 09:55 666
+-rw-rw-rwx 1 dev dev     0 7月  12 09:55 667*
+-rw-rwx--- 1 dev dev     0 7月  12 09:55 670*
+-rw-rwx--x 1 dev dev     0 7月  12 09:55 671*
+-rw-rwx-w- 1 dev dev     0 7月  12 09:55 672*
+-rw-rwx-wx 1 dev dev     0 7月  12 09:55 673*
+-rw-rwxr-- 1 dev dev     0 7月  12 09:55 674*
+-rw-rwxr-x 1 dev dev     0 7月  12 09:55 675*
+-rw-rwxrw- 1 dev dev     0 7月  12 09:55 676*
+-rw-rwxrwx 1 dev dev     0 7月  12 09:55 677*
+-rwx------ 1 dev dev     0 7月  12 09:55 700*
+-rwx-----x 1 dev dev     0 7月  12 09:55 701*
+-rwx----w- 1 dev dev     0 7月  12 09:55 702*
+-rwx----wx 1 dev dev     0 7月  12 09:55 703*
+-rwx---r-- 1 dev dev     0 7月  12 09:55 704*
+-rwx---r-x 1 dev dev     0 7月  12 09:55 705*
+-rwx---rw- 1 dev dev     0 7月  12 09:55 706*
+-rwx---rwx 1 dev dev     0 7月  12 09:55 707*
+-rwx--x--- 1 dev dev     0 7月  12 09:55 710*
+-rwx--x--x 1 dev dev     0 7月  12 09:55 711*
+-rwx--x-w- 1 dev dev     0 7月  12 09:55 712*
+-rwx--x-wx 1 dev dev     0 7月  12 09:55 713*
+-rwx--xr-- 1 dev dev     0 7月  12 09:55 714*
+-rwx--xr-x 1 dev dev     0 7月  12 09:55 715*
+-rwx--xrw- 1 dev dev     0 7月  12 09:55 716*
+-rwx--xrwx 1 dev dev     0 7月  12 09:55 717*
+-rwx-w---- 1 dev dev     0 7月  12 09:55 720*
+-rwx-w---x 1 dev dev     0 7月  12 09:55 721*
+-rwx-w--w- 1 dev dev     0 7月  12 09:55 722*
+-rwx-w--wx 1 dev dev     0 7月  12 09:55 723*
+-rwx-w-r-- 1 dev dev     0 7月  12 09:55 724*
+-rwx-w-r-x 1 dev dev     0 7月  12 09:55 725*
+-rwx-w-rw- 1 dev dev     0 7月  12 09:55 726*
+-rwx-w-rwx 1 dev dev     0 7月  12 09:55 727*
+-rwx-wx--- 1 dev dev     0 7月  12 09:55 730*
+-rwx-wx--x 1 dev dev     0 7月  12 09:55 731*
+-rwx-wx-w- 1 dev dev     0 7月  12 09:55 732*
+-rwx-wx-wx 1 dev dev     0 7月  12 09:55 733*
+-rwx-wxr-- 1 dev dev     0 7月  12 09:55 734*
+-rwx-wxr-x 1 dev dev     0 7月  12 09:55 735*
+-rwx-wxrw- 1 dev dev     0 7月  12 09:55 736*
+-rwx-wxrwx 1 dev dev     0 7月  12 09:55 737*
+-rwxr----- 1 dev dev     0 7月  12 09:55 740*
+-rwxr----x 1 dev dev     0 7月  12 09:55 741*
+-rwxr---w- 1 dev dev     0 7月  12 09:55 742*
+-rwxr---wx 1 dev dev     0 7月  12 09:55 743*
+-rwxr--r-- 1 dev dev     0 7月  12 09:55 744*
+-rwxr--r-x 1 dev dev     0 7月  12 09:55 745*
+-rwxr--rw- 1 dev dev     0 7月  12 09:55 746*
+-rwxr--rwx 1 dev dev     0 7月  12 09:55 747*
+-rwxr-x--- 1 dev dev     0 7月  12 09:55 750*
+-rwxr-x--x 1 dev dev     0 7月  12 09:55 751*
+-rwxr-x-w- 1 dev dev     0 7月  12 09:55 752*
+-rwxr-x-wx 1 dev dev     0 7月  12 09:55 753*
+-rwxr-xr-- 1 dev dev     0 7月  12 09:55 754*
+-rwxr-xr-x 1 dev dev     0 7月  12 09:55 755*
+-rwxr-xrw- 1 dev dev     0 7月  12 09:55 756*
+-rwxr-xrwx 1 dev dev     0 7月  12 09:55 757*
+-rwxrw---- 1 dev dev     0 7月  12 09:55 760*
+-rwxrw---x 1 dev dev     0 7月  12 09:55 761*
+-rwxrw--w- 1 dev dev     0 7月  12 09:55 762*
+-rwxrw--wx 1 dev dev     0 7月  12 09:55 763*
+-rwxrw-r-- 1 dev dev     0 7月  12 09:55 764*
+-rwxrw-r-x 1 dev dev     0 7月  12 09:55 765*
+-rwxrw-rw- 1 dev dev     0 7月  12 09:55 766*
+-rwxrw-rwx 1 dev dev     0 7月  12 09:55 767*
+-rwxrwx--- 1 dev dev     0 7月  12 09:55 770*
+-rwxrwx--x 1 dev dev     0 7月  12 09:55 771*
+-rwxrwx-w- 1 dev dev     0 7月  12 09:55 772*
+-rwxrwx-wx 1 dev dev     0 7月  12 09:55 773*
+-rwxrwxr-- 1 dev dev     0 7月  12 09:55 774*
+-rwxrwxr-x 1 dev dev     0 7月  12 09:55 775*
+-rwxrwxrw- 1 dev dev     0 7月  12 09:55 776*
+-rwxrwxrwx 1 dev dev     0 7月  12 09:55 777*
+```
+
+
+
+### 6、文件压缩
+
+> 常见的压缩文件扩展名：
 
 ```
-# 在环境变量 $PATH 中搜索指定命令的绝对路径，并返回第一个匹配的结果
-# 使用 which 可以检查某个命令是否存在，以及执行的到底是哪个命令
-
-Usage: which [-a] <COMMAND...>
-
-Options:
-    -a  显示所有匹配的位置
-
-# 查看 which 的所有位置
-> which -a which
-/usr/bin/which
-/bin/which
-
-# 查看 docker 的绝对路径
-> which docker
-/usr/bin/docker
+*.Z        compress 程序压缩的文件
+*.zip      zip 程序压缩的文件
+*.gz       gzip 程序压缩的文件
+*.bz2      bzip2 程序压缩的文件
+*.xz       xz 程序压缩的文件
+*.tar      tar 程序打包的数据，并没有压缩过
+*.tar.gz   tar 程序打包的文件，其中并且经过 gzip 的压缩
+*.tar.bz2  tar 程序打包的文件，其中并且经过 bzip2 的压缩
+*.tar.xz   tar 程序打包的文件，其中并且经过 xz 的压缩
 ```
 
-### 7、文件压缩与解压
+
 
 #### （1）gzip / gunzip
 
@@ -1105,152 +2187,334 @@ zip [-options] [-b path] [-t mmddyyyy] [-n suffixes] [zipfile list] [-xi list]
 如果省略了 zipfile 和 list，zip 会将 stdin 压缩为 stdout。
 ```
 
+## 2.4 文本编辑器（vi | vim）
 
+> 终端编辑工具有：vi、vim、emacs 等。
+>
+> 系统默认自带 vi 编辑器。
+>
+> vim 是 vi 的增加版，如：语法高亮、代码补全、编译及错误跳转等功能。
 
-### 8、文件权限管理
+### 1、vi 的基本使用
 
-#### （1）ls
+#### （1）一般模式
 
-```
-# list 列出文件
-ls [Options...] [Files...]
+以 vi 打开一个文件就直接进入到一般模式（默认模式）。
 
-列出给定文件（默认为当前目录）的信息。
-如果不指定 -cftuvSUX 中任意一个或 --sort 选项，则根据字母大小排序。
+在这个模式下， 可以使用“上下左右”按键来移动光标，还可以进行删除字符、删除整列、复制、粘贴等操作。
 
-常用选项：
-    -a    显示所有文件，包括隐藏文件（以./ 和 ../ 开头的文件）
-    -l    列表显示文件，会显示文件的所有信息 <==> ll
-    -lh   带单位显示文件大小
+在任意模式下按 ESC 键回到一般模式。
 
-
-> ls -h
--rw-r--r--. 1 root root 7.4M 9月  23 16:19 tree.txt
-
-
-结果说明：
-    文件类型及权限 | 引用数 | 文件所有者 | 文件所属组组 | 大小 | 月 | 日 | 年/时间 | 文件名
-
-
-文件类型及权限：[-rw-r--r--.]
-    1        文件类型（-：文件；b：块设备；c：字符设备；d：目录；l：链接；s：套接字）
-    2/3/4    文件所有者的读(r)/写(w)/执行(x)权限，-表示无权限
-    5/6/7    文件所有者所属组的读/写/执行权限
-    8/9/10   其它用户的读/写/执行权限
-    .        表示启用了selinux，空表示没有开启
-
-注：
-    所属组的权限将被组中成员继承；
-    对文件拥有写（权限）不代表可以删除文件，同时还需要对该目录的写权限才可删除文件。
-
-
-文件类型说明：
-    -    普通文件
-    d    目录
-    b    块设备：硬盘
-    c    字符设备：鼠标、键盘
-    l    链接
-    s    套接字
-    p    管道	
-```
-
-> 实用指令
-
-```sh 
-# 统计当前目录下的文件数量
-$ ls -l | grep '^-' | wc -l
-
-# 统计当前目录下的目录数量
-$ ls -l | grep '^d' | wc -l
-
-# 递归统计（包括子孙）文件/文件夹 数量
-$ ls -lR | grep '^-' | wc -l
-
-# 以树形结构打印目录
-$ yum install tree
-$ tree [目录]
-```
-
-#### （2）chmod
-
-```
-chmod [选项] [模式|八进制模式] 文件
-
-模式：
-    r    可读
-    w    可写
-    x    可执行
-    +    添加权限
-    -    去除权限
-    =    设置权限
-    u    所有者
-    g    所属组
-    o    其它组
-    777	 八进制模式，777 => 111 111 111 这三组二进制分别代表了三个角色的三种权限
-	
-实例：
-    chmod +x file     给文件添加可执行权限（所有者、组、其它）
-    chmod u+x file    给文件所有者添加可执行权限
-    chmod 777 file    用八进制数来设置权限
-    chmod u=rwx,g=rx,o=- file    分别设置权限
-```
-
-#### （3）umask 
-
-> 查看或设置 umask 的值，用来确定创建文件的默认权限。
-
-```
-umask [-p] [-S] [模式]
-
-说明：
-    默认umask为0022 => 000 010 010
-    创建目录文件的权限 rwx r-x r-x
-    创建普通文件的权限 rw- r-- r--
-	
-    创建目录时，取反即得新建目录的操作权限
-    创建普通文件时，没有可执行权限，其余位取反即得新建文件的操作权限
-	
-配置文件（永久生效）：
-    所有用户：/etc/profile
-    单个用户：~/.profile 或 ~/.bash_profile
-```
-
-#### （4）lsattr & chattr
-
-```
-# 查看使用chattr设置的文件属性
-lsattr [-RVadlv] [files...]
-
-# 修改文件属性，提高系统的稳定性
-chattr [-RVf] [-+=aAcCdDeijsStTu] [-v version] files...
-
-选项：
-    i  表示忽略
-    +  表示添加
-    -  表示去掉
-```
-
-#### （5）chown
+> 打开文件
 
 ```sh
-# 设置/修改文件所属组
-chgrp 组 文件,...
+# 若文件存在，则直接打开。
+# 若文件不存在，则新建文件，不修改时不会创建空文件。
+vi filename
 
-# 设置/修改文件所属者[及组]
-chown 所属者[:组] 文件,...
+# 打开文件，光标定位到第n行
+vi filename +n
 
-Options:
-    -R, --recursive 递归操作文件和目录
-
-注：
-    修改所属者及组时，可以使用UID或GID；
+# 打开文件，光标定位到最后一行
+vi filename +
 ```
 
+> 按键说明
+
+```sh
+# =========
+#  光标移动
+# =========
+
+# 单行（列）移动
+←, h    向左移动 1 列
+↓, j    向下移动 1 行
+↑, k    向上移动 1 行
+→, l    向右移动 1 列
+
++       向下移动 1 行（将光标重置到行首）
+-       向上移动 1 行（将光标重置到行首）
+
+# 多行（列）移动
+n↓                    向下移动 n 行
+n[Enter]              向下移动 n 行
+n[space]              向右移动 n 列（行尾自动换行）
+w, W, [Shift] + [→]   移动到下一个单词首（以空格划分）
+e, E                  移动到下一个单词尾
+# 翻页移动（预览功能）
+[Ctrl] + [f]  向下翻 1 页（forward）
+[Ctrl] + [b]  向上翻 1 页（backward）
+[Ctrl] + [d]  向下翻半页（down）
+[Ctrl] + [u]  向上翻半页（up）
+
+# =========
+#  光标定位
+# =========
+0, [Home]    定位到行首
+^            定位到行首第一个非空字符
+$, [End]     定位到行尾
+H  定位到当前页的首行
+M  定位到当前页的中间行
+L  定位到当前页的末行
+
+gg  定位到文档的首行
+G   定位到文档的末行
+nG  定位到指定的行
+
+# ==========
+#  查找与替换
+# ==========
+
+# / 或 ? 都是搜索关键词，
+# 主要区别在于查找上一处、下一处的关键词互换了
+/keyword    查找下一处（n），查找上一处（N）
+?keyword    查找下一处（N），查找上一处（n）
+
+# 在所有行中查找 abc 替换成 123
+# g 代表全局替换，可选
+:%s/abc/123/g
+
+# 将 1 ~ 10 行的 abc 替换成 123 
+:1,10s/abc/123/g
+
+# 将 1 ~ $ 行（全部行）的 abc 替换成 123
+:1,$s/abc/123/g
+
+# 将 1 ~ $ 行（全部行）的 abc 替换成 123
+# c 每次替换前需确认
+:1,$s/abc/123/gc
+替换为 123 (y/n/a/q/l/^E/^Y)？
+  y  替换当前
+  n  不替换
+  a  替换全部
+  q  退出替换
+  l  替换当前并退出
+
+# =====================
+#  删除（剪切）、复制、粘贴
+# =====================
+
+# 删除（剪切）字符
+x    删除一个字符
+nx   删除 n 个字符
+dd   删除 1 行
+ndd  删除 n 行
+
+dnG  从当前行删除到第 n 行
+dG   从当前行删除到最后一行
+d0   从当前位置删除到行首
+d$   从当前位置删除到行尾
+
+%d   删除所有行
+
+# 复制
+yy     复制 1 行
+nyy    复制 n 行
+
+ynG    从当前行复制到第 n 行
+yG     从当前行复制到最后一行
+y0     从当前位置复制到行首
+y$     从当前位置复制到行尾
+
+# 粘贴（剪切或复制的内容）
+p  粘贴到当前字符后
+P  粘贴到当前字符前
+
+# 删除当前行的换行符（两行合并）
+J
+
+# 撤销与反撤销
+u            撤销
+[Ctrl] + r   重做
+
+# 保存并退出
+ZZ    等价于 :wq
+```
+
+#### （2）编辑模式
+
+主要用来编辑文本，正常模式下输入以下字符进入编辑模式。
+
+```
+i  在光标所在字符前开始输入文本
+I  在行首第一个非空白字符处开始输入文本
+a  在光标所在字符后开始输入文本
+A  在行尾开始输入文本
+o  在光标所在行的下面新增一行来开始输入文本
+O  在光标所在行的上面新增一行来开始输入文本
+s  删除光标所在字符开始输入
+S  删除光标所在行开始输入
+```
+
+#### （3）命令行模式
+
+在一般模式下，输入 `:`、`/`、`?` 进入命令行模式。
+
+在这个模式下，可以进行搜寻数据、读取、存盘、大量取代字符、离开 vi 、显示行号等操作。
+
+```
+:w    保存文件
+:q    退出软件
+:x    保存退出（:wq）
+:!    强制操作
+:e!   放弃修改
+
+:w <filename>        将当前文件内容写入新文件（相当于 cp）
+:n1,n2 w <filename>  将指定行的内容写入新文件
+:r <filename>        读取指定文件，插入当前位置
+
+# 设置环境变量
+:set nu      显示行号
+:set nonu    隐藏行号
+```
+
+### 2、vim 额外功能
+
+#### （1）可视模式
+
+> 可视模式主要用作批量操作
+
+```sh
+# 一般模式下输入以下命令进入可视模式
+v        可视字符模式（通过左右逐个选择字符）
+V        可视行模式（通过上下选择行数）
+Ctrl+v   可视块模式（通过上下左右选择行数和列数）
+
+# 可视模式下的可用命令
+y  复制
+d  删除（剪切）
+p  粘贴
+
+# 例1：多行注释
+① Esc 进入正常模式；
+② Ctrl+v 进入可视化块模式；
+③ 利用上下左右调整需要注释的行数及列数；
+④ Shift+i 进入插入模式，插入注释符：“#”；
+⑤ 再次按 Esc，即可完成多行注释。
+
+# 例2：取消多行注释
+① Esc 进入正常模式；
+② Ctrl+v 进入可视化块模式；
+③ 利用上下左右调整需要注释的行数及列数；
+④ 按 d 即可取消注释。
+```
+
+#### （2）多文件编辑
+
+> 用于复制其它文件的内容。
+
+```
+# 打开两个文件
+vim file_a file_b file_c
+
+# 查看正在编辑的文件
+# %a 当前选中的文件
+:files
+  1 %a   "file_a"                          第 1 行
+  2      "file_b"                          第 0 行
+  3      "file_c"                          第 0 行
+请按 ENTER 或其它命令继续
+
+# 切换文件
+:n  切换到下一个文件
+:N  切换到上一个文件
+```
+
+#### （3）分区窗口
+
+> 同时显示多个文件
+
+```
+# 开启分区窗口
+:sp <filename>
+
+# 切换窗口
+[Ctrl]+w+↑
+[Ctrl]+w+↓
+
+# 退出窗口
+[Ctrl]+w+ q
+```
+
+#### （4）语法提示
+
+```
+[ctrl]+x & [ctrl]+n    通过目前正在编辑的这个“文件的内容文字”作为关键字，予以补齐
+[ctrl]+x & [ctrl]+f    以当前目录内的“文件名”作为关键字，予以补齐
+[ctrl]+x & [ctrl]+o    以扩展名作为语法补充，以 vim 内置的关键字，予以补齐
+```
+
+#### （5）vi/vim 配置项
+
+- 一次性配置（命令模式下操作，仅针对本次打开文件有效）
+
+```sh
+# 查看已 set 的值
+:set
+--- 选项 ---
+  autoindent          expandtab         nomodeline            ruler               shiftwidth=4        tabstop=4           ttymouse=sgr
+  background=dark     helplang=cn         number              scroll=29           smartindent         ttyfast
+  backspace=indent,eol,start
+  fileencoding=utf-8
+  fileencodings=ucs-bom,utf-8,default,latin1
+  printoptions=paper:a4
+  suffixes=.bak,~,.swp,.o,.info,.aux,.log,.dvi,.bbl,.blg,.brf,.cb,.ind,.idx,.ilg,.inx,.out,.toc
+
+# 查看所有可用选项
+:set all
 
 
-## 四、用户 & 用户组
+# Options
+:set nu|nonu                   " 行号: 显示|不显示
+:set fileeccodings=utf-8,gbk   " 设置字符集
+:set hlsearch|nohlsearch       " 搜索结果：高亮|不高亮
+:set autoindent|noautoindent   " 缩进：自动缩进|不自动缩进
+:set tabstop=4                 " 设置缩进字符数
+:set backup
+:set ruler                     " 显示右下角的状态
+:set showmode                  " 显示左下角的状态
+:set backspace=0|1|2           " 
+:syntax on|off                 " 语法检查：开|关
+:set bg=dark|light             " 背景颜色
+```
 
-### 1、用户管理
+- 配置文件： `~/.vimrc`（永久生效）
+
+````shell 
+# 编辑配置文件
+vi ~/.vimrc
+
+`
+set nu
+set ...
+
+" Indent & Tab
+set autoindent      " 自动保留上一行的缩进
+set smartindent     " 以 { 结尾的行，在新行会触发缩进
+set tabstop=4       " Tab 宽度，4 空格
+set shiftwidth=4    " 自动缩进时的宽度，4 空格
+set expandtab       " 将 Tab 转换为空格，而不是 \t（注意不能打开 Makefile 文件）
+
+" 粘贴格式不错乱，两种都可以暂不知道区别
+set clipboard=unnamed      " 系统缓冲区中的内容
+set clipboard=unnamedplus  " 系统剪切板里的内容  
+`
+
+# 立即生效
+source ~/.vimrc
+````
+
+### 4、vi/vim 键盘图
+
+![vi / vim 键盘图](Images/Linux_vi-vim键盘图.jpg)
+
+
+
+
+
+# 三、用户 & 用户组
+
+## 1、用户管理
 
 ```sh
 # 显示当前登录用户
@@ -1313,7 +2577,7 @@ sudo <command>
     ~  用户 home 目录
 ```
 
-### 2、用户组管理（角色）
+## 2、用户组管理（角色）
 
 ```sh
 # 添加用户组
@@ -1339,7 +2603,7 @@ id <用户名>
 uid=0(root) gid=0(root) 组=0(root),27(sudo),998(docker)
 ```
 
-### 3、相关文件
+## 3、相关文件
 
 #### （1）/etc/passwd
 
@@ -1376,7 +2640,7 @@ root:x:0:
 
 
 
-## 五、定时任务 Cron
+# 五、定时任务 Cron
 
 ### 1、cron 服务
 
@@ -1434,7 +2698,7 @@ crontab -ir
 
 
 
-## 六、磁盘与文件系统管理
+# 六、磁盘与文件系统管理
 
 ### 1、磁盘名称组成
 
@@ -2149,7 +3413,8 @@ $ vi /etc/fstab
 `
 # <Device/UUID/LABLE>  <mount point>  <type>  <options>         <dump>  <pass>
 # LABEL=DISK1          /mnt/disk1     xfs     defaults,noatime  0       2
-  UUID="0d4e5d5d-a568-420d-a3f3-925d1db3d720"  /data  ext4  defaults,noatime  0  2
+# UUID="0d4e5d5d-a568-420d-a3f3-925d1db3d720"  /data  ext4  defaults,noatime  0  2
+  /dev/sda1            /data          ext4    default,noatime   0       2
 `
 
 # 不重启生效的方法：（需预先创建好挂载点）
@@ -2227,7 +3492,17 @@ $ sudo yum install -y nfs-utils
 # 3 执行 NFS 绑定
 $ sudo mount -t nfs 172.16.56.53:/mnt/nfs_share /mnt/nfs_53
 
+$ vim /etc/fstab
+`
+# <Device/UUID/LABLE>        <mount point>  <type>  <options>  <dump>  <pass>
+172.16.56.53:/mnt/nfs_share  /mnt/nfs_53    nfs4    defaults   0       0
+`
+
 # 成功
+$ df -h /mnt/nfs_53
+文件系统                       容量   已用  可用   已用%  挂载点
+172.16.56.53:/mnt/nfs_share  234G   89G  133G   41%  /mnt/nfs_53
+
 $ mount | grep 172.16.56.53
 172.16.56.53:/mnt/nfs_share on /mnt/nfs_53 type nfs4 (rw,relatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=172.16.56.56,local_lock=none,addr=172.16.56.53)
 
@@ -2312,7 +3587,7 @@ umount <挂载点>
 
 
 
-## 七、网络管理
+# 七、网络管理
 
 ### 1、查看网卡信息
 
@@ -2476,7 +3751,7 @@ service iptables status			查看防火墙状态
 
 
 
-## 八、进程管理
+# 八、进程管理
 
 ### 1、vmstat：系统整体信息
 
@@ -3045,11 +4320,31 @@ pdbedit -a readonly
 
 
 
-## 十、Shell 编程
+# 十、Shell
+
+## 10.1、Shell 概述
 
 Shell 是一个命令行解释器，它接收应用程序、用户命令，然后调用操作系统内核。
 
 Shell 还是一个功能相当强大的编程语言，易编写、易调试、灵活性强。
+
+```
+# Cmd 执行流程
+
+┌───────────────────┐
+│  Shell, KDE, App  │
+└───────────────────┘
+         ↓↑
+┌──────────────────┐
+│   Linux Kernel   │
+└──────────────────┘
+         ↓↑
+┌──────────────────┐
+│     Hardware     │
+└──────────────────┘
+```
+
+> Shell
 
 ```sh
 # Linux 提供的 Shell 解释器有
@@ -3072,7 +4367,7 @@ lrwxrwxrwx    1 root root          4 May 10  2023 sh -> bash
 $ echo $SHELL
 /bin/bash
 
-# 查看当前运行的 Shell 
+# 显示当前会话的 Shell 
 $ echo $0
 -bash
 
@@ -3086,6 +4381,8 @@ sh
 ```
 
 ### 1、Bash
+
+> 当我们登陆系统之后就会取得一个 Shell（bash）。
 
 ```sh
 GNU bash, version 4.2.46(2)-release-(x86_64-redhat-linux-gnu)
@@ -3151,7 +4448,554 @@ $ bash -x hello.sh
 Hello World!
 ```
 
-#### （1）set
+bash 的优点：
+
+- 命令历史（history），最多能记录的指令条数 `$HISTSIZE`，历史指令记录在 `~/.bash_history`。
+- 命令补全（Tab）。
+- 命令别名（alias）。
+- 工作控制（前景、背景）。
+- 支持 Shell 脚本。
+- 支持通用字符 *。
+
+### 2、指令编辑
+
+```sh
+# 当指令太长时可以通过 \ 来连接换行的指令
+$ ls /etc \
+> /usr \
+> /data
+
+# 编辑指令快捷键
+[ctrl]+u    从光标处向前删除指令串
+[ctrl]+k    从光标处向后删除指令串
+[ctrl]+a    让光标移动到整个指令串的最前面
+[ctrl]+e    让光标移动到整个指令串的最后面
+```
+
+### 3、指令类型 type
+
+>  显示命令类型
+
+```sh
+# 显示命令类型的信息
+type: type [-afptP] <NAME, ...>
+
+    对于每一个 NAME 名称，指示如果作为命令它将如何被解释。
+
+    选项：
+      -a        显示所有包含名称为 NAME 的可执行文件的位置；
+                包括别名、内建和函数。仅当 -p 选项没有使用时
+      -f        抑制 shell 函数查询
+      -P        为每个 NAME 名称进行 PATH 路径搜索，即使它是别名、内建或函数，
+                并且返回将被执行的磁盘上文件的名称。
+      -p        返回将被执行的磁盘上文件的名称，或者当 type -t 不是 file 时，不返回任何值。
+      -t        返回：alias, keyword, function, builtin, file, ''，
+                对应：别名、shell 保留字、shell 函数、shell 内建、磁盘文件、没有找到。
+      
+
+# 通过 type 指令可以知道哪些命令是 bash 内置的
+$ type cd
+cd 是 shell 内嵌
+```
+
+### 4、别名 & 历史
+
+#### （1）alias & unalias
+
+```sh
+# 打印别名列表
+$ alias
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias grep='grep --color=auto'
+alias l='ls -CF'
+alias la='ls -A'
+alias ll='ls -alF'
+alias ls='ls --color=auto'
+
+# 定义别名
+$ alias rm='rm -i'
+
+
+# 从别名定义列表中删除每一个“名字”。
+unalias [-a] <NAME...>
+
+Options:
+  -a  删除所有的别名定义
+
+# 删除别名 rm
+$ unalias rm
+```
+
+
+
+#### （2）history
+
+```sh
+# 带行号显示历史命令列表，将每个被修改的条目加上 * 前缀。
+# 参数 N：仅列出最后的 N 条命令。
+history [-c] [-d 偏移量] [N]
+history -anrw [FILENAME]
+history -ps [ARGS...]
+
+选项：
+  -c           清空历史列表
+  -d <offset>  从指定位置删除历史列表。负偏移量将从历史条目末尾开始计数
+
+# -anrw 历史文件优先级：指定的 FILENAME ＞ $HISTFILE 变量 ＞ ~/.bash_history 文件。
+  -a [FILENAME]    将当前会话的历史行追加到历史文件中
+  -n [FILENAME]    从历史文件中读取所有未被读取的行并且将它们附加到历史列表
+  -r [FILENAME]    读取历史文件并将内容追加到历史列表中
+  -w [FILENAME]    将当前历史写入到历史文件中
+
+  -p        对每一个 ARG 参数展开历史并显示结果，而不存储到历史列表中
+  -s        以单条记录追加 ARG 到历史列表中
+
+# 如果 $HISTTIMEFORMAT 变量存在，它的值会被用于 strftime(3) 的格式字符串来打印与每一个显示的历史条目想关联的时间戳，否则不打印时间戳。
+
+
+# 显示历史命令
+$ history     # 显示全部
+$ history 10  # 显示最近10条
+
+# 再次执行
+$ !15         # 执行历史第15条命令
+$ !-3         # 执行倒数第3条
+$ !!          # 执行上一条
+$ !command    # 执行最近一条 command 开头的目录
+
+# 清除历史
+$ history -c 
+
+
+$ echo $HISTFILE
+/home/dev/.bash_history
+
+# 将当前历史追加到历史文件中（~/.bash_history）
+# 否则当我们登出时会自动追加到历史文件
+$ history -a
+
+
+# 同一个账号同时多次登录的 history 写入问题
+当同时以 root 身份登录，获取多个 bash 时，每个 bash 都有自己的记录在内存中。
+等到登出时才会更新到历史文件，所以最后登出的 bash 可能会覆盖掉前面登出 bash 的历史记录。
+由于多重登录有这样的问题，所以建议登录单一 bash，通过工作控制（后台执行）来切换不同工作。
+这样才能将所有历史指令记录下来。
+
+# 无法记录时间
+可以通过 ~/.bash_logout 来进行 history 的记录，并加上 date 来增加时间参数。
+```
+
+### 5、Bash 操作环境
+
+（1）指令执行搜索顺序
+
+- 以相对/绝对路径执行指令，例如“ /bin/ls ”或“ ./ls ”；
+- 由 alias 找到该指令来执行；
+- 由 bash 内置的 （builtin） 指令来执行；
+- 通过 $PATH 这个变量的顺序搜寻到的第一个指令来执行。
+
+（2） bash 的进站与欢迎讯息（/etc/issue, /etc/motd）：
+
+  ```
+  issue 内的各代码意义：
+  
+    \d  本地端时间的日期；
+    \l  显示第几个终端机接口；
+    \m  显示硬件的等级 （i386/i486/i586/i686...）；
+    \n  显示主机的网络名称；
+    \O  显示 domain name；
+    \r  操作系统的版本 （相当于 uname -r）
+    \t  显示本地端时间的时间；
+    \S  操作系统的名称；
+    \v  操作系统的版本。
+    
+  使用 telnet 连接到主机时，主机的登陆画面就会显示 /etc/issue.net 而不是 /etc/issue。
+  
+  如果想要让使用者登陆后取得一些讯息，那么可以将讯息加入 /etc/motd 里面去。
+  ```
+
+  （3）环境配置文件
+
+> `login` 与 `non-login` Shell
+
+login Shell：取得 bash 时需要完整的登陆流程。如：由 tty1 ~ tty6 输入使用者的帐号与密码登录取得的 bash。
+
+non-login Shell：取得 bash 接口的方法不需要重复登陆的举动。如：① 在图形化 Linux 中启动的终端，此时并没有再次输入账号密码；② 在原本的 bash 环境中再次开启 bash，第二个 bash（子 Shell）也是 non-login。
+
+login Shell 只会读取这两个配置文件：
+
+- /etc/profile （系统整体配置文件，不要修改）
+- ~/.bash_profile 或 ~/.bash_login 或 ~/.profile （个人偏好配置文件）
+
+#### `/etc/profile`
+
+这是每个登录者取得 bash 时，一定会读取的配置文件，因此可以利用 UID 来决定很多重要的变量数据。
+
+这个文件设置的变量主要有：
+
+PATH：会依据 UID 决定 PATH 变量要不要含有 sbin 的系统指令目录；
+
+MAIL：依据帐号设置好使用者的 mailbox 到 /var/spool/mail/帐号名；
+
+USER：根据使用者的帐号设置此一变量内容；
+
+HOSTNAME：依据主机的 hostname 指令决定此一变量内容；
+
+HISTSIZE：历史命令记录笔数。CentOS 7.x 设置为 1000 ；
+
+umask：root 默认为 022 而一般用户为 002 。
+
+调用外部配置文件：
+
+- /etc/profile.d/*.sh
+- /etc/locale.conf
+- /usr/share/bash-completion/completions/*
+- ~/.bash_profile 
+
+#### `~/.bash_profile | ~/.bash_login | ~/.profile`
+
+bash 在读完系统整体环境配置 /etc/profile 并调用其他配置文件后，就会读取个人偏好配置文件。
+
+在 login shell 的 bash 环境中，所读取的个人偏好配置文件主要有三个（只会按顺序读取一个）：
+
+- ~/.bash_profile
+
+- ~/.bash_login
+
+- ~/.profile
+
+```sh
+# ~/.profile: executed by the command interpreter for login shells.
+# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+# exists.
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# the files are located in the bash-doc package.
+
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+    fi
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+```
+
+
+
+#### `~/.bashrc`
+
+当取得 non-login shell 时，bash 配置文件仅会读取 ~/.bashrc 而已。
+
+```sh
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=99999
+HISTFILESIZE=99999
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# If set, the pattern "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories.
+#shopt -s globstar
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+#force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # We have color support; assume it's compliant with Ecma-48
+    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+    # a case would tend to support setf rather than setaf.)
+    color_prompt=yes
+    else
+    color_prompt=
+    fi
+fi
+```
+
+（4）其它相关配置文件
+
+/etc/man_db.conf 
+
+~/.bash_history
+
+~/.bash_logout
+
+（5）环境设置 stty，set
+
+```sh
+$ stty -a
+speed 38400 baud; rows 59; columns 211; line = 0;
+intr = ^C; quit = ^\; erase = ^?; kill = ^U; eof = ^D; eol = M-^?; eol2 = M-^?; swtch = <undef>; start = ^Q; stop = ^S; susp = ^Z; rprnt = ^R; werase = ^W; lnext = ^V; discard = ^O; min = 1; time = 0;
+-parenb -parodd -cmspar cs8 -hupcl -cstopb cread -clocal -crtscts
+-ignbrk -brkint -ignpar -parmrk -inpck -istrip -inlcr -igncr icrnl ixon -ixoff -iuclc ixany imaxbel iutf8
+opost -olcuc -ocrnl onlcr -onocr -onlret -ofill -ofdel nl0 cr0 tab0 bs0 vt0 ff0
+isig icanon iexten echo echoe echok -echonl -noflsh -xcase -tostop -echoprt echoctl echoke -flusho -extproc
+
+# ^ 代表 [Ctrl]
+# 如：^C 为 [Ctrl] + C
+intr : 送出一个 interrupt （中断） 的讯号给目前正在 run 的程序 （就是终止啰！）；
+quit : 送出一个 quit 的讯号给目前正在 run 的程序；
+erase : 向后删除字符，
+kill : 删除在目前命令行上的所有文字；
+eof : End of file 的意思，代表“结束输入”。
+start : 在某个程序停止后，重新启动他的 output
+stop : 停止目前屏幕的输出；
+susp : 送出一个 terminal stop 的讯号给正在 run 的程序。
+```
+
+### 6、万用字符
+
+在 bash 的操作环境中利用万用字符（wildcard）处理数据会更加方便。
+
+```sh
+# 万用字符：
+*      代表 0 个到多个任意字符
+?      代表一个任意字符
+[ ]    匹配范围内的一个字符，如 [abcd] 匹配 abcd 中的一个字符
+[ - ]  如 [a-z] [A-Z] [0-9]
+[^ ]   反向匹配，非范围内的一个字符，如 [^0-9] 匹配非数字的字符
+```
+
+### 7、bash 环境中的特殊符号
+
+
+
+| 符号  | 说明                                            |
+| ----- | ----------------------------------------------- |
+| #     | Shell 脚本的注释                                |
+| \     | 转移字符                                        |
+| \|    | 管道                                            |
+| ;     | 连续指令分隔，如 sleep 5; echo done...          |
+| ~     | 用户 home 目录                                  |
+| $     | 取用变量符，如 $PATH                            |
+| &     | 工作控制：将指令变成背景下执行                  |
+| !     | 逻辑运算符非                                    |
+| /     | 路径分隔符                                      |
+| >, >> | 数据流重导向，输出导向，> 代表覆盖，>> 代表追加 |
+| <, << | 数据流重导向，输入导向                          |
+| ' '   | 单引号，不具有变量置换功能                      |
+| " "   | 双引号，具有变量置换的功能                      |
+| ``    | 可以优先执行的指令，与 $( ) 等价                |
+| ( )   | 子 Shell 的生命边界                             |
+| { }   | 命令区块的边界                                  |
+
+### 8、数据流重导向
+
+![img](Images/Linux_data_flow_redirect.png)
+
+标准输出是：指令执行所回传的正确的讯息。
+
+标准错误输出是：指令执行失败后，所回传的错误讯息。
+
+
+
+标准输入（Stdin）：代码为 0 ，使用特殊字符 `<, <<`；
+
+标准输出（Stdout）：代码为 1 ，使用特殊字符 `>, >>`；（`1>, 1>>` 默认为1，故可以写成 `>, >>`）
+
+标准错误输出（Stderr）：代码为 2 ，使用特殊字符 `2>, 2>>`；
+
+```sh
+# Stdout 和 Stderr 默认都输出到屏幕上
+
+# Stderr 输出到屏幕
+$ cat abcd
+cat: abcd: 没有那个文件或目录
+
+# 将 Stderr 重导向到 stderr.log 文件
+$ cat abcd 2>> stderr.log
+$ cat stderr.log
+cat: abcd: 没有那个文件或目录
+
+# /dev/null
+# 会忽略到导向这个设备的所有信息
+$ cat abcd 2> /dev/null
+
+# Stdout 与 Stderr 写入同一个文件
+$ cat abcd 1> std.log 2>&1
+# 或
+$ cat abcd &> std.log
+```
+
+标准输入：将原本需要由键盘输入的数据，改由文件内容来取代
+
+```sh
+# cat 通过键盘输入来创建文件
+$ cat > test
+line 1
+line 2
+line 3
+[Ctrl]+D 结束输入
+$ cat test
+line 1
+line 2
+line 3
+
+# cat 通过 stdin 取代键盘输入来创建文件
+$ cat > test < ~/.bashrc
+# 这两个文件的大小会一模一样, 像是使用 cp 复制的一样
+$ ll test ~/.bashrc
+-rw-r--r-- 1 dev dev 5287 4月   2 16:49 /home/dev/.bashrc
+-rw-rw-r-- 1 dev dev 5287 7月  18 15:11 test
+
+# << 指定 stdin 的结束符
+# 不需要通过 [Ctrl] + D 结束输入，遇到结束符号自动结束
+$ cat > test << END
+> line 1
+> line 2
+> END
+$ cat test
+line 1
+line 2
+```
+
+### 9、命令执行的判断依据
+
+```sh
+cmd1 ; cmd2    cmd1 执行完毕后立即执行 cmd2
+cmd1 && cmd2   cmd1 执行完毕且正确（$?=0），才执行 cmd2。错误（$?≠0），cmd2 不执行。
+cmd1 || cmd2   cmd1 执行完毕且正确（$?=0），则 cmd2 不执行。错误（$?≠0），才执行 cmd2。
+
+
+# 休息 5s 后，输出 done...
+$ sleep 5; echo done...
+
+# 如果 ls 执行成功，才执行 mkdir
+$ ls /data100 && mkdir /data100/test
+ls: 无法访问 '/data100': 没有那个文件或目录
+
+# 如果 ls 执行失败，才执行 mkdir
+$ ls /data100 || mkdir /data100/test
+ls: 无法访问 '/data100': 没有那个文件或目录
+mkdir: 无法创建目录 “/data100/test”: 没有那个文件或目录
+
+# 三目运算符
+cmd1 && cmd2 || cmd3
+
+$ ls /data100 && echo "/data100 exist" || echo "/data100 not exist"
+```
+
+### 10、管道
+
+```sh
+# 管道：|
+    Linux允许将一个命令的输出通过管道作为另一个命令的输入。
+    常与管道搭配使用的命令有：
+    more
+    grep
+```
+
+（1）排序命令：sort、wc、uniq
+
+（2）双向重导向： tee
+
+（3）字符转换命令： tr, col, join, paste, expand
+
+（4）分区命令： split
+
+（5）参数代换： xargs
+
+（6）sed
+
+## 10.2、变量
+
+### 1、环境变量
+
+#### （1）env | printenv
+
+```sh
+# 查看系统环境变量
+$ env
+$ printenv
+SHELL=/bin/bash
+LANGUAGE=zh_CN:zh
+PWD=/data/base-api
+HOME=/home/dev
+LANG=zh_CN.UTF-8
+USER=dev
+SHLVL=1
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/usr/local/etcd-3.5
+SSH_TTY=/dev/pts/0
+_=/usr/bin/printenv
+OLDPWD=/data/base-api/perm
+...
+```
+
+#### （2）set
+
+> 显示 shell 变量的名称和值。
+>
+> 更改 shell 选项和位置参数的值。
+
+```sh
+# 显示当前 Shell 中所有的变量和函数（包含系统的和用户的）
+$ set
+BASH=/bin/bash
+HOME=/home/dev
+HOSTNAME=172.16.56.53
+HOSTTYPE=x86_64
+LANG=zh_CN.UTF-8
+LANGUAGE=zh_CN:zh
+PPID=11294
+PS1='\[\e]0;\u@\h: \w\a\]\[\e[1;36;40m\][\u@\H:\w]\$ \[\e[m\]'
+PS2='> '
+PS4='+ '
+PWD=/data/base-api
+RANDOM=11938
+SHELL=/bin/bash
+...
+```
+
+> set 使用手册
 
 ```sh
 set: set [-abefhkmnptuvxBCHP] [-o option-name] [--] [arg ...]
@@ -3305,6 +5149,7 @@ $ history -c
 $ set +o history
 $ echo '此命令不会记录到 history'
 此命令不会记录到 history
+$ mysql -uroot -proot
 $ history
     1  set +o history
 
@@ -3315,9 +5160,7 @@ $ history
     2  history
 ```
 
-
-
-#### （2）环境变量：PS1
+#### （3）PS1
 
 > **PS1** 用于设置终端中的 Shell 命令提示符。
 
@@ -3375,7 +5218,7 @@ export BASH_ENV=/usr/local/etc/my_custom_bashrc
 |               | 36            | 46            | 青色 |
 |               | 37            | 47            | 白色 |
 
-#### （3）PS2
+#### （4）PS2
 
 > **PS2** 是第二次提示符，用于交互式的 Shell 中一条多行命令连接时的显示信息。
 
@@ -3395,7 +5238,7 @@ $ echo \
 Continue typing... > 
 ```
 
-#### （4）PS3
+#### （5）PS3
 
 > **PS3** 用于控制 select 命令在选择过程中显示的提示符。
 
@@ -3451,9 +5294,9 @@ $ bash select.sh
 Please select... >
 ```
 
-#### （5）环境变量：PS4
+#### （6）PS4
 
-> PS4 是 Prompt String 4 的缩写，它是 Linux/Unix 下的一个用于控制脚本调试显示信息的环境变量。
+> **PS4** 是 Prompt String 4 的缩写，它是 Linux/Unix 下的一个用于控制脚本调试显示信息的环境变量。
 >
 > 一般用来修改 `set -x` 跟踪输出的前缀信息。
 
@@ -3525,13 +5368,414 @@ $ now='2024-06-13 17:44:08'
 $ echo '2024-06-13 17:44:08 Working...'
 ```
 
+#### （7）$
+
+> **$** 代表当前 Shell 的进程号（PID）
+
+```sh
+# 显示当前 Shell 的 PID
+$ echo $$
+11295
+```
+
+#### （8）?
+
+> **?** 代表上一条指令的返回值
+
+```sh
+# 输出上一条指令的返回值
+#  0  代表成功
+#  !0 代表失败
+
+# 输出当前 Shell 的 PID => 成功
+$ echo $$
+11295
+$ echo $?
+0
+
+# 定义变量 语法错误 => 失败
+$ name = ycz
+bash: name: 未找到命令...
+$ echo $?
+127
+```
+
+#### （9）OSTYPE | HOSTTYPE | MACHTYPE
+
+```sh
+# 操作系统、主机、核心
+$ echo -e "$OSTYPE\n$HOSTTYPE\n$MACHTYPE"
+linux-gnu
+x86_64
+x86_64-pc-linux-gnu
+```
+
+### 2、自定义变量
+
+#### （1）局部变量
+
+```sh
+# =========
+#  局部变量
+# =========
+
+# = 两边不能有空格
+$ name=ycz
+$ age=18
 
 
-### 2、基础
+# ===================
+#  取用变量 $variable
+# ===================
 
-#### （1）编写脚本
+# 输出变量
+$ echo $name $age
+ycz 18
+```
 
-> vim hello.sh
+#### （2）export
+
+```sh
+# ================
+#  全局变量 export
+# ================
+
+$ export hello="Hello Yancz"
+$ echo $hello
+Hello Yancz
+$ bash
+# 已进入子 Shell
+$ ps -f
+UID        PID  PPID  C STIME TTY          TIME CMD
+root     18988 18984  0 14:03 pts/0    00:00:00 -bash
+root     20132 18988  0 15:28 pts/0    00:00:00 bash
+root     20135 20132  0 15:28 pts/0    00:00:00 ps -f
+# 在子 Shell 中也能获取到 $hello
+$ echo $hello
+Hello Yancz
+
+# 继承关系：父 ==> 子
+# 注意：子 Shell 中的修改不会影响到父 Shell
+$ export hello="Hello Son Shell"
+$ echo $hello
+Hello Son Shell
+$ exit
+# 已退回父 Shell
+$ ps -f
+UID        PID  PPID  C STIME TTY          TIME CMD
+root     18988 18984  0 14:03 pts/0    00:00:00 -bash
+root     20455 18988  0 15:34 pts/0    00:00:00 ps -f
+$ echo $hello
+Hello Yancz
+```
+
+#### （3）unset
+
+```sh
+# ==============
+#  撤销变量 unset
+# ==============
+
+# 变量名前不要加 $
+$ unset name age
+```
+
+#### （4）readonly
+
+```sh
+# ==================
+#  静态变量 readonly
+# ==================
+
+# 声明静态变量（不能 unset）
+$ readonly CONST=ABCDE
+$ echo $CONST
+$ unset CONST
+-bash: unset: CONST: cannot unset: readonly variable
+```
+
+#### （5）其他命令的结果
+
+```sh
+# =====================
+#  变量中使用其他命令的结果 
+#  方式 1： `` 
+#  方式 2： $()
+# =====================
+
+# 方式 1：
+$ version1=`uname -r`; echo $version1
+5.15.0-101-generic
+
+# 方式 2：
+$ version2=$(uname -r); echo $version2
+5.15.0-101-generic
+
+# 查看当前核心模块的目录
+$ ll /lib/modules/$(uname -r)/kernel
+```
+
+#### （6）read
+
+> 读取控制台输入
+
+```sh
+# 语法
+read [options] [变量名]
+
+Options:
+    -p  指定参数的提示语
+    -t  指定读取值时等待的时间（s），如果不加 -t 则一直等待
+    
+# 案例
+$ cat read.sh
+#!/bin/bash
+
+read -p "请输入姓名：" name
+read -p "你的年龄：" age
+
+echo "欢迎 $age 岁的朋友：$name"
+
+$ bash read.sh
+请输入姓名：ycz
+你的年龄：18
+欢迎 18 岁的朋友：ycz
+```
+
+#### （7）declare / typeset
+
+> declare / typeset 声明变量的类型
+
+```sh
+# 设定变量值和属性
+declare [-aAfFgilnrtux] [-p] [NAME[=VALUE] ...]
+
+声明变量并且赋予它们属性。如果没有给定名称，则显示所有变量的属性和值。
+
+Options:
+  -f        仅显示函数名称和定义
+  -F        仅显示函数名称（以及调试时显示行号和源文件名）
+  -g        用于 shell 函数内时创建全局变量; 否则忽略
+  -p        显示变量的属性
+
+Attrs：
+  -a        声明变量为 array 类型
+  -A        声明变量为关联数组类型（map）
+  -i        声明变量为 integer 类型
+  -u        在赋值时将 VALUE 转为大写
+  -l        在赋值时将 VALUE 转为小写
+  -n        使 NAME 成为指向一个以其值为名称的变量的引用
+  -r        声明变量为 readonly 类型
+  -t        使 NAME 带有 trace 属性
+  -x        声明变量为 export 类型
+  
+  用 + 会关闭指定选项。
+  在函数中使用时，declare 使 NAME 成为本地变量，和 local 命令一致。-g 选项抑制此行为。
+
+
+# 变量类型默认为：string
+$ sum=1+2+3
+$ echo $sum
+1+2+3
+
+# 声明 sum 为 integer 类型
+# 带有整数属性的变量在赋值时将使用算术估值
+$ declare -i sum=1+2+3
+$ echo $sum
+6
+
+# 查看变量属性
+$ declare -p sum
+declare -i sum="6"
+
+
+# 赋值时转为大小写
+#  -u
+#  -l
+$ declare -u uppercase=Abc
+$ echo $uppercase
+ABC
+$ declare -l lowercase=Abc
+$ echo $lowercase
+abc
+
+# -r 选项 readonly 
+$ declare -r CONST=1
+$ echo $CONST
+1
+$ declare -p CONST
+declare -r CONST="1"
+$ unset CONST
+-bash: unset: CONST：无法取消设定: 只读 variable
+```
+
+> array
+
+```sh
+# =======
+#  array
+# =======
+
+# 方式 1：声明数组
+$ arr1=("a" "b" "c" "d" "e" "f" "g")
+$ declare -p arr1
+declare -a arr1=([0]="a" [1]="b" [2]="c" [3]="d" [4]="e" [5]="f" [6]="g")
+
+# 方式 2：声明数组
+$ arr2[0]=0
+$ arr2[1]=1
+$ arr2[2]=2
+
+# 获取数组所有元素
+$ echo ${arr1[*]}
+a b c d e f g
+$ echo ${arr2[@]}
+0 1 2
+
+# 获取数组长度
+$ echo ${#arr1[*]}
+7
+$ echo ${#arr2[@]}
+3
+
+# 删除数组元素
+$ unset arr2[0]
+$ echo ${arr2[*]}
+1 2
+
+# 拼接数组
+$ arr=(${arr1[*]} ${arr2[*]})
+$ echo ${arr[*]}
+a b c d e f g 1 2
+
+# 数组切片
+# 格式：${arr[*]:起始位置:长度}
+$ echo ${arr1[*]:1:4}
+b c d e
+
+# 数组元素替换
+# 格式：${arr[*]/find/replace}
+$ echo ${arr[*]/1/h}
+a b c d e f g h 2
+```
+
+> map
+
+```sh
+# 声明关联数组（map）
+# 必须加 -A 声明，否则默认为索引数组
+$ declare -A map=(["name"]=ycz ["age"]=18)
+map["score"]=99
+
+# 列出关联数组的 keys
+$ echo ${!map[*]}
+score age name
+
+# 列出关联数组的 values
+$ echo ${map[*]}
+99 18 ycz
+
+# 通过 key 获取 value
+$ echo ${map[name]}
+ycz
+```
+
+#### （8）变量内容删除与替换
+
+```sh
+# 从头开始匹配并删除 keyword（可以使用通配符 *）
+#  #  最短匹配删除
+#  ## 最长匹配删除
+${VARIABLE#keyword}
+${VARIABLE##keyword}
+
+# 从尾开始匹配并删除 keyword（可以使用通配符 *）
+#  %  最短匹配删除
+#  %% 最长匹配删除
+${VARIABLE%keyword}
+${VARIABLE%%keyword}
+
+# 替换
+#  /  将第一个找到的 find 替换成 replace
+#  // 将所有找到的 find 替换成 replace
+${VARIABLE/find/replace}
+${VARIABLE//find/replace}
+
+
+# ======
+#  删除
+# ======
+
+$ path=/data/www/base-api/main.go
+
+# 从头开始删除，最短匹配
+# 匹配 /data/ 并删除
+$ echo ${path#/*/}
+www/base-api/main.go
+
+# 从头开始删除，最长匹配
+# 匹配 /data/www/base-api/ 并删除（basename $path）
+$ echo ${path##/*/}
+main.go
+
+# 从尾开始删除，最短匹配
+# 匹配 /main.go 并删除（dirname $path）
+$ echo ${path%/*}
+/data/www/base-api
+
+# 从尾开始删除，最长匹配
+# 匹配并删除全部内容
+$ echo ${path%%/*}
+
+
+# ======
+#  替换
+# ======
+
+$ str="Aa Bb Cc Dd"
+
+# 替换第一个
+$ echo ${str/[a-z]/1}
+A1 Bb Cc Dd
+
+# 替换全部
+$ echo ${str//[a-z]/1}
+A1 B1 C1 D1
+```
+
+#### （9）变量是否存在
+
+| 变量设置方式     | str 没有设置       | str 为空字串       | str 已设置非为空字串 |
+| ---------------- | ------------------ | ------------------ | -------------------- |
+| var=${str-expr}  | var=expr           | var=               | var=$str             |
+| var=${str:-expr} | var=expr           | var=expr           | var=$str             |
+| var=${str+expr}  | var=               | var=expr           | var=expr             |
+| var=${str:+expr} | var=               | var=               | var=expr             |
+| var=${str=expr}  | str=expr var=expr  | str 不变 var=      | str 不变 var=$str    |
+| var=${str:=expr} | str=expr var=expr  | str=expr var=expr  | str 不变 var=$str    |
+| var=${str?expr}  | expr 输出至 stderr | var=               | var=$str             |
+| var=${str:?expr} | expr 输出至 stderr | expr 输出至 stderr | var=$str             |
+
+```sh
+# 当变量不存在时，使用默认值
+$ echo ${str-default}
+default
+
+# 当变量不存在或为空时，使用默认值
+$ echo ${str:-default}
+
+# 常用于 if 判断
+# 如果 str 非空，则执行 if 逻辑
+if [ ${str-} ]; then
+    # ...
+fi
+```
+
+## 10.3、Shell 脚本基础
+
+#### （1）hello.sh
+
+> 编写脚本
 
 ```sh
 #!/bin/bash
@@ -3541,7 +5785,7 @@ echo "Hello World!"
 
 注：脚本以 `#!/bin/bash` 开头指定 Shell 解释器。
 
-#### （2）执行脚本
+> 执行脚本
 
 方式 1：用 bash 或 sh 跟 shell 脚本的路径执行（不需要赋予脚本可执行权限）。
 
@@ -3567,7 +5811,7 @@ $ source hello.sh
 $ . hello.sh
 ```
 
-> 子 Shell
+#### （2）子 Shell
 
 ```sh
 $ cat test.sh
@@ -3601,70 +5845,6 @@ $ echo $A
 ```
 
 #### （3）变量
-
-- 系统预定义变量
-
-```sh
-# 查看系统环境变量
-$ env
-$ printenv
-
-# 显示当前 Shell 中所有的变量和函数（包含系统的和用户的）
-$ set
-
-# 显示当前会话的 shell 
-$ echo $0
-```
-
-- 用户自定义变量
-
-```sh
-# 定义局部变量
-# = 两边不能有空格
-$ name=ycz
-$ age=18
-$ echo $name $age
-ycz 18
-
-
-# 定义全局变量
-$ export hello="Hello Yancz"
-$ echo $hello
-Hello Yancz
-$ bash
-# 已进入子 Shell
-$ ps -f
-UID        PID  PPID  C STIME TTY          TIME CMD
-root     18988 18984  0 14:03 pts/0    00:00:00 -bash
-root     20132 18988  0 15:28 pts/0    00:00:00 bash
-root     20135 20132  0 15:28 pts/0    00:00:00 ps -f
-# 在子 Shell 中也能获取到 $hello
-$ echo $hello
-Hello Yancz
-
-# 继承关系：父 ==> 子
-# 注意：子 Shell 中的修改不会影响到父 Shell
-$ export hello="Hello Son Shell"
-$ echo $hello
-Hello Son Shell
-$ exit
-# 已退回父 Shell
-$ ps -f
-UID        PID  PPID  C STIME TTY          TIME CMD
-root     18988 18984  0 14:03 pts/0    00:00:00 -bash
-root     20455 18988  0 15:34 pts/0    00:00:00 ps -f
-$ echo $hello
-Hello Yancz
-
-# 撤销变量（变量名前不要加 $）
-$ unset name age
-
-# 生命静态变量（不能 unset）
-$ readonly CONST=ABCDE
-$ echo $CONST
-$ unset CONST
--bash: unset: CONST: cannot unset: readonly variable
-```
 
 - 特殊变量
 
@@ -3942,31 +6122,6 @@ done
 echo $sum3
 ```
 
-#### （7）读取控制台输入
-
-```sh
-# 语法
-read [options] [变量名]
-
-Options:
-    -p  指定参数的提示语
-    -t  指定读取值时等待的时间（s），如果不加 -t 则一直等待
-    
-# 案例
-$ cat read.sh
-#!/bin/bash
-
-read -p "请输入姓名：" name
-read -p "你的年龄：" age
-
-echo "欢迎 $age 岁的朋友：$name"
-
-$ bash read.sh
-请输入姓名：ycz
-你的年龄：18
-欢迎 18 岁的朋友：ycz
-```
-
 #### （8）函数
 
 - 系统函数
@@ -4020,7 +6175,7 @@ $ bash add.sh
 999 + 999 = 1998
 ```
 
-### 3、正则
+## 10.4、正则
 
 #### （1）正则基础
 
@@ -4126,7 +6281,7 @@ $ cat for.sh | grep -n -E '\$'[0-9]+
 24:while [ $i -le $1 ]
 ```
 
-### 4、文本处理器
+## 10.5、文本处理器
 
 #### （1）cut
 
@@ -4257,7 +6412,7 @@ $ ifconfig enp2s0 | awk -F " " '/netmask/ {print "IP:", $2}'
 IP: 172.16.56.56
 ```
 
-### 5、综合应用
+## 10.6、综合应用
 
 > 给在线用户发送通知
 

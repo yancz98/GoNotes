@@ -75,18 +75,33 @@
 ## Cloud Native
 
 - [x] [Docker](Docker.md)
+
 - [ ] [Kubernetes](https://kubernetes.io/)
+
 - [x] [DevOps](DevOps.md)
-- [x] [CICD (GitLab)](GitLab.md)
+
+  - [x] [CICD (GitLab)](GitLab.md)
+
 - [ ] 容器编排（Docker / K8S）
+
 - [ ] 服务治理
+
 - [ ] 服务注册发现（Consul、ETCD）
+
 - [ ] 配置中心（Apollo、ETCD）
+
 - [ ] 负载均衡（Nginx）
+
 - [ ] 服务网关（Envoy）
-- [ ] 日志中心（ELK）
-- [ ] 链路追踪（OpenTelemetry、Zipkin）
-- [ ] [监控&报警（Prometheus + Grafana）](Promethues.md)
+
+- [x] [可观测性](Observability.md)
+
+  - 日志中心（ELK）
+
+  - 监控&报警（Prometheus + Grafana）
+
+  - 链路追踪（OpenTelemetry、Zipkin）
+
 - [x] [微服务](MicroService.md)
 
 
@@ -105,7 +120,7 @@
 
 - [x] [Git](Git.md)
 
-- [ ] [Nginx](Nginx_80.md)
+- [x] [Nginx](Nginx_80.md)
 
   
 

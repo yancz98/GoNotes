@@ -1001,6 +1001,7 @@ OPTIONS:
 	-p, --publish			将容器端口映射到主机，[host_port]:[container_port]
 	-P, --publish-all		将 EXPOSE 暴露的端口映射到随机端口
 	--rm					容器退出时自动移除容器（同时移除匿名数据卷）
+	--restart=always
 	-v, --volume			绑定数据卷
 	--volumes-from			从指定容器加载卷
 	--mount					将文件系统挂载到容器
@@ -1259,7 +1260,7 @@ Options:
 docker image save -o base.tar base-api
 
 # 例2
-docker Image save base-api > base.tar
+docker image save base-api > base.tar
 
 
 # 导入

@@ -848,13 +848,15 @@ maxmemory <bytes>
 # 设置内存淘汰方式
 # maxmemory-policy noeviction
 
-# 选项
-# volatile-lru 利用LRU算法移除设置过过期时间的key（LRU：最近使用 Least Recently Used）。
-# allkeys-lru 利用LRU算法移除任何key（和上一个相比，删除的key包括设置过期时间和不设置过期时间的）。通常使用该方式。
-# volatile-random 移除设置过过期时间的随机key 。
-# allkeys-random  无差别的随机移除。
-# volatile-ttl   移除即将过期的key(minor TTL) 
-# noeviction 不移除任何key，只是返回一个写错误 ，默认选项，一般不会选用。
+# maxmemory-policy 可选值：
+    volatile-lru     利用 LRU 算法移除设置过期时间且最近最少使用的 key
+                     LRU：Least Recently Used
+    allkeys-lru      利用 LRU 算法移除任何（不管是否设置过期时间）最近最少使用的 key
+                     推荐使用
+    volatile-random  随机移除设置了过期时间的 key
+    allkeys-random   随机移除任何的 key
+    volatile-ttl     移除即将过期的 key（minor TTL）
+    noeviction       不移除任何 key，只是返回一个写错误 ，默认选项。
 ```
 
 ### 6、主从复制删除策略

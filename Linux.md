@@ -1105,9 +1105,9 @@ PATTERN 可以包括多个模式字符串，使用换行符进行分隔。
   -Z, --null                在<文件>名最后打印空字符
 
 文件控制:
-  -B, --before-context=NUM  打印文本及其前面NUM 行
-  -A, --after-context=NUM   打印文本及其后面NUM 行
-  -C, --context=NUM         打印NUM 行输出文本
+  -B, --before-context=NUM  打印匹配文本及其前面 NUM 行
+  -A, --after-context=NUM   打印匹配文本及其后面 NUM 行
+  -C, --context=NUM         打印匹配文本及其上下 NUM 行
   -NUM                      等同于 --context=NUM
       --color[=WHEN],
       --colour[=WHEN]       使用标记高亮匹配字串；
@@ -1139,7 +1139,21 @@ dev:x:1000:1000:DEV,,,:/home/dev:/bin/bash
 # 查看 root 组
 > cat /etc/group | grep root
 root:x:0:
+
+# 查看 DB 日志匹配的行及前 1 行（Caller）
+> grep -B 1 375588859863400463 log/2024-07-31_db.log
+2024/08/05 11:49:53 E:/CODE/ssns-api.readline.cn/service/business/task.go:40
+[2.949ms] [rows:1] SELECT * FROM `rd_task` WHERE id = 375588859863400463 AND `rd_task`.`deleted_at` = 0 ORDER BY `rd_task`.`id` LIMIT 1
 ```
+
+#### （7）sed
+
+```
+# 查看 10 ~ 20 行的内容
+sed -n '10,20p' file.txt
+```
+
+
 
 ### 4、默认权限与隐藏权限
 
@@ -2504,7 +2518,7 @@ set clipboard=unnamedplus  " 系统剪切板里的内容
 source ~/.vimrc
 ````
 
-### 4、vi/vim 键盘图
+### 3、vi/vim 键盘图
 
 ![vi / vim 键盘图](Images/Linux_vi-vim键盘图.jpg)
 
@@ -4142,7 +4156,7 @@ kill [选项] <PID>
 
 
 
-## 九、软件安装
+# 九、软件安装
 
 > 查看系统版本：cat /etc/redhat-release
 

@@ -2289,11 +2289,6 @@ tcpConn, err := net.DialTCP("tcp", nil, tcpAddr)
 
 > 服务端：
 >
-> 监听端口
->
-> 接收客户端的连接请求
->
-> 处理客户端的请求（goroutine）
 
 ```go
 package main
@@ -2318,6 +2313,9 @@ func response(conn net.Conn) {
 	defer conn.Close()
 }
 
+// 监听端口
+// 接收客户端的连接请求
+// 处理客户端的请求（goroutine）
 func main() {
 	fmt.Println("服务器开启监听...")
 
@@ -2347,20 +2345,12 @@ func main() {
 			// 用协程响应各个请求
 			go response(conn)
 		}
-
 	}
 }
 ```
 
-
-
 > 客户端：
 >
-> 建立连接
->
-> 发送请求
->
-> 关闭连接
 
 ```go
 package main
@@ -2370,9 +2360,11 @@ import (
 	"net"
 )
 
+// 建立连接
+// 发送请求
+// 关闭连接
 func main() {
-
-	conn, err := net.Dial("tcp", "192.168.8.66:1027")
+	conn, err := net.Dial("tcp", ":1027")
 	if err != nil {
 		fmt.Println("连接出错：", err)
 	}

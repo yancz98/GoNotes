@@ -472,11 +472,11 @@ RocketMQ 定时消息的定时时长参数精确到毫秒级，定时消息的�
 
 ### 3、RocketMQ Dashboard
 
-[GitHub 地址：](https://github.com/apache/rocketmq-dashboard)
+[GitHub](https://github.com/apache/rocketmq-dashboard)
 
 > 前提：启动 RocketMQ
 
-#### （1）、Docker 镜像安装
+（1）Docker 镜像安装
 
 ```
 docker run -d \

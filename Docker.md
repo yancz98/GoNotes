@@ -1831,6 +1831,12 @@ services:
 # docker-compose 文件中绑定未定义的数据卷时，不会自动创建，需手动创建
 volumes:
     web-data:
+        # 以下配置可以省略，主要用于更改 volume 的位置
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/data/docker/ES/volumes'
     
 # 定义网络
 networks:
@@ -2083,6 +2089,7 @@ $ docker compose --compatibility up -d
 > 验证
 
 ```sh
+# docker 版本 version 26.1.3（低版本没有此功能）
 $ docker compose stats
 CONTAINER ID   NAME          CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O         PIDS
 782a410c0f42   mongo_27017   0.02%     440.2MiB / 32GiB    1.34%     66.3kB / 1.67MB   153MB / 4.12MB    35

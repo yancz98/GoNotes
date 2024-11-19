@@ -89,7 +89,7 @@ mysql> FLUSH PRIVILEGES;
 Query OK, 0 rows affected (0.01 sec)
 ```
 
-#### （4）建库/表（测试用）
+#### （4）建库/表（同步测试用）
 
 ```sql
 # 建库
@@ -179,6 +179,7 @@ spring.datasource:
   username: root   # 这个账号需要有 Insert 权限，否则 Canal-Admin 无法管理
   password: root
   driver-class-name: com.mysql.jdbc.Driver
+  # useSSL=false
   url: jdbc:mysql://${spring.datasource.address}/${spring.datasource.database}?useUnicode=true&characterEncoding=UTF-8&useSSL=false
   hikari:
     maximum-pool-size: 30
@@ -633,7 +634,8 @@ $ cat logs/example/example.log
 #### （5）Docker（推荐）
 
 ```sh
-# Server 会自动添加到 Admin 中
+# Server 会自动注册到 Admin 中
+# http://172.16.2.13:8089/api/v1/config/server_polling?ip=172.17.0.4&port=11110&md5=&register=1&cluster=&name=d640112f65b0
 # 在 Instance 管理界面中配置 Instance 更方便
 $ docker run -d \
   --restart=always \
@@ -1008,6 +1010,8 @@ mysql> INSERT INTO `canal_sync`.`user`(`id`, `user`, `passwd`, `role`, `created_
 
 #### （1）配置 Adapter
 
+> conf/application.yml
+
 ```yml
 server:
   port: 8081
@@ -1041,6 +1045,7 @@ canal.conf:
   # 数据源配置
   srcDataSources:
     defaultDS:
+      # useSSL=false
       url: jdbc:mysql://127.0.0.1:3306/canal_sync?useUnicode=true&useSSL=false
       username: canal
       password: canal
@@ -1115,8 +1120,8 @@ esMapping:
       user u"
     # 当 MySQL 中字段类型为 Json 时
   #  objFields:
-  #    _labels: array:;   # 数组或者对象属性, array:; 代表字段里面是以;分隔的
-  #    _obj: object       # Json 对象
+  #    _labels: array:;   # 数组属性, array:; 代表字段里面是以;分隔的，如：a;b;c => [a,b,c]
+  #    _obj: object       # Json 对象（或数组）
   etlCondition: "WHERE created_at>={}"  # ETL 的条件参数，软删除时有用
   commitBatch: 3000
 ```

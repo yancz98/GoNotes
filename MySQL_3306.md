@@ -924,9 +924,105 @@ InnoDB 表必须要有主键，且推荐整形自增（减少往索引中间的�
 
 ## 七、分区
 
+```sql
+# 查看是否支持分区
+SHOW PLUGINS;
+partition	ACTIVE	...
 ```
 
+分区方式：
+
+- Range：基于连续区间分区
+- List：基于离散集合分区
+- Hash：根据用户自定义规则对数据进行散列分区
+- Key：与 hash 分区类似，但是根据 MySQL 引擎自身的规则处理数据
+
+#### （1）Range
+
+```sql
+# Range
+CREATE TABLE `part_range` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `data` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY RANGE (id) (
+  PARTITION p0 VALUES LESS THAN (10) ENGINE = InnoDB,
+  PARTITION p1 VALUES LESS THAN (20) ENGINE = InnoDB,
+  PARTITION p2 VALUES LESS THAN (30) ENGINE = InnoDB
+);
+
+# 多次执行
+INSERT INTO `part_range` VALUES();
+
+# 执行到第 30 次时，报错
+> 1526 - Table has no partition for value 30
+
+# 增加分区
+ALTER TABLE part_range ADD PARTITION(PARTITION p3 VALUES LESS THAN MAXVALUE);
+
+# 再次插入即可成功
+
+# 按分区查询
+SELECT * FROM part_range PARTITION(p3);
 ```
+
+#### （2）List
+
+```sql
+# List
+CREATE TABLE `part_list` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `data` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY LIST (id%10) (
+  PARTITION p0 VALUES IN (1,3,5,7,9),
+  PARTITION p1 VALUES IN (2,4,6,8,0)
+);
+```
+
+#### （3）Hash
+
+Hash 分区的特点：
+
+- 根据 MOD(分区键, 分区数) 的值把数据行存储到表的不同分区中。
+- 数据可以平均的分布在各个分区中。
+- Hash 分区的键值必须是一个 int 类型的值，或通过函数可以转为 int 类型。
+
+```sql
+# Hash：id % 4
+CREATE TABLE `part_hash` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `data` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY HASH (id) PARTITIONS 4;
+```
+
+#### （4）Key
+
+Key 分区类似于 Hash 分区，不同之处在于 Hash 分区使用用户自定义的表达式，而 Key 分区的散列函数由 MySQL 服务器提供。NDB 集群使用 MD5() 来实现此目的。对于其它存储引擎的表，服务器采用其自身的内部散列函数。
+
+Key 分区只接受零或多个列名的列表。任何用作分区键的列都必须包含表的部分或全部主键（若有）。如果没有将列名指定为分区键，则使用表的主键（若有）。
+
+```sql
+# Key
+CREATE TABLE `part_key` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `data` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+PARTITION BY KEY (id) PARTITIONS 4;
+```
+
+### 分表 vs 分区
+
+分表后，单表的并发能力提高了，磁盘 IO 性能也提高了。分表的侧重点是存取数据时，如何提高 MySQL 的并发能力。
+
+分区后，主要突破磁盘 IO 瓶颈，提升磁盘的读写能力，来增加 MySQL 的性能。分区的侧重点是提高磁盘的读写能力。
+
+
 
 
 
@@ -1795,7 +1891,7 @@ EXPLAIN SELECT * FROM table WHERE 1 = 1;
 | ref           | 哪些列或常量被用于查找索引列上的值。                         |
 | rows          | 查询时必须检查的行数。                                       |
 | filtered      | 通过查询条件获取的最终记录数 ÷ 通过访问类型（type）指定的方式搜索出来的记录数×100% <br/>如果比例很低，说明存储引擎层返回的数据需要经过大量过滤，效率低。 |
-| Extra         | Extra：处理查询时的额外信息。<br/><br/>**Using filesort**【慢】：MySQL中无法利用索引完成的排序，只能在内存或磁盘中进行排序操作。<br/>**Using temporary**【慢】：使用临时表，MySQL 如果不能有效利用索引来完成去重、排序、分组等查询，将创建内部临时表来保存中间结果。<br/>**Using index**：使用索引覆盖，扫描索引树一步完成，不需要回表。<br/>**Using index condition**：使用了索引，但需要回表。<br/>**Using where**：使用 WHERE 条件过滤。<br/>**Using join buffer**：使用了连接缓存，在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，MySQL 一般会为其分配一块名叫 join buffer 的内存块来加快查询速度。<br/>**impossible where**：WHERE 子句的值总是 false，不能获取到数据。<br/>**select tables optimized away**：在没有 GROUP 子句的情况下，基于索引优化 MIN、MAX 操作或者对于 MyISAM 存储引擎优化 COUNT(*) 操作，不必等到执行阶段再进行计算，查询执行计划生成的阶段即完成优化。 <br/>**distinct**：优化 DISTINCT，在找到第一个匹配的元组后记停止找相同值的工作。 |
+| Extra         | Extra：处理查询时的额外信息。<br/><br/>**Using filesort**【慢】：MySQL中无法利用索引完成的排序，只能在内存或磁盘中进行排序操作。<br/>**Using temporary**【慢】：使用临时表，MySQL 如果不能有效利用索引来完成去重、排序、分组等查询，将创建内部临时表来保存中间结果。<br/>**Using index**：使用索引覆盖，扫描索引树一步完成，不需要回表。<br/>**Using index condition**：使用了索引，但需要回表。<br/>**Using where**：使用 WHERE 条件过滤。<br/>**Using join buffer**：使用了连接缓存，在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，MySQL 一般会为其分配一块名叫 join buffer 的内存块来加快查询速度。<br/>**impossible where**：WHERE 子句的值总是 false，不能获取到数据。<br/>**select tables optimized away**：在没有 GROUP 子句的情况下，基于索引优化 MIN、MAX 操作或者对于 MyISAM 存储引擎优化 COUNT(*) 操作，不必等到执行阶段再进行计算，查询执行计划生成的阶段即完成优化。 <br/>**distinct**：优化 DISTINCT，在找到第一个匹配的元组后记停止找相同值的工作。<br />**no matching row in const table**：JOIN 表中没有找到匹配的行。<br />**unique row not found**：JOIN 表中主键或唯一键不存在。 |
 
 > `Using temporary` 产生的条件：
 
@@ -1817,9 +1913,10 @@ WHERE ＞ GROUP BY ＞ ORDER BY
 
 # WHERE 条件最左原则
 索引顺序：主键 ＞ 唯一索引 ＞ 普通索引 ＞ 无索引
-范围顺序：等号 ＞ IN ＞ 范围（＞、＜、BETWEEN、LIKE）
+范围顺序：等号 ＞ IN ＞ 范围（>、<、BETWEEN、LIKE）
 
 # 联合索引的最左原则
+# 将区分度最高的放在最左边
 创建联合索引 (a, b, c)
 将生成以下索引
 (a)
@@ -1977,5 +2074,82 @@ Error 1205: Lock wait timeout exceeded; try restarting transaction
 
 # 语句太长
 Error 1390: Prepared statement contains too many placeholders
+
+# 列数太多，列的数据类型占用的空间太大时
+> 1118 - Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
+
+# 字段超过索引长度
+> 1170 - BLOB/TEXT column '' used in key specification without a key length
 ```
+
+### 深分页查询优化
+
+```sql
+# 利用延迟关联或者子查询优化深分页
+SELECT t1.* FROM 表1 as t1 , (select id from 表1 where 条件 LIMIT 20 OFFSET 1000000) as t2 where t1.id = t2.id
+```
+
+### 分表
+
+```sql
+CREATE TABLE `member_1` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) NOT NULL DEFAULT '',
+  `sex` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM CHARSET=utf8mb4;
+
+CREATE TABLE `member_2` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) NOT NULL DEFAULT '',
+  `sex` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM CHARSET=utf8mb4;
+
+CREATE TABLE `member` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) NOT NULL DEFAULT '',
+  `sex` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MERGE UNION=(member_1, member_2) INSERT_METHOD=NO CHARSET=utf8mb4;
+# INSERT_METHOD 表示该表的插入方式
+#  - NO     只能查询，不能写入
+#  - FIRST  插入到第一张表（member_1）
+#  - LAST   插入到最后一张表（member_n）
+
+INSERT INTO member_1(`name`, sex) VALUES('Yan1', 1);
+INSERT INTO member_2(`name`, sex) VALUES('Yan2', 2);
+
+SELECT * FROM member_1;
++----+------+-----+
+| id | name | sex |
++----+------+-----+
+| 1  | Yan1 | 1   |
++----+------+-----+
+SELECT * FROM member_2;
++----+------+-----+
+| id | name | sex |
++----+------+-----+
+| 1  | Yan2 | 2   |
++----+------+-----+
+SELECT * FROM member;
++----+------+-----+
+| id | name | sex |
++----+------+-----+
+| 1  | Yan1 | 1   |
+| 1  | Yan2 | 2   |
++----+------+-----+
+
+# 主表不能插入
+INSERT INTO member(`name`, sex) VALUES('Yan3', 3)
+> 1036 - Table 'member' is read only
+```
+
+> Error 1168 - Unable to open underlying table which is differently defined or of non-MyISAM type or doesn't exist.
+
+报错原因：
+
+- MERGE 引擎只适用于 MyISAM 表。
+- UNION 了不存在的表。
+- 各表的结构（索引、引擎、列、字符集等）不一致。
 

@@ -58,7 +58,7 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 
 - 启动 MongoDB 服务：
 
-  ```shell
+  ```sh
   # 启动 MongoDB 服务
   > mongod --dbpath=D:\MongoDB-5.0\data
   
@@ -71,7 +71,7 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 
 - 将 MongoDB 作为 Windows 服务
 
-  ```shell
+  ```sh
   # 将 MongoDB 作为 Windows 服务随机启动
   > mongod --dbpath=D:\MongoDB-5.0\data --logpath=D:\MongoDB-5.0\log\mongod.log --install
   
@@ -80,8 +80,9 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
 
 - 客户端连接验证
 
-  ```shell
-  # 连接到 MongoDB 服务（mongod.exe）
+  ```sh
+  # Windows 下连接到 MongoDB 服务（mongod.exe）
+  # 新版中没有 mongo（需额外安装）
   > mongo
   MongoDB shell version v5.0.15
   connecting to: mongodb://127.0.0.1:27017/?compressors=disabled&gssapiServiceName=mongodb
@@ -89,8 +90,30 @@ BSON 是一种二进制序列化格式，用于在 MongoDB 中存储文档和进
   MongoDB server version: 5.0.15
   ......
   
-  # 新版中没有 mongo 
-  # 需要额外安装 mongosh
+  
+  # Linux 下安装 mongosh
+  $ wget https://downloads.mongodb.com/compass/mongosh-2.3.2-linux-x64.tgz
+  $ tar zxvf mongosh-2.3.2-linux-x64.tgz
+  $ tree mongosh-2.3.2-linux-x64
+  mongosh-2.3.2-linux-x64
+  ├── bin
+  │   ├── mongosh              # mongosh
+  │   └── mongosh_crypt_v1.so
+  ├── LICENSE-crypt-library
+  ├── LICENSE-mongosh
+  ├── mongosh.1.gz
+  ├── README
+  └── THIRD_PARTY_NOTICES
+  $ mongosh --host 127.0.0.1 --port 27017
+  Current Mongosh Log ID: 67175d7414f83a54a0fe6910
+  Connecting to:          mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.3.2
+  Using MongoDB:          7.0.5
+  Using Mongosh:          2.3.2
+  
+  For mongosh info see: https://www.mongodb.com/docs/mongodb-shell/
+  ......
+  
+  > exit
   ```
 
 
@@ -203,7 +226,7 @@ db.serverStatus()
 
 ### 1、数据库方法
 
-```shell
+```sh
 # 查看帮助
 > db.help()
 DB methods:
@@ -246,7 +269,7 @@ switched to db <database>
 
 ### 2、集合方法
 
-```shell
+```sh
 # 查看帮助
 > db.mycoll.help()
 DBCollection methods:
@@ -287,7 +310,7 @@ true
 
 ### 1、Insert
 
-```shell
+```sh
 # ============
 #  插入单个文档
 # ============
@@ -314,7 +337,7 @@ db.collection.insertMany( [objects], <optional params> )
 
 > 填充数据
 
-```json
+```sh
 db.collection.insertMany([
     {
         "item": "circular",
@@ -375,7 +398,7 @@ db.collection.insertMany([
 
 #### （1）[查询文档](https://www.mongodb.com/docs/v5.0/tutorial/query-documents/)
 
-```shell
+```sh
 # find 语法
 db.collection.find([query],[fields])
 
@@ -596,7 +619,7 @@ db.mycoll.distinct( key, query, <optional params> )
 
 #### （2）[查询嵌套文档](https://www.mongodb.com/docs/v5.0/tutorial/query-embedded-documents/)
 
-```shell
+```sh
 # =====================
 #  匹配嵌套文档（相等匹配）
 # =====================
@@ -629,7 +652,7 @@ db.collection.find( { "positoin.h": { $gte: 10 } } )
 
 #### （3）[查询数组](https://www.mongodb.com/docs/v5.0/tutorial/query-arrays/)
 
-```shell
+```sh
 # =====================
 #  匹配整个数组（相等匹配）
 # =====================
@@ -672,7 +695,7 @@ db.collection.find( { "colors": { $size: 3 } } )
 
 #### （4）[指定查询字段](https://www.mongodb.com/docs/v5.0/tutorial/project-fields-from-query-results/)
 
-```shell
+```sh
 # =======================
 #  inclusion 包含指定字段
 # =======================
@@ -724,7 +747,7 @@ Error: error: {
 
 #### （5）[查询 Null 字段或缺失字段](https://www.mongodb.com/docs/v5.0/tutorial/query-for-null-fields/)
 
-```shell
+```sh
 # 插入数据
 db.collection.insertOne( { "data": null } )
 
@@ -750,7 +773,7 @@ db.collection.find( { "data": { $exists: true } } )
 
 #### （6）[迭代游标](https://www.mongodb.com/docs/v5.0/tutorial/iterate-a-cursor/#manually-iterate-the-cursor)
 
-```shell
+```sh
 # 将查询结果存入 cursor
 > var cursor = db.collection.find()
 
@@ -764,11 +787,23 @@ db.collection.find( { "data": { $exists: true } } )
 > cursor.toArray()[0]
 ```
 
+#### （7）按数据类型查询
+
+```sh
+db.system_log.find({
+    visible_time: {
+        $type: 'string'
+    }
+})
+```
+
+
+
 ### 3、Update
 
 #### （1）更新文档
 
-```shell
+```sh
 # ===================
 #  更新第一个匹配的文档
 # ===================
@@ -832,13 +867,37 @@ db.system_log.find().forEach(function(doc) {
     doc.visible_time = new Date(doc.created_at);
     db.system_log.save(doc);
 });
+
+// 遍历所有集合
+for (i = 0; i < db.getCollectionNames().length; i++) {
+    cn = db.getCollectionNames()[i]
+    if (cn == 'request_log_20241023') {
+        continue
+    }
+    if (cn.slice(0, 12) != 'request_log_') {
+        continue
+    }
+    
+    print(cn + "  Begin...")
+    
+    db.getCollection(cn).find({
+        visible_time: {
+            $type: 'string'
+        }
+    }).forEach(function(doc) {
+        doc.visible_time = new Date(doc.created_at);
+        db.getCollection(cn).save(doc);
+    })
+    
+    print(cn + "  End...")
+}
 ```
 
 
 
 ### 4、Delete
 
-```shell
+```sh
 # ===================
 #  删除第一个匹配的文档
 # ===================
@@ -884,7 +943,7 @@ db.mycoll.bulkWrite( operations, <optional params> )
 
 > 填充数据
 
-```shell
+```sh
 db.collection.insertMany([
     {
         "rank": 1,
@@ -941,7 +1000,7 @@ db.collection.insertMany([
 
 > 执行文本搜索
 
-```shell
+```sh
 # 执行文本搜索查询的集合中必须有一个文本索引
 > db.collection.find( { $text: { $search: "\"script language\""} } )
 Error: error: {
@@ -1096,7 +1155,7 @@ db.articles.aggregate(
 
 未显式指定读关注点的操作会继承全局默认读关注的设置。
 
-```shell
+```sh
 # 设置全局默认读写关注点
 db.adminCommand(
     {
@@ -1127,7 +1186,7 @@ db.adminCommand(
 
 未指定显式写关注的操作继承全局默认写关注设置。
 
-```shell
+```sh
 # 设置全局默认读写关注点
 db.adminCommand(
     {
@@ -1142,7 +1201,7 @@ db.adminCommand(
 
 > 写关注规范
 
-```shell
+```sh
 { w: <value>, j: <boolean>, wtimeout: <number> }
 ```
 
@@ -1207,7 +1266,7 @@ findAndModify 对文档的操作是原子的，如果查找条件与文档匹配
 
 ### 1、聚合方法
 
-```shell
+```sh
 # 返回集合或视图中文档的近似计数
 db.collection.estimatedDocumentCount()
 
@@ -1415,7 +1474,7 @@ db.collection.aggregate()
 
 
 
-```shell
+```sh
 # 填充数据
 db.collection.insertMany([
     {
@@ -1477,7 +1536,7 @@ db.collection.insertMany([
 
 #### （4）聚合管道查询示例
 
-```shell
+```sh
 # 查询各年级的总人数
 db.collection.aggregate([
 
@@ -1548,7 +1607,7 @@ MongoDB 索引使用 B-Tree 数据结构。
 
 ### 1、操作索引
 
-```shell
+```sh
 # 创建索引
 db.collection.createIndex( <key and index type specification>, <options> )
 
@@ -1635,7 +1694,7 @@ item + location + stock
 
 复合索引支持与索引的排序顺序或索引的反向排序顺序匹配的排序操作。
 
-```shell
+```sh
 # 创建复合索引
 db.collection.createIndex( { score: -1, username: 1 } )
 

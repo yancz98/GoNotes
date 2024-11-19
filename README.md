@@ -34,7 +34,16 @@
 
 - [ ] [Consul](Consul.md)
 
+> 常见存储系统排行
+>
+> https://db-engines.com/en/ranking
 
+| OLTP       | OLAP       | NoSQL         | 大数据    |
+| ---------- | ---------- | ------------- | --------- |
+| MySQL      | ClickHouse | Redis         | HDFS      |
+| PostgreSQL | Hive       | MongoDB       | HBase     |
+| Oracle     | Kylin      | Elasticsearch | Cassandra |
+|            |            | InfluxDB      | Ceph      |
 
 > Key-Value Stores Comparison Chart
 

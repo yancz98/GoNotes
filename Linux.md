@@ -249,6 +249,107 @@ $ cal
 26 27 28 29 30 31
 ```
 
+### 5、lscpu
+
+```sh
+# 显示 CPU 架构信息
+lscpu [Options]
+
+Options：
+ -a, --all               同时打印在线和离线 CPU (-e 选项默认值)
+ -b, --online            只打印在线 CPU (-p 选项默认值)
+ -B, --bytes             print sizes in bytes rather than in human readable format
+ -C, --caches[=<list>]   info about caches in extended readable format
+ -c, --offline           只打印离线 CPU
+ -J, --json              use JSON for default or extended format
+ -e, --extended[=<列表>] 打印扩展的可读格式
+ -p, --parse[=<列表>]    打印可解析格式
+ -s, --sysroot <目录>    以指定目录作为系统根目录
+ -x, --hex               打印十六进制掩码而非 CPU 列表
+ -y, --physical          打印物理 ID 而非逻辑 ID
+     --output-all        print all available columns for -e, -p or -C
+
+ -h, --help              display this help
+ -V, --version           display version
+
+Available output columns for -e or -p:
+           CPU  逻辑 CPU 数量
+          CORE  逻辑核心数量
+        SOCKET  逻辑(CPU)座数量
+          NODE  逻辑 NUMA 节点数量
+          BOOK  逻辑 book 数
+        DRAWER  逻辑抽屉号
+         CACHE  显示 CPU 间是如何共享缓存的
+  POLARIZATION  虚拟硬件上的 CPU 调度模式
+       ADDRESS  CPU 的物理地址
+    CONFIGURED  显示超级监督(hypervisor)是否分配了 CPU
+        ONLINE  显示 Linux 当前是否在使用该 CPU
+        MAXMHZ  显示 CPU 的最大 MHz
+        MINMHZ  显示 CPU 的最小 MHz
+
+Available output columns for -C:
+      ALL-SIZE  size of all system caches
+         LEVEL  cache level
+          NAME  cache name
+      ONE-SIZE  size of one cache
+          TYPE  cache type
+          WAYS  ways of associativity
+
+
+$ lscpu
+# CPU 的架构名称
+Architecture:          x86_64
+# CPU 的操作模式
+CPU op-mode(s):        32-bit, 64-bit
+# 字节序
+Byte Order:            Little Endian
+# 逻辑核心数 = 物理核心数 * 每个核心的线程数 = 96 * 2 = 192
+# 物理核心数 = 插槽数 * 每个插槽的核心数 = 4 * 24 = 96
+CPU(s):                192
+# 当前在线的 CPU 列表
+On-line CPU(s) list:   0-191
+# 每个核心的线程数，如果是 1，则是超线程（Hyper-Threading）
+Thread(s) per core:    2
+# 每个 CPU 插槽的核心数
+Core(s) per socket:    24
+# 安装在主板上的 CPU 插槽数
+Socket(s):             4
+# 非统一内存访问（NUMA）节点的数量
+NUMA node(s):          4
+# 制造商 ID
+Vendor ID:             GenuineIntel
+# CPU 系列
+CPU family:            6
+# 型号
+Model:                 85
+# 型号名称
+Model:                 Intel(R) Xeon(R) Platinum 8260 CPU @ 2.40GHz
+# 步进版本
+Stepping:              7
+# CPU 频率
+CPU MHz:               1898.291
+CPU max MHz:           3900.0000
+CPU min MHz:           1000.0000
+BogoMIPS:              4800.00
+# 显示 CPU 是否支持虚拟化技术（如：Intel VT-x 或 AMD-V）
+Virtualization:        VT-x
+# 第 1 级缓存
+L1d cache:             32K
+# 第 1 级指令缓存
+L1i cache:             32K
+L2 cache:              1024K
+L3 cache:              36608K
+# 每个 NUMA 节点上的 CPU
+NUMA node0 CPU:        0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124,128,132,136,140,144,148,152,156,160,164,168,172,176,180,184,188
+NUMA node1 CPU:        1,5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,81,85,89,93,97,101,105,109,113,117,121,125,129,133,137,141,145,149,153,157,161,165,169,173,177,181,185,189
+NUMA node2 CPU:        2,6,10,14,18,22,26,30,34,38,42,46,50,54,58,62,66,70,74,78,82,86,90,94,98,102,106,110,114,118,122,126,130,134,138,142,146,150,154,158,162,166,170,174,178,182,186,190
+NUMA node3 CPU:        3,7,11,15,19,23,27,31,35,39,43,47,51,55,59,63,67,71,75,79,83,87,91,95,99,103,107,111,115,119,123,127,131,135,139,143,147,151,155,159,163,167,171,175,179,183,187,191
+# 显示 CPU 支持的特性和功能
+Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch epb cat_l3 cdp_l3 invpcid_single intel_ppin ssbd mba rsb_ctxsw ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke avx512_vnni md_clear spec_ctrl intel_stibp flush_l1d arch_capabilities
+```
+
+
+
 ## 1.6、运行级别
 
 ```sh
@@ -275,9 +376,13 @@ init [0123456]
 # 运行级别 1 的应用：[找回 root 密码]（www.baidu.com）
 ```
 
+## 1.7、SSH 远程登录
 
 
-# 二、文件 & 目录
+
+
+
+# 二、目录&文件
 
 ## 2.1 文件权限
 
@@ -610,9 +715,9 @@ $ chmod -R +x script/
 
 ## 2.3 文件与目录管理
 
-1、目录与路径
+### 1、目录/文件管理
 
-### 1、工作目录
+#### （1）cd
 
 ```sh
 # change directory
@@ -621,13 +726,12 @@ cd [Options] [目录]
     改变 shell 工作目录。
     改变当前目录至 DIR 目录。默认的 DIR 目录是 shell 变量 HOME 的值。
 
-
+# 打印当前工作目录的名字
 pwd [Options]
     
-    打印当前工作目录的名字。
 
 
-特殊目录：
+# 特殊目录表示：
     /     根目录
     .     代表当前目录
     ..    代表上级目录
@@ -638,12 +742,10 @@ pwd [Options]
     ~account  代表 account 用户的主目录
 
 # 打印并切换回上一个工作目录
-> cd -
+$ cd -
 ```
 
-### 2、文件与目录管理
-
-#### （1）mkdir & rmdir
+#### （2）mkdir & rmdir
 
 ```sh
 # 创建目录
@@ -690,7 +792,7 @@ $ rmdir -p a/b/c
 $ rmdir a/b/c a/b a
 ```
 
-#### （2）touch
+#### （3）touch
 
 ```sh
 # 更新文件的访问和修改时间
@@ -702,7 +804,7 @@ Options:
     -m  更改修改时间
 ```
 
-#### （3）cp
+#### （4）cp
 
 ```sh
 # 拷贝文件 & 目录
@@ -714,7 +816,7 @@ Options:
     -T  将目标目录视作普通文件
 ```
 
-#### （4）rm
+#### （5）rm
 
 ```sh
 # 删除文件 & 目录
@@ -728,7 +830,7 @@ Options:
 注：默认 rm 不会删除目录，使用 rm -r 删除目录及其内容
 ```
 
-#### （5）mv
+#### （6）mv
 
 ```sh
 # 重命名或移动文件 & 文件夹
@@ -742,7 +844,7 @@ mv [选项] 源文件 目标文件
 注：指定 -i、-f、-n 中的多个时，仅最后一个生效。
 ```
 
-#### （6）basename & dirname
+#### （7）basename & dirname
 
 ```sh
 # 取得文件名
@@ -754,7 +856,7 @@ $ dirname /etc/sysconfig/network
 /etc/sysconfig
 ```
 
-#### （7）scp
+#### （8）scp
 
 ```sh
 # 拷贝到远程
@@ -766,7 +868,7 @@ scp -P port <文件> user@host:File
 scp root@192.168.0.159:/etc/hosts ./
 ```
 
-#### （8）ln
+#### （9）ln
 
 > 硬链接（hard link）
 
@@ -885,9 +987,7 @@ $ cd /data/database/ && ll taxonomy
 lrwxrwxrwx 1 dell dell 14 5月  20 12:06 taxonomy -> /data/taxonomy/
 ```
 
-## 
-
-### 3、文件内容查看
+### 2、文件内容查看
 
 #### （1）cat & tac
 
@@ -1156,9 +1256,19 @@ root:x:0:
 sed -n '10,20p' file.txt
 ```
 
+#### （8）awk
 
+#### （9）cut
 
-### 4、默认权限与隐藏权限
+#### （10）wc
+
+#### （11）sort
+
+#### （12）stat
+
+#### （13）uniq
+
+### 3、默认权限与隐藏权限
 
 #### （1）umask 
 
@@ -1284,7 +1394,7 @@ README: ASCII text
 
 
 
-### 5、指令与文件搜寻
+### 4、指令与文件搜寻
 
 #### （1）which
 
@@ -2125,7 +2235,7 @@ $ ll
 
 
 
-### 6、文件压缩
+### 5、文件压缩与解压
 
 > 常见的压缩文件扩展名：
 
@@ -2655,6 +2765,18 @@ root:x:0:
 组名:密码:gid:组内用户列表（隐藏）
 ```
 
+# 四、系统性能监控
+
+1、查看系统版本
+
+
+
+2、cpuinfo
+
+
+
+3、meminfo
+
 
 
 # 五、定时任务 Cron
@@ -2809,7 +2931,7 @@ Options:
       OPT-IO  optimal I/O size
      PHY-SEC  物理扇区大小
      LOG-SEC  逻辑扇区大小
-        ROTA  rotational device
+        ROTA  旋转设备（Rotational device），0 固态，1 机械
        SCHED  I/O scheduler name
      RQ-SIZE  request queue size
         TYPE  设备类型：disk 磁盘、part 分区、rom 只读存储器
@@ -2869,6 +2991,19 @@ sr0
 $ lsblk -S
 NAME HCTL       TYPE VENDOR   MODEL               REV TRAN
 sda  0:0:0:0    disk ATA      ST2000DM008-2FR102 1003 sata
+
+# 查看是固态硬盘（SSD）还是机械硬盘（HDD）
+# ROTA：旋转，0 代表固态，1 代表机械
+# sda 是固态硬盘，sdb 是机械硬盘
+$ lsblk -o NAME,SIZE,ROTA
+NAME              SIZE ROTA
+sda             893.8G    0
+├─sda1              1G    0
+└─sda2          892.8G    0
+  ├─centos-root    50G    0
+  ├─centos-swap     4G    0
+  └─centos-home 838.8G    0
+sdb               6.6T    1
 ```
 
 ### 3、查看磁盘使用情况
@@ -3266,6 +3401,8 @@ Filesystem/RAID signature on partition 1 will be wiped.
 ```
 
 ### 5、mkfs
+
+> mkfs：格式化磁盘
 
 常见的文件系统：
 
@@ -4961,9 +5098,89 @@ $ ls /data100 && echo "/data100 exist" || echo "/data100 not exist"
 
 #### （6）sed
 
-```
-# 查看 10 ~ 20 行的内容
-sed -n '10,20p' file.txt
+```sh
+# sed 命令是一个面向行处理的工具，对文件内每一行进行处理，并把当前处理的行存储在临时缓冲区中，称为“模式空间”，处理完成后，把缓冲区的内容送往屏幕，直到文件末尾。
+# sed 命令默认不会直接修改源文件数据。
+sed [OPTION]... {script-only-if-no-other-script} [input-file]...
+
+Options:
+  -e  直接在命令行模式上进行 sed 动作编辑，此为默认选项
+  -f  将 sed 的动作写在一个文件内，用 –f filename 执行 filename 内的 sed 动作
+  -i  直接修改文件内容
+  -n  只打印模式匹配的行
+  -r  支持扩展表达式
+
+动作：
+  a  在当前行下面插入文本
+  i  在当前行上面插入文本
+  c  把选定的行改为新的文本
+  d  删除，删除选择的行
+  D  删除模板块的第一行
+  s  替换指定字符
+  h  拷贝模板块的内容到内存中的缓冲区
+  H  追加模板块的内容到内存中的缓冲区
+  g  获得内存缓冲区的内容，并替代当前模板块中的文本;
+  G  获得内存缓冲区的内容，并追加到当前模板块文本的后面;
+  l  列表不能打印字符的清单;
+  n  读取下一个输入行，用下一个命令处理新的行而不是用第一个命令;
+  N  追加下一个输入行到模板块后面并在二者间嵌入一个新行，改变当前行号码;
+  p  打印模板块的行。 P(大写) 打印模板块的第一行;
+  q  退出Sed;
+  b  lable 分支到脚本中带有标记的地方，如果分支不存在则分支到脚本的末尾;
+  r  file 从file中读行;
+  t  label if分支，从最后一行开始，条件一旦满足或者T，t命令，将导致分支到带有标号的命令处，或者到脚本的末尾;
+  T  label 错误分支，从最后一行开始，一旦发生错误或者T，t命令，将导致分支到带有标号的命令处，或者到脚本的末尾;
+  w  file 写并追加模板块到file末尾;
+  W  file 写并追加模板块的第一行到file末尾;
+  y  把一个字符翻译为另外的字符
+  x  表示互换模板块中的文本和缓冲区中的文本
+
+
+# 注意：默认为 -e 模式，不会修改原文件
+
+# 【增】在第 5 行后面追加一行内容
+$ sed '5a new line content' sed.txt
+
+# 【删】
+# 删除第 5 行（$ 代表尾行）
+$ sed '5d' sed.txt
+# 删除 5 ~ 最后一行
+$ sed '5,$d' sed.txt
+
+# 【改】将第 2 ~ 5 行替换为新内容
+$ sed '2,5c change content' sed.txt
+
+# 【查】
+# 仅打印 10 ~ 20 行的内容
+$ sed -n '10,20p' sed.txt
+
+# 仅打印 第一行 和 最后一行
+$ sed -n '1p,$p' sed.txt
+
+# 搜索 abc 匹配的行
+sed -n '/abc/p' sed.txt
+
+# 全局替换
+$ sed 's/查找内容/替换内容/g' sed.txt
+
+# 仅替换第 2 ~ 8 行的内容
+$ sed '2,8s/查找内容/替换内容/g' sed.txt
+
+# 删除关键词（替换为空）
+$ sed 's/查找内容//g' sed.txt
+
+# 打印奇数行
+$ sed -n 'p;n' sed.txt
+$ sed -n '1~2p' sed.txt
+
+# 打印偶数行
+$ sed -n 'n;p' sed.txt
+$ sed -n '2~2p' sed.txt
+
+# 【修改原文件】
+
+# 删除超大文件的 1 ~ 75 行
+$ sed -i '1,75d' sed.txt
 ```
 
 

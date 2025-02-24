@@ -1528,6 +1528,7 @@ func hello() {
 
 func main() {
     go hello()
+    // 第 n 个发送发生在第 n 个接收完成之前
     // 先发送才能接收完成，msg 赋值为 hello
     <-done
     println(msg)

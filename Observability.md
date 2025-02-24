@@ -251,7 +251,7 @@ Prometheus 专为可靠性而设计，在系统中断期间可以快速诊断问
 
 Prometheus 不适用于收集严格精准的数据（如，按请求计费的数据），因为 Prometheus 收集的数据可能不够详细和完整。
 
-#### （4）指标类型
+#### （4）指标（metrics）类型
 
 Prometheus 支持四种类型的指标，分别是： Counter - Gauge - Histogram - Summary。
 
@@ -308,7 +308,15 @@ Prometheus 支持四种类型的指标，分别是： Counter - Gauge - Histogra
   prometheus_target_interval_length_seconds_count{interval="15s"} 81479
   ```
 
-  
+
+#### （5）向量（vector）类型
+
+向量（vector）：按标签的维度对样本进行划分的指标（metrics）。
+
+- CounterVec
+- GaugeVec
+- HistogramVec
+- SummaryVec
 
 ### 2、安装 & 配置
 
@@ -1100,6 +1108,8 @@ scalar	NaN
 ### 4、ClientLibs
 
 #### （1）[Go](https://github.com/prometheus/client_golang)
+
+> 文档：https://prometheus.io/docs/guides/go-application/
 
 ```
 go get github.com/prometheus/client_golang/prometheus

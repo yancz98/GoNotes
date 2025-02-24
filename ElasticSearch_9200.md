@@ -2230,6 +2230,8 @@ PUT /index_name/_bulk
 
 # 六、Query DSL
 
+[QueryDSL](https://www.elastic.co/docs/reference/query-languages/querydsl)
+
 Query DSL 是一种功能齐全的 JSON 样式查询语言，支持复杂的搜索、筛选和聚合。 它是当今 ES 的原始且最强大的查询语言。`_search` 端点接受用Query DSL语法编写的查询。
 
 Query DSL 支持多种搜索技术，包括：
@@ -2953,7 +2955,7 @@ combined_fields 查询支持搜索多个 text 字段，就像它们的内容已�
 
 ```json
 {
-    "query": {
+    "exists": {
         // Required
         // 如果 JSON 值为 null 或 [], 则认为字段不存在
         "field": "<field_name>"
@@ -3519,81 +3521,202 @@ filter 对于查询结构化数据和在复杂搜索中实现 `must have` 条件
 
 ### 6.4.2 Boolean 查询
 
+由于每个 query 查询里面只能有一种查询，当需要同时使用多种查询时，就需要用 bool 组合起来。
+
 用于将多个叶子或复合查询子句组合的默认查询，如 must，should，must_not，filter 子句。
 
-must 子句和 should 子句的分数合并在一起，匹配的子句越多越好；而 must_not 子句和 filter 子句是在 filter 上下文中执行的。
+must 子句和 should 子句的分数合并在一起，匹配的子句越多分数越高；而 must_not 子句和 filter 子句是在 filter 上下文中执行的。
 
-must：子句（查询）必须出现在匹配的文档中，并将有助于得分。
+#### 1、must
 
-should：子句（查询）可能出现在匹配的文档中。
-
-must_not：子句（查询）不得出现在匹配的文档中。子句在 filter 上下文中执行，这会忽略评分（_score: 0），并考虑缓存子句。
-
-filter：子句（查询）必须出现在匹配的文档中。会忽略评分（_score: 0），并考虑缓存子句。
+- 必须匹配 must 中的所有条件（类似 AND 查询）。
+- 满足的 must 子句越多，文档得分越高。
 
 ```json
 {
     "query": {
         "bool": {
-            // 类似 AND 查询
+            // 这是一个 []query 数组，每个元素都是一个 query 查询
             "must": [
                 {
-                    "match_query": {}
+                    "match": {}
                 },
                 {
-                    "terms_query": {}
+                    "terms": {}
                 }
-                // query: {...}
-                // 这是一个 []query 数组，每个元素都适用 query 查询语法
-            ],
-
-            // 类似 OR 查询
-            "should": [
-                {
-                    "match_query": {}
-                },
-                {
-                    "terms_query": {}
-                }
-                // {...}
-            ],
-
-            // 类似 NOT 查询（不评分，有缓存）
-            "must_not": [
-                {
-                    "match_query": {}
-                },
-                {
-                    "terms_query": {}
-                }
-                // {...}
-            ],
-
-            // 不评分，有缓存
-            "filter": [
-                {
-                    "match_query": {}
-                },
-                {
-                    "terms_query": {}
-                }
-                // {...}
-            ],
-
-            // 指定返回文档的 should 子句必须匹配的数量或百分比
-            // 如果 bool 查询至少包含一个 should 子句，并且没有 must 或 filter 子句，则默认值为 1。否则，默认值为 0。
-            "minimum_should_match": 1,
-            "boost": 1.0
+                // {"query": {...}}
+            ]
         }
     }
 }
 ```
 
 > 示例
+>
+> ```sql
+> SELECT * FROM table WHERE title = '手机' AND brand = 'Apple';
+> ```
 
 ```json
-// 以下三个查询都返回 status 包含 active 术语的所有文档
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "term": {
+                        "title": "手机"
+                    }
+                },
+                {
+                    "term": {
+                        "brand": "Apple"
+                    }
+                }
+            ]
+        }
+    }
+}
+```
 
+#### 2、should
+
+- 满足任一 should 中的条件即可（类似 OR 查询）。
+- 评分增强，匹配的 should 子句越多，文档得分越高。
+- 特殊规则：如果 bool 查询中没有 must 或 filter，则至少满足一个 should 条件。如果有 must 或 filter，should 条件变为可选（但满足的 should 会提升得分）。
+
+```json
+{
+    "query": {
+        "bool": {
+            // 这是一个 []query 数组，每个元素都是一个 query 查询
+            "should": [
+                {
+                    "match": {}
+                },
+                {
+                    "terms": {}
+                }
+                // {"query": {...}}
+            ],
+            
+            // 指定必须匹配 should 子句的数量或百分比
+            // 如果 bool 查询中没有 must 或 filter 子句，则默认值为 1。
+            // 否则，默认值为 0（should 条件变为可选）。
+            "minimum_should_match": 1 
+        }
+    }
+}
+```
+
+> 示例 1：OR 查询
+>
+> ```sql
+> SELECT * FROM table WHERE title = '手机' OR brand = 'Apple';
+> ```
+
+```json
+{
+    "query": {
+        "bool": {
+            "should": [
+                {
+                    "term": {
+                        "title": "手机"
+                    }
+                },
+                {
+                    "term": {
+                        "brand": "Apple"
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+> 示例 2：提升指定文档的优先级
+
+```json
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "match": {
+                        "title": "手机"
+                    }
+                }
+            ],
+            // 此时的 should 条件为可选项，但指定文档的评分会提升
+            "should": [
+                {
+                    "terms": {
+                        "_id": [1, 2, 3, 4, 5],
+                        "boost": 100
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+#### 3、filter
+
+- 过滤文档，仅判断文档是否匹配条件，匹配 filter 中的所有条件，会忽略评分（_score: 0）。
+- 性能优化，支持缓存，适合高频过滤操作（如状态、范围、精确值匹配）。
+
+```json
+{
+    "query": {
+        "bool": {
+            // 不评分，有缓存
+            "filter": [
+                {
+                    "match": {}
+                },
+                {
+                    "terms": {}
+                }
+                // {"query": {...}}
+            ]
+        }
+    }
+}
+```
+
+#### 4、must_not
+
+- 匹配全部不在 must_not 条件中的文件。
+- 子句在 filter 上下文中执行，这会忽略评分（_score: 0），并考虑缓存子句。
+
+```json
+{
+    "query": {
+        "bool": {
+            // 类似 NOT 查询（不评分，有缓存）
+            "must_not": [
+                {
+                    "match": {}
+                },
+                {
+                    "terms": {}
+                }
+                // {"query": {...}}
+            ]
+        }
+    }
+}
+```
+
+#### 5、bool.filter 评分
+
+在 filter 元素下指定的查询对评分没有影响——评分返回为0。
+
+> 示例：以下三个查询都返回 status 包含 active 术语的所有文档。
+
+```json
 // filter 查询，_score: 0
 {
     "query": {
@@ -3699,11 +3822,132 @@ filter：子句（查询）必须出现在匹配的文档中。会忽略评分�
 
 
 
-## 6.5、查询场景示例
+## 6.5、连接查询
 
-### 6.5.1 全量查询
+### 6.5.1 nested
 
+nested 查询搜索 nested 字段对象，就像它们作为单独的文档被索引一样。如果对象与搜索匹配，则 nested 查询将返回根父文档。
+
+> 语法：
+
+```json
+{
+    "query": {
+        "nested": {
+            // Required...
+            
+            // 要搜索的嵌套对象的路径
+            // 可以是多级嵌套对象，如：obj.obj1
+            "path": "<nested_field>",
+            
+            // 要在路径中的嵌套对象上运行的查询，
+            // 如果对象与搜索匹配，嵌套查询将返回根父文档。
+            "query": {
+                // Query...
+            },
+            
+            // Options...
+            
+            // 指示匹配子对象的分数如何影响根父文档的相关性分数，有效值：
+            // avg  使用所有匹配子对象的平均相关性得分
+            // max  使用所有匹配的子对象中的最高相关性得分
+            // min  使用所有匹配的子对象中的最低相关性得分
+            // none 不要使用匹配子对象的相关性得分。查询为父文档分配 0 分。
+
+            // sum  将所有匹配的子对象的相关性得分相加。
+            "score_mode": "avg",
+            
+            // 指示是否忽略未映射的路径，并且不返回任何文档而不是错误。
+            // 如果为 false，如果路径是未映射的字段，ES 将返回错误。
+            // 您可以使用此参数查询可能不包含字段路径的多个索引
+            "ignore_unmapped": false
+        }
+    }
+}
+```
+
+> 示例：
+
+```json
+// 定义 mappings
+{
+    "properties": {
+        "toxicities": {
+            "type": "nested",
+            "properties": {
+                "id": {
+                    "type": "keyword"
+                },
+                "peptide_id": {
+                    "type": "keyword"
+                },
+                "toxicity": {
+                    "type": "keyword"
+                },
+                "value": {
+                    "type": "scaled_float",
+                    "scaling_factor": 1000
+                },
+                "unit": {
+                    "type": "keyword"
+                },
+                "status": {
+                    "type": "keyword"
+                },
+                "source": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}
+
+// nested 查询条件
+> POST /<index_name>/_search
+{
+    "query": {
+        "nested": {
+            "path": "toxicities",
+            "query": {
+                "bool": {
+                    "must": [
+                        { "term": { "toxicities.toxicity": "IC50" } },
+                        { "term": { "toxicities.unit": "μM" } },
+                        { "range": { "toxicities.value": { "gte": 0, "lte": 100 } } }
+                    ]
+                }
+            }
+        }
+    }
+}
+
+
+// 存在 nested 字段的计数
+{
+    "query": {
+        "nested": {
+            "path": "toxicities",
+            "query": {
+                "exists": {
+                    "field": "toxicities.id"
+                }
+            }
+        }
+    },
+    "size": 0,
+    "track_total_hits": true
+}
+```
+
+
+
+## 6.6、查询场景示例
+
+### 6.6.1 全量查询
+
+> ```sql
 > SELECT * FROM table;
+> ```
 
 ```json
 > [GET|POST] /<index_name>/_search
@@ -3815,7 +4059,7 @@ filter：子句（查询）必须出现在匹配的文档中。会忽略评分�
 | hits.hits[0]._source: {}          | object | 文档的源数据                                            |
 | hits.hits[0].sort: []             | array  | 文档排序方式 （指定 sort 时才有，默认按相关性分数排序） |
 
-### 6.5.2 返回指定字段（_source）
+### 6.6.2 返回指定字段（_source）
 
 > ```mysql
 > SELECT a, b, c FROM `table`;
@@ -3853,7 +4097,7 @@ filter：子句（查询）必须出现在匹配的文档中。会忽略评分�
 }
 ```
 
-### 6.5.3 范围搜索（range）
+### 6.6.3 范围搜索（range）
 
 > ```mysql
 > SELECT * FROM `table` WHERE created_time BETWEEN '2021-01-01' AND '2021-12-31';
@@ -3899,7 +4143,7 @@ filter：子句（查询）必须出现在匹配的文档中。会忽略评分�
 }
 ```
 
-### 6.5.4 IN 查询（terms）
+### 6.6.4 IN 查询（terms）
 
 > ```mysql
 > SELECT * FROM `table` WHERE `status` IN (1, 2, 3);
@@ -3915,7 +4159,7 @@ filter：子句（查询）必须出现在匹配的文档中。会忽略评分�
 }
 ```
 
-### 6.5.5 LIKE 查询（wildcard）
+### 6.6.5 LIKE 查询（wildcard）
 
 仅 keyword 字段。
 
@@ -3934,7 +4178,7 @@ filter：子句（查询）必须出现在匹配的文档中。会忽略评分�
 }
 ```
 
-### 6.5.6 统计总数（COUNT）
+### 6.6.6 统计总数（COUNT）
 
 ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，无法得到精确值。
 
@@ -4059,7 +4303,7 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 }
 ```
 
-### 6.5.7 排序（sort）
+### 6.6.7 排序（sort）
 
 > ```mysql
 > SELECT * FROM `table` ORDER BY field1 ASC, field2 DESC;
@@ -4082,7 +4326,7 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 }
 ```
 
-### 6.5.8 分页
+### 6.6.8 分页
 
 > ```mysql
 > SELECT * FROM `table` LIMIT 10 OFFSET 0;
@@ -4100,7 +4344,7 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 }
 ```
 
-### 6.5.9 批量删除
+### 6.6.9 批量删除
 
 > ```mysql
 > DELETE FROM `table` WHERE created_at > 0;
@@ -4120,7 +4364,7 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 }
 ```
 
-### 6.5.10 高亮
+### 6.6.10 高亮
 
 ```json
 // Request
@@ -4192,6 +4436,34 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 }
 ```
 
+### 6.6.11 组合条件（AND / OR）
+
+> ```mysql
+> SELECT * FROM `table` WHERE name = 'YCZ' AND (rank <= 10 OR score >= 90);
+> ```
+
+```json
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "term": { "name": "YCZ" }
+                },
+                {
+                    "bool": {
+                        "should": [
+                            { "range": { "rank": { "lte": 10 } } },
+                            { "range": { "score": { "gte": 90 } } }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
 
 
 ### Query 语法汇总
@@ -4201,6 +4473,7 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 
 // Request
 {
+    // 注：每个 query 里面只能使用一种查询
     "query": {
         // bool 查询
         "bool": {
@@ -4208,10 +4481,10 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
             "should": [],
             "must_not": [],
             "filter": []
-        },
+        }
         
-        // 各种查询方法（match, terms, ...）
-        "query_method": {}
+        // 或其它查询方法（match, terms, ...）
+        // "query_method": {}
     },
     
     // 限制返回字段
@@ -4269,11 +4542,6 @@ ES 将聚合分为三类：
 
     // 聚合语法（aggregations）
     "aggs": {
-        // 限制聚合的文档集
-        "filter": {
-            // Query
-        },
-
         // 第一个聚合：aggregation
         // 聚合结果名称
         "<group_name>": {
@@ -4285,12 +4553,13 @@ ES 将聚合分为三类：
 
         // 第二个聚合：aggregation
         "<group_name_2>": {
-            // 限制聚合的文档集
+            // 限制聚合的文档集（或其它任意聚合方法）
             "filter": {
                 // Query
             },
 
             // 第二个聚合的子聚合
+            // 子聚合是基于父级结果的聚合（此处是基于 filter 结果）
             "aggs": {
                 // aggregations
             }

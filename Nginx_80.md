@@ -619,6 +619,7 @@ systemctl reload nginx
 
 ```nginx
 # 基于 IP 的虚拟主机（需配置主机网卡）
+# - 访问地址：139.9.103.139
 server {
     listen 80;
     server_name 139.9.103.139;
@@ -630,9 +631,10 @@ server {
 }
 
 # 基于主机名的虚拟主机（需在客户端配置 hosts）
+#  - 访问地址：yancz.com
 server {
     listen 80;
-    server_name ycz.com;
+    server_name yancz.com;
     
     location / {
         root html/virtual;
@@ -641,9 +643,10 @@ server {
 }
 
 # 基于端口的虚拟主机
+#  - 访问地址：yancz.com:8080
 server {
     listen 8080;
-    server_name localhost;
+    server_name yancz.com;
     
     location / {
         root html/virtual;

@@ -4464,6 +4464,111 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
 }
 ```
 
+### 6.6.12 深度分页（scroll）
+
+> Result window is too large, from + size must be less than or equal to: [10000] but was [10010]. See the scroll api for a more efficient way to request large data sets. This limit can be set by changing the [index.max_result_window] index level setting.
+
+Scroll API（推荐用于大量数据导出）
+
+- 首次搜索请求（第 1 页）
+
+```json
+// scroll=1m 指定搜索上下文的保持时间：1 Min
+> [POST] /<index_name>/_search?scroll=1m
+
+// Request
+{
+    "_source": [
+        "id"
+    ],
+    "from": 0,
+    "query": {
+        "match_all": {}
+    },
+    "size": 10000,
+    "track_total_hits": true
+}
+
+// Response
+{
+    // _scroll_id 用于获取后续批次
+    "_scroll_id": "FGluY2x1ZGVfY29udGV4dF91dWlkDXF1ZXJ5QW5kRmV0Y2gBFktjWkZOZ2NQUkhhN25sNXF0WXhtRFEAAAAAAAAiWBZuYlAtaDc1WlFoT2RWc1dCeE9yeFN3",
+    "took": 159,
+    "timed_out": false,
+    "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": {
+            "value": 39262,
+            "relation": "eq"
+        },
+        "max_score": 0.0,
+        "hits": [
+            {
+                "_index": "<index_name>",
+                "_id": "400972128532299776",
+                "_score": 0.0,
+                "_source": {
+                    "id": "400972128532299776"
+                }
+            }
+            // ...
+        ]
+    }
+}
+```
+
+- 使用 Scroll ID 获取后续批次（第 2 ~ N 页）
+
+```json
+// 不需要索引名称，不需要查询参数
+> [POST] /_search/scroll
+
+// Request
+{
+    "scroll": "1m", // 指定搜索上下文的保持时间：1 Min
+    "scroll_id": "FGluY2x1ZGVfY29udGV4dF91dWlkDXF1ZXJ5QW5kRmV0Y2gBFktjWkZOZ2NQUkhhN25sNXF0WXhtRFEAAAAAAAAiWBZuYlAtaDc1WlFoT2RWc1dCeE9yeFN3"
+}
+
+// Response
+{
+    "_scroll_id": "FGluY2x1ZGVfY29udGV4dF91dWlkDXF1ZXJ5QW5kRmV0Y2gBFktjWkZOZ2NQUkhhN25sNXF0WXhtRFEAAAAAAAAiWRZuYlAtaDc1WlFoT2RWc1dCeE9yeFN3",
+    "took": 2,
+    "timed_out": false,
+    "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+    },
+    "hits": {
+        "total": {
+            "value": 39262,
+            "relation": "eq"
+        },
+        "max_score": 0.0,
+        // 当 hits 数组为空时，代表数据读取完成
+        "hits": [
+            {
+                "_index": "<index_name>",
+                "_id": "400972308526661632",
+                "_score": 0.0,
+                "_source": {
+                    "id": "400972308526661632"
+                }
+            }
+            // ...
+        ]
+    }
+}
+```
+
+### 6.6.12 深度分页（search_after）
+
 
 
 ### Query 语法汇总
@@ -4488,7 +4593,7 @@ ES 默认限制索引最多只能查询，当匹配的总数大于 10000 时，�
     },
     
     // 限制返回字段
-    "_source": null,
+    "_source": [],
     
     // 跟踪总数
     "track_total_hits": true,

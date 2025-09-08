@@ -289,10 +289,10 @@ double	双精度，8字节（15位左右的精度）
 ### 2、日期和时间类型
 
 ```mysql
-date	格式：YYYY-mm-dd，3字节
-time	格式：HH:ii:ss，3字节
+date	格式：YYYY-mm-dd，4字节
+time	格式：HH:ii:ss，4字节
 datetime	合并上面格式
-timestemp	时间戳类型，不能为空，有默认值CURRENT_TIMESTEMP，数据更新时，更新为当前时间。
+timestemp	时间戳类型，不能为空，有默认值CURRENT_TIMESTEMP，数据更新时，更新为当前时间。4字节，最大2038年
 ```
 
 ### 3、字符串类型

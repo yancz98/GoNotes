@@ -1,5 +1,7 @@
 ## 一、概述
 
+MinIO是一种软件定义的高性能分布式对象存储服务器。
+
 ### 1、Install & Deploy
 
 ```shell
@@ -9,6 +11,8 @@ chmod +x minio
 ```
 
 #### （1）单节点单驱动（SNSD）
+
+![SNSD](Images/MinIO_SNSD.png)
 
 ```shell
 > minio server /data/minio --address :9000 --console-address :9001
@@ -27,6 +31,8 @@ RootPass: minioadmin
 说明：直接访问 http://127.0.0.1:9000 也可以，API 内置了 Console 页面。
 
 #### （2）单节点多驱动（SNMD）
+
+![SNMD](Images/MinIO_SNMD.png)
 
 > MinIO 强烈建议使用 XFS 格式磁盘的直连 JBOD 阵列以获得最佳性能。
 >
@@ -120,6 +126,8 @@ RootPass: minioadmin
 ```
 
 #### （3）多节点多驱动（MNMD）
+
+![MNMD](Images/MinIO_MNMD.png)
 
 > MNMD 部署提供企业级性能、可用性和可扩展性，是生产环境推荐的部署。
 >

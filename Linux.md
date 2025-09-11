@@ -3036,6 +3036,24 @@ $ du -sh logs
 $ du -sch
 12M     .
 12M     总用量
+
+# 当前层的总大小
+$ du -h --max-depth=0
+96M     .
+
+# 列出当前层下所有子目录的总大小
+$ du -h --max-depth=1
+95K     ./api
+4.0K    ./config
+67K     ./log
+113K    ./model
+50M     ./release
+41K     ./router
+445K    ./service
+8.0K    ./test
+36K     ./util
+45M     ./vendor
+96M     .
 ```
 
 #### （2）df
